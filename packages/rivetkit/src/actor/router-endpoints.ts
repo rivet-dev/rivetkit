@@ -113,6 +113,7 @@ export async function handleWebSocketConnect(
 	encoding: Encoding,
 	parameters: unknown,
 	authData: unknown,
+	subscriptions: string[],
 ): Promise<UpgradeWebSocketArgs> {
 	const exposeInternalError = req ? getRequestExposeInternalError(req) : false;
 
@@ -182,6 +183,7 @@ export async function handleWebSocketConnect(
 						connState,
 						CONNECTION_DRIVER_WEBSOCKET,
 						{ encoding } satisfies GenericWebSocketDriverState,
+						subscriptions,
 						authData,
 					);
 
@@ -332,6 +334,7 @@ export async function handleSseConnect(
 	_runConfig: RunConfig,
 	actorDriver: ActorDriver,
 	actorId: string,
+	subscriptions: string[],
 	authData: unknown,
 ) {
 	const encoding = getRequestEncoding(c.req);
@@ -367,6 +370,7 @@ export async function handleSseConnect(
 				connState,
 				CONNECTION_DRIVER_SSE,
 				{ encoding } satisfies GenericSseDriverState,
+				subscriptions,
 				authData,
 			);
 
@@ -463,6 +467,7 @@ export async function handleAction(
 			connState,
 			CONNECTION_DRIVER_HTTP,
 			{} satisfies GenericHttpDriverState,
+			[],
 			authData,
 		);
 
@@ -655,6 +660,8 @@ export const HEADER_CONN_ID = "X-RivetKit-Conn";
 
 export const HEADER_CONN_TOKEN = "X-RivetKit-Conn-Token";
 
+export const HEADER_CONN_SUBS = "X-RivetKit-Conn-Subs";
+
 /**
  * Headers that publics can send from public clients.
  *
@@ -669,6 +676,7 @@ export const ALLOWED_PUBLIC_HEADERS = [
 	HEADER_ACTOR_ID,
 	HEADER_CONN_ID,
 	HEADER_CONN_TOKEN,
+	HEADER_CONN_SUBS,
 ];
 
 // Helper to get connection parameters for the request

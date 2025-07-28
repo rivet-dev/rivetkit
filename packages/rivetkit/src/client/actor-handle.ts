@@ -18,7 +18,11 @@ import {
 } from "@/schemas/client-protocol/versioned";
 import { bufferToArrayBuffer } from "@/utils";
 import type { ActorDefinitionActions } from "./actor-common";
-import { type ActorConn, ActorConnRaw } from "./actor-conn";
+import {
+	type ActorConn,
+	ActorConnRaw,
+	type ActorManualConn,
+} from "./actor-conn";
 import { queryActor } from "./actor-query";
 import { type ClientRaw, CREATE_ACTOR_CONN_PROXY } from "./client";
 import { ActorError } from "./errors";
@@ -161,6 +165,33 @@ export class ActorHandleRaw {
 	}
 
 	/**
+	 * Creates a new connection to the actor, that should be manually connected.
+	 * This is useful for creating connections that are not immediately connected,
+	 * such as when you want to set up event listeners before connecting.
+	 *
+	 * @param AD - The actor definition for the connection.
+	 * @returns {ActorConn<AD>} A connection to the actor.
+	 */
+	create(): ActorManualConn<AnyActorDefinition> {
+		logger().debug({
+			msg: "creating a connection from handle",
+			query: this.#actorQuery,
+		});
+
+		const conn = new ActorConnRaw(
+			this.#client,
+			this.#driver,
+			this.#params,
+			this.#encoding,
+			this.#actorQuery,
+		);
+
+		return this.#client[CREATE_ACTOR_CONN_PROXY](
+			conn,
+		) as ActorManualConn<AnyActorDefinition>;
+	}
+
+	/**
 	 * Makes a raw HTTP request to the actor.
 	 *
 	 * @param input - The URL, path, or Request object
@@ -259,10 +290,12 @@ export class ActorHandleRaw {
  */
 export type ActorHandle<AD extends AnyActorDefinition> = Omit<
 	ActorHandleRaw,
-	"connect"
+	"connect" | "create"
 > & {
 	// Add typed version of ActorConn (instead of using AnyActorDefinition)
 	connect(): ActorConn<AD>;
 	// Resolve method returns the actor ID
 	resolve(): Promise<string>;
+	// Add typed version of create
+	create(): ActorManualConn<AD>;
 } & ActorDefinitionActions<AD>;

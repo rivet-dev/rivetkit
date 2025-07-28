@@ -8,6 +8,7 @@ import type { ActorActionFunction } from "./actor-common";
 import {
 	type ActorConn,
 	type ActorConnRaw,
+	type ActorManualConn,
 	CONNECT_SYMBOL,
 } from "./actor-conn";
 import { type ActorHandle, ActorHandleRaw } from "./actor-handle";
@@ -149,6 +150,7 @@ export interface Region {
 
 export const ACTOR_CONNS_SYMBOL = Symbol("actorConns");
 export const CREATE_ACTOR_CONN_PROXY = Symbol("createActorConnProxy");
+export const CREATE_ACTOR_PROXY = Symbol("createActorProxy");
 export const TRANSPORT_SYMBOL = Symbol("transport");
 
 /**
@@ -359,10 +361,32 @@ export class ClientRaw {
 		// Save to connection list
 		this[ACTOR_CONNS_SYMBOL].add(conn);
 
+		logger().debug({
+			msg: "creating actor proxy for connection and connecting",
+			conn,
+		});
+
 		// Start connection
 		conn[CONNECT_SYMBOL]();
 
 		return createActorProxy(conn) as ActorConn<AD>;
+	}
+
+	[CREATE_ACTOR_PROXY]<AD extends AnyActorDefinition>(
+		conn: ActorConnRaw,
+	): ActorConn<AD> {
+		// Save to connection list
+		this[ACTOR_CONNS_SYMBOL].add(conn);
+
+		logger().debug({ msg: "creating actor proxy for connection", conn });
+
+		Object.assign(conn, {
+			connect: () => {
+				conn[CONNECT_SYMBOL]();
+			},
+		});
+
+		return createActorProxy(conn) as ActorManualConn<AD>;
 	}
 
 	/**

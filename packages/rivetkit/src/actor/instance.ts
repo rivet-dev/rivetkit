@@ -917,6 +917,7 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 		state: CS,
 		driverId: ConnectionDriver,
 		driverState: unknown,
+		subscriptions: string[],
 		authData: unknown,
 	): Promise<Conn<S, CP, CS, V, I, DB>> {
 		this.#assertReady();
@@ -950,6 +951,11 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 		//
 		// Do this immediately after adding connection & before any async logic in order to avoid race conditions with sleep timeouts
 		this.#resetSleepTimer();
+		if (subscriptions) {
+			for (const sub of subscriptions) {
+				this.#addSubscription(sub, conn, true);
+			}
+		}
 
 		// Add to persistence & save immediately
 		this.#persist.connections.push(persist);
@@ -1017,6 +1023,7 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 				return await this.executeAction(ctx, name, args);
 			},
 			onSubscribe: async (eventName, conn) => {
+				console.log("subscribing to event", { eventName, connId: conn.id });
 				this.inspector.emitter.emit("eventFired", {
 					type: "subscribe",
 					eventName,
@@ -1489,6 +1496,13 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 	_broadcast<Args extends Array<unknown>>(name: string, ...args: Args) {
 		this.#assertReady();
 
+		console.log("broadcasting event", {
+			name,
+			args,
+			actorId: this.id,
+			subscriptions: this.#subscriptionIndex.size,
+			connections: this.conns.size,
+		});
 		this.inspector.emitter.emit("eventFired", {
 			type: "broadcast",
 			eventName: name,
