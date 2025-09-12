@@ -2,7 +2,11 @@ import * as errors from "./errors";
 import { logger } from "./log";
 
 export function assertUnreachable(x: never): never {
-	logger().error("unreachable", { value: `${x}`, stack: new Error().stack });
+	logger().error({
+		msg: "unreachable",
+		value: `${x}`,
+		stack: new Error().stack,
+	});
 	throw new errors.Unreachable(x);
 }
 

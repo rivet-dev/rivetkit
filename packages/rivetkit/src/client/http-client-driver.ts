@@ -56,7 +56,8 @@ export function createHttpClientDriver(managerEndpoint: string): ClientDriver {
 			args: Args,
 			opts: { signal?: AbortSignal } | undefined,
 		): Promise<Response> => {
-			logger().debug("actor handle action", {
+			logger().debug({
+				msg: "actor handle action",
 				name,
 				args,
 				query: actorQuery,
@@ -93,7 +94,7 @@ export function createHttpClientDriver(managerEndpoint: string): ClientDriver {
 			encodingKind: Encoding,
 			params: unknown,
 		): Promise<string> => {
-			logger().debug("resolving actor ID", { query: actorQuery });
+			logger().debug({ msg: "resolving actor ID", query: actorQuery });
 
 			try {
 				const result = await sendHttpRequest<
@@ -115,10 +116,10 @@ export function createHttpClientDriver(managerEndpoint: string): ClientDriver {
 					responseVersionedDataHandler: HTTP_RESOLVE_RESPONSE_VERSIONED,
 				});
 
-				logger().debug("resolved actor ID", { actorId: result.actorId });
+				logger().debug({ msg: "resolved actor ID", actorId: result.actorId });
 				return result.actorId;
 			} catch (error) {
-				logger().error("failed to resolve actor ID", { error });
+				logger().error({ msg: "failed to resolve actor ID", error });
 				if (error instanceof errors.ActorError) {
 					throw error;
 				} else {
@@ -155,7 +156,7 @@ export function createHttpClientDriver(managerEndpoint: string): ClientDriver {
 			// HACK: See packages/drivers/cloudflare-workers/src/websocket.ts
 			protocol.push("rivetkit");
 
-			logger().debug("connecting to websocket", { url });
+			logger().debug({ msg: "connecting to websocket", url });
 			const ws = new WebSocket(url, protocol);
 			// HACK: Bun bug prevents changing binary type, so we ignore the error https://github.com/oven-sh/bun/issues/17005
 			try {
@@ -176,7 +177,7 @@ export function createHttpClientDriver(managerEndpoint: string): ClientDriver {
 
 			const url = `${managerEndpoint}/registry/actors/connect/sse`;
 
-			logger().debug("connecting to sse", { url });
+			logger().debug({ msg: "connecting to sse", url });
 			const eventSource = new EventSource(url, {
 				fetch: (input, init) => {
 					return fetch(input, {
@@ -248,7 +249,8 @@ export function createHttpClientDriver(managerEndpoint: string): ClientDriver {
 			const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
 			const url = `${managerEndpoint}/registry/actors/raw/http/${normalizedPath}`;
 
-			logger().debug("rewriting http url", {
+			logger().debug({
+				msg: "rewriting http url",
 				from: path,
 				to: url,
 			});
@@ -287,7 +289,8 @@ export function createHttpClientDriver(managerEndpoint: string): ClientDriver {
 			const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
 			const url = `${wsEndpoint}/registry/actors/raw/websocket/${normalizedPath}`;
 
-			logger().debug("rewriting websocket url", {
+			logger().debug({
+				msg: "rewriting websocket url",
 				from: path,
 				to: url,
 			});
@@ -317,7 +320,7 @@ export function createHttpClientDriver(managerEndpoint: string): ClientDriver {
 			}
 
 			// Create WebSocket connection
-			logger().debug("opening raw websocket", { url });
+			logger().debug({ msg: "opening raw websocket", url });
 			return new WebSocket(url, protocolList) as any;
 		},
 	};

@@ -94,19 +94,22 @@ export class EngineActorDriver implements ActorDriver {
 			),
 			onConnected: () => {
 				if (hasDisconnected) {
-					logger().info("runner reconnected", {
+					logger().info({
+						msg: "runner reconnected",
 						namespace: this.#config.namespace,
 						runnerName: this.#config.runnerName,
 					});
 				} else {
-					logger().debug("runner connected", {
+					logger().debug({
+						msg: "runner connected",
 						namespace: this.#config.namespace,
 						runnerName: this.#config.runnerName,
 					});
 				}
 			},
 			onDisconnected: () => {
-				logger().warn("runner disconnected", {
+				logger().warn({
+					msg: "runner disconnected",
 					namespace: this.#config.namespace,
 					runnerName: this.#config.runnerName,
 				});
@@ -121,7 +124,8 @@ export class EngineActorDriver implements ActorDriver {
 		// Create and start runner
 		this.#runner = new Runner(runnerConfig);
 		this.#runner.start();
-		logger().debug("engine runner started", {
+		logger().debug({
+			msg: "engine runner started",
 			endpoint: config.endpoint,
 			namespace: config.namespace,
 			runnerName: config.runnerName,
@@ -195,7 +199,8 @@ export class EngineActorDriver implements ActorDriver {
 		generation: number,
 		config: RunnerActorConfig,
 	): Promise<void> {
-		logger().debug("runner actor starting", {
+		logger().debug({
+			msg: "runner actor starting",
 			actorId,
 			name: config.name,
 			key: config.key,
@@ -248,11 +253,11 @@ export class EngineActorDriver implements ActorDriver {
 		handler.actorStartPromise?.resolve();
 		handler.actorStartPromise = undefined;
 
-		logger().debug("runner actor started", { actorId, name, key });
+		logger().debug({ msg: "runner actor started", actorId, name, key });
 	}
 
 	async #runnerOnActorStop(actorId: string, generation: number): Promise<void> {
-		logger().debug("runner actor stopping", { actorId, generation });
+		logger().debug({ msg: "runner actor stopping", actorId, generation });
 
 		const handler = this.#actors.get(actorId);
 		if (handler?.actor) {
@@ -260,11 +265,12 @@ export class EngineActorDriver implements ActorDriver {
 			this.#actors.delete(actorId);
 		}
 
-		logger().debug("runner actor stopped", { actorId });
+		logger().debug({ msg: "runner actor stopped", actorId });
 	}
 
 	async #runnerFetch(actorId: string, request: Request): Promise<Response> {
-		logger().debug("runner fetch", {
+		logger().debug({
+			msg: "runner fetch",
 			actorId,
 			url: request.url,
 			method: request.method,
@@ -279,7 +285,7 @@ export class EngineActorDriver implements ActorDriver {
 	): Promise<void> {
 		const websocket = websocketRaw as UniversalWebSocket;
 
-		logger().debug("runner websocket", { actorId, url: request.url });
+		logger().debug({ msg: "runner websocket", actorId, url: request.url });
 
 		const url = new URL(request.url);
 
@@ -324,7 +330,7 @@ export class EngineActorDriver implements ActorDriver {
 		const wsContext = new WSContext(websocket);
 
 		wsHandlerPromise.catch((err) => {
-			logger().error("building websocket handlers errored", { err });
+			logger().error({ msg: "building websocket handlers errored", err });
 			wsContext.close(1011, `${err}`);
 		});
 
@@ -354,7 +360,7 @@ export class EngineActorDriver implements ActorDriver {
 	}
 
 	async shutdown(immediate: boolean): Promise<void> {
-		logger().info("stopping engine actor driver");
+		logger().info({ msg: "stopping engine actor driver" });
 		await this.#runner.shutdown(immediate);
 	}
 }

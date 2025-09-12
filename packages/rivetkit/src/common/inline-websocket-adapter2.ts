@@ -7,10 +7,8 @@ import type {
 } from "@/common/websocket-interface";
 import { getLogger } from "./log";
 
-export const LOGGER_NAME = "fake-event-source2";
-
 export function logger() {
-	return getLogger(LOGGER_NAME);
+	return getLogger("fake-event-source2");
 }
 
 // TODO: Merge with ConnectWebSocketOutput interface
@@ -55,11 +53,11 @@ export class InlineWebSocketAdapter2 implements UniversalWebSocket {
 		this.#wsContext = new WSContext({
 			raw: this,
 			send: (data: string | ArrayBuffer | Uint8Array) => {
-				logger().debug("WSContext.send called");
+				logger().debug({ msg: "WSContext.send called" });
 				this.#handleMessage(data);
 			},
 			close: (code?: number, reason?: string) => {
-				logger().debug("WSContext.close called", { code, reason });
+				logger().debug({ msg: "WSContext.close called", code, reason });
 				this.#handleClose(code || 1000, reason || "");
 			},
 			// Set readyState to 1 (OPEN) since handlers expect an open connection
@@ -99,11 +97,12 @@ export class InlineWebSocketAdapter2 implements UniversalWebSocket {
 	}
 
 	send(data: string | ArrayBufferLike | Blob | ArrayBufferView): void {
-		logger().debug("send called", { readyState: this.readyState });
+		logger().debug({ msg: "send called", readyState: this.readyState });
 
 		if (this.readyState !== this.OPEN) {
 			const error = new Error("WebSocket is not open");
-			logger().warn("cannot send message, websocket not open", {
+			logger().warn({
+				msg: "cannot send message, websocket not open",
 				readyState: this.readyState,
 				dataType: typeof data,
 				dataLength: typeof data === "string" ? data.length : "binary",
@@ -124,7 +123,7 @@ export class InlineWebSocketAdapter2 implements UniversalWebSocket {
 			return;
 		}
 
-		logger().debug("closing fake websocket", { code, reason });
+		logger().debug({ msg: "closing fake websocket", code, reason });
 
 		this.#readyState = this.CLOSING;
 
@@ -132,7 +131,7 @@ export class InlineWebSocketAdapter2 implements UniversalWebSocket {
 		try {
 			this.#handler.onClose({ code, reason, wasClean: true }, this.#wsContext);
 		} catch (err) {
-			logger().error("error closing websocket", { error: err });
+			logger().error({ msg: "error closing websocket", error: err });
 		} finally {
 			this.#readyState = this.CLOSED;
 
@@ -156,15 +155,15 @@ export class InlineWebSocketAdapter2 implements UniversalWebSocket {
 	 */
 	async #initialize(): Promise<void> {
 		try {
-			logger().debug("fake websocket initializing");
+			logger().debug({ msg: "fake websocket initializing" });
 
 			// Call the handler's onOpen method
-			logger().debug("calling handler.onOpen with WSContext");
+			logger().debug({ msg: "calling handler.onOpen with WSContext" });
 			this.#handler.onOpen(undefined, this.#wsContext);
 
 			// Update the ready state and fire events
 			this.#readyState = this.OPEN;
-			logger().debug("fake websocket initialized and now OPEN");
+			logger().debug({ msg: "fake websocket initialized and now OPEN" });
 
 			// Fire the open event
 			this.#fireOpen();
@@ -172,13 +171,15 @@ export class InlineWebSocketAdapter2 implements UniversalWebSocket {
 			// Delay processing queued messages slightly to allow event handlers to be set up
 			if (this.#queuedMessages.length > 0) {
 				if (this.readyState !== this.OPEN) {
-					logger().warn("socket no longer open, dropping queued messages");
+					logger().warn({
+						msg: "socket no longer open, dropping queued messages",
+					});
 					return;
 				}
 
-				logger().debug(
-					`now processing ${this.#queuedMessages.length} queued messages`,
-				);
+				logger().debug({
+					msg: `now processing ${this.#queuedMessages.length} queued messages`,
+				});
 
 				// Create a copy to avoid issues if new messages arrive during processing
 				const messagesToProcess = [...this.#queuedMessages];
@@ -186,12 +187,13 @@ export class InlineWebSocketAdapter2 implements UniversalWebSocket {
 
 				// Process each queued message
 				for (const message of messagesToProcess) {
-					logger().debug("processing queued message");
+					logger().debug({ msg: "processing queued message" });
 					this.#handleMessage(message);
 				}
 			}
 		} catch (err) {
-			logger().error("error opening fake websocket", {
+			logger().error({
+				msg: "error opening fake websocket",
 				error: err,
 				errorMessage: err instanceof Error ? err.message : String(err),
 				stack: err instanceof Error ? err.stack : undefined,
@@ -207,7 +209,8 @@ export class InlineWebSocketAdapter2 implements UniversalWebSocket {
 	#handleMessage(data: string | ArrayBuffer | Uint8Array): void {
 		// Store messages that arrive before the socket is fully initialized
 		if (this.readyState !== this.OPEN) {
-			logger().debug("message received before socket is OPEN, queuing", {
+			logger().debug({
+				msg: "message received before socket is OPEN, queuing",
 				readyState: this.readyState,
 				dataType: typeof data,
 				dataLength:
@@ -226,7 +229,8 @@ export class InlineWebSocketAdapter2 implements UniversalWebSocket {
 		}
 
 		// Log message received from server
-		logger().debug("fake websocket received message from server", {
+		logger().debug({
+			msg: "fake websocket received message from server",
 			dataType: typeof data,
 			dataLength:
 				typeof data === "string"
@@ -299,11 +303,16 @@ export class InlineWebSocketAdapter2 implements UniversalWebSocket {
 				try {
 					listener(event);
 				} catch (err) {
-					logger().error(`error in ${type} event listener`, { error: err });
+					logger().error({
+						msg: `error in ${type} event listener`,
+						error: err,
+					});
 				}
 			}
 		} else {
-			logger().debug(`no ${type} listeners registered, buffering event`);
+			logger().debug({
+				msg: `no ${type} listeners registered, buffering event`,
+			});
 			this.#bufferedEvents.push({ type, event });
 		}
 
@@ -314,7 +323,7 @@ export class InlineWebSocketAdapter2 implements UniversalWebSocket {
 					try {
 						this.#onopen(event);
 					} catch (error) {
-						logger().error("error in onopen handler", { error });
+						logger().error({ msg: "error in onopen handler", error });
 					}
 				}
 				break;
@@ -323,7 +332,7 @@ export class InlineWebSocketAdapter2 implements UniversalWebSocket {
 					try {
 						this.#onclose(event);
 					} catch (error) {
-						logger().error("error in onclose handler", { error });
+						logger().error({ msg: "error in onclose handler", error });
 					}
 				}
 				break;
@@ -332,7 +341,7 @@ export class InlineWebSocketAdapter2 implements UniversalWebSocket {
 					try {
 						this.#onerror(event);
 					} catch (error) {
-						logger().error("error in onerror handler", { error });
+						logger().error({ msg: "error in onerror handler", error });
 					}
 				}
 				break;
@@ -341,7 +350,7 @@ export class InlineWebSocketAdapter2 implements UniversalWebSocket {
 					try {
 						this.#onmessage(event);
 					} catch (error) {
-						logger().error("error in onmessage handler", { error });
+						logger().error({ msg: "error in onmessage handler", error });
 					}
 				}
 				break;
@@ -377,7 +386,7 @@ export class InlineWebSocketAdapter2 implements UniversalWebSocket {
 
 			this.#dispatchEvent("open", event);
 		} catch (err) {
-			logger().error("error in open event", { error: err });
+			logger().error({ msg: "error in open event", error: err });
 		}
 	}
 
@@ -385,7 +394,7 @@ export class InlineWebSocketAdapter2 implements UniversalWebSocket {
 		try {
 			this.#dispatchEvent("close", event);
 		} catch (err) {
-			logger().error("error in close event", { error: err });
+			logger().error({ msg: "error in close event", error: err });
 		}
 	}
 
@@ -402,11 +411,11 @@ export class InlineWebSocketAdapter2 implements UniversalWebSocket {
 
 			this.#dispatchEvent("error", event);
 		} catch (err) {
-			logger().error("error in error event", { error: err });
+			logger().error({ msg: "error in error event", error: err });
 		}
 
 		// Log the error
-		logger().error("websocket error", { error });
+		logger().error({ msg: "websocket error", error });
 	}
 
 	// Event handler properties with getters/setters

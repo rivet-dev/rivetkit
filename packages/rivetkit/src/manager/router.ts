@@ -612,7 +612,8 @@ export function createManagerRouter(
 			const { encoding, transport, method, args }: TestInlineDriverCallRequest =
 				cbor.decode(new Uint8Array(buffer));
 
-			logger().debug("received inline request", {
+			logger().debug({
+				msg: "received inline request",
 				encoding,
 				transport,
 				method,
@@ -652,7 +653,8 @@ export function createManagerRouter(
 				const params =
 					paramsRaw !== undefined ? JSON.parse(paramsRaw) : undefined;
 
-				logger().debug("received test inline driver websocket", {
+				logger().debug({
+					msg: "received test inline driver websocket",
 					actorQuery,
 					params,
 					encodingKind,
@@ -695,7 +697,8 @@ export function createManagerRouter(
 				const protocols =
 					protocolsRaw !== undefined ? JSON.parse(protocolsRaw) : undefined;
 
-				logger().debug("received test inline driver raw websocket", {
+				logger().debug({
+					msg: "received test inline driver raw websocket",
 					actorQuery,
 					params,
 					encodingKind,
@@ -704,7 +707,7 @@ export function createManagerRouter(
 				});
 
 				// Connect to the actor using the inline client driver - this returns a Promise<WebSocket>
-				logger().debug("calling inlineClientDriver.rawWebSocket");
+				logger().debug({ msg: "calling inlineClientDriver.rawWebSocket" });
 				const clientWsPromise = inlineClientDriver.rawWebSocket(
 					undefined,
 					actorQuery,
@@ -715,7 +718,7 @@ export function createManagerRouter(
 					undefined,
 				);
 
-				logger().debug("calling createTestWebSocketProxy");
+				logger().debug({ msg: "calling createTestWebSocketProxy" });
 				return await createTestWebSocketProxy(clientWsPromise, "raw");
 			})(c, noopNext());
 		});
@@ -744,7 +747,8 @@ export function createManagerRouter(
 			const url = new URL(c.req.url);
 			const pathWithQuery = pathOnly + url.search;
 
-			logger().debug("received test inline driver raw http", {
+			logger().debug({
+				msg: "received test inline driver raw http",
 				actorQuery,
 				params,
 				encoding,
@@ -771,7 +775,8 @@ export function createManagerRouter(
 				// Return the response directly
 				return response;
 			} catch (error) {
-				logger().error("error in test inline raw http", {
+				logger().error({
+					msg: "error in test inline raw http",
 					error: stringifyError(error),
 				});
 
@@ -838,7 +843,7 @@ export async function queryActor(
 	query: ActorQuery,
 	driver: ManagerDriver,
 ): Promise<{ actorId: string }> {
-	logger().debug("querying actor", { query });
+	logger().debug({ msg: "querying actor", query });
 	let actorOutput: { actorId: string };
 	if ("getForId" in query) {
 		const output = await driver.getForId({
@@ -886,9 +891,7 @@ export async function queryActor(
 		throw new errors.InvalidRequest("Invalid query format");
 	}
 
-	logger().debug("actor query result", {
-		actorId: actorOutput.actorId,
-	});
+	logger().debug({ msg: "actor query result", actorId: actorOutput.actorId });
 	return { actorId: actorOutput.actorId };
 }
 
@@ -903,21 +906,22 @@ async function createTestWebSocketProxy(
 	let clientWs: WebSocket | null = null;
 	try {
 		// Resolve the client WebSocket promise
-		logger().debug("awaiting client websocket promise");
+		logger().debug({ msg: "awaiting client websocket promise" });
 		const ws = await clientWsPromise;
 		clientWs = ws;
-		logger().debug("client websocket promise resolved", {
+		logger().debug({
+			msg: "client websocket promise resolved",
 			constructor: ws?.constructor.name,
 		});
 
 		// Wait for ws to open
 		await new Promise<void>((resolve, reject) => {
 			const onOpen = () => {
-				logger().debug("test websocket connection opened");
+				logger().debug({ msg: "test websocket connection opened" });
 				resolve();
 			};
 			const onError = (error: any) => {
-				logger().error("test websocket connection failed", { error });
+				logger().error({ msg: "test websocket connection failed", error });
 				reject(
 					new Error(`Failed to open WebSocket: ${error.message || error}`),
 				);
@@ -926,10 +930,10 @@ async function createTestWebSocketProxy(
 			ws.addEventListener("error", onError);
 		});
 	} catch (error) {
-		logger().error(
-			`failed to establish client ${connectionType} websocket connection`,
-			{ error },
-		);
+		logger().error({
+			msg: `failed to establish client ${connectionType} websocket connection`,
+			error,
+		});
 		return {
 			onOpen: (_evt, serverWs) => {
 				serverWs.close(1011, "Failed to establish connection");
@@ -943,10 +947,13 @@ async function createTestWebSocketProxy(
 	// Create WebSocket proxy handlers to relay messages between client and server
 	return {
 		onOpen: (_evt: any, serverWs: WSContext) => {
-			logger().debug(`test ${connectionType} websocket connection opened`);
+			logger().debug({
+				msg: `test ${connectionType} websocket connection opened`,
+			});
 
 			// Check WebSocket type
-			logger().debug("clientWs info", {
+			logger().debug({
+				msg: "clientWs info",
 				constructor: clientWs.constructor.name,
 				hasAddEventListener: typeof clientWs.addEventListener === "function",
 				readyState: clientWs.readyState,
@@ -954,19 +961,17 @@ async function createTestWebSocketProxy(
 
 			// Add message handler to forward messages from client to server
 			clientWs.addEventListener("message", (clientEvt: MessageEvent) => {
-				logger().debug(
-					`test ${connectionType} websocket connection message from client`,
-					{
-						dataType: typeof clientEvt.data,
-						isBlob: clientEvt.data instanceof Blob,
-						isArrayBuffer: clientEvt.data instanceof ArrayBuffer,
-						dataConstructor: clientEvt.data?.constructor?.name,
-						dataStr:
-							typeof clientEvt.data === "string"
-								? clientEvt.data.substring(0, 100)
-								: undefined,
-					},
-				);
+				logger().debug({
+					msg: `test ${connectionType} websocket connection message from client`,
+					dataType: typeof clientEvt.data,
+					isBlob: clientEvt.data instanceof Blob,
+					isArrayBuffer: clientEvt.data instanceof ArrayBuffer,
+					dataConstructor: clientEvt.data?.constructor?.name,
+					dataStr:
+						typeof clientEvt.data === "string"
+							? clientEvt.data.substring(0, 100)
+							: undefined,
+				});
 
 				if (serverWs.readyState === 1) {
 					// OPEN
@@ -975,21 +980,21 @@ async function createTestWebSocketProxy(
 						clientEvt.data
 							.arrayBuffer()
 							.then((buffer) => {
-								logger().debug(
-									"converted client blob to arraybuffer, sending to server",
-									{
-										bufferSize: buffer.byteLength,
-									},
-								);
+								logger().debug({
+									msg: "converted client blob to arraybuffer, sending to server",
+									bufferSize: buffer.byteLength,
+								});
 								serverWs.send(buffer as any);
 							})
 							.catch((error) => {
-								logger().error("failed to convert blob to arraybuffer", {
+								logger().error({
+									msg: "failed to convert blob to arraybuffer",
 									error,
 								});
 							});
 					} else {
-						logger().debug("sending client data directly to server", {
+						logger().debug({
+							msg: "sending client data directly to server",
 							dataType: typeof clientEvt.data,
 							dataLength:
 								typeof clientEvt.data === "string"
@@ -1003,7 +1008,9 @@ async function createTestWebSocketProxy(
 
 			// Add close handler to close server when client closes
 			clientWs.addEventListener("close", (clientEvt: CloseEvent) => {
-				logger().debug(`test ${connectionType} websocket connection closed`);
+				logger().debug({
+					msg: `test ${connectionType} websocket connection closed`,
+				});
 
 				if (serverWs.readyState !== 3) {
 					// Not CLOSED
@@ -1013,7 +1020,9 @@ async function createTestWebSocketProxy(
 
 			// Add error handler
 			clientWs.addEventListener("error", () => {
-				logger().debug(`test ${connectionType} websocket connection error`);
+				logger().debug({
+					msg: `test ${connectionType} websocket connection error`,
+				});
 
 				if (serverWs.readyState !== 3) {
 					// Not CLOSED
@@ -1022,7 +1031,8 @@ async function createTestWebSocketProxy(
 			});
 		},
 		onMessage: (evt: { data: any }) => {
-			logger().debug("received message from server", {
+			logger().debug({
+				msg: "received message from server",
 				dataType: typeof evt.data,
 				isBlob: evt.data instanceof Blob,
 				isArrayBuffer: evt.data instanceof ArrayBuffer,
@@ -1039,18 +1049,21 @@ async function createTestWebSocketProxy(
 					evt.data
 						.arrayBuffer()
 						.then((buffer) => {
-							logger().debug("converted blob to arraybuffer, sending", {
+							logger().debug({
+								msg: "converted blob to arraybuffer, sending",
 								bufferSize: buffer.byteLength,
 							});
 							clientWs.send(buffer);
 						})
 						.catch((error) => {
-							logger().error("failed to convert blob to arraybuffer", {
+							logger().error({
+								msg: "failed to convert blob to arraybuffer",
 								error,
 							});
 						});
 				} else {
-					logger().debug("sending data directly", {
+					logger().debug({
+						msg: "sending data directly",
 						dataType: typeof evt.data,
 						dataLength:
 							typeof evt.data === "string" ? evt.data.length : undefined,
@@ -1067,7 +1080,8 @@ async function createTestWebSocketProxy(
 			},
 			serverWs: WSContext,
 		) => {
-			logger().debug(`server ${connectionType} websocket closed`, {
+			logger().debug({
+				msg: `server ${connectionType} websocket closed`,
 				wasClean: event.wasClean,
 				code: event.code,
 				reason: event.reason,
@@ -1088,7 +1102,10 @@ async function createTestWebSocketProxy(
 			}
 		},
 		onError: (error: unknown) => {
-			logger().error(`error in server ${connectionType} websocket`, { error });
+			logger().error({
+				msg: `error in server ${connectionType} websocket`,
+				error,
+			});
 
 			// Close the client websocket on error
 			if (
@@ -1114,7 +1131,7 @@ async function handleSseConnectRequest(
 	let encoding: Encoding | undefined;
 	try {
 		encoding = getRequestEncoding(c.req);
-		logger().debug("sse connection request received", { encoding });
+		logger().debug({ msg: "sse connection request received", encoding });
 
 		const params = ConnectRequestSchema.safeParse({
 			query: getRequestQuery(c),
@@ -1123,7 +1140,8 @@ async function handleSseConnectRequest(
 		});
 
 		if (!params.success) {
-			logger().error("invalid connection parameters", {
+			logger().error({
+				msg: "invalid connection parameters",
 				error: params.error,
 			});
 			throw new errors.InvalidRequest(params.error);
@@ -1149,10 +1167,10 @@ async function handleSseConnectRequest(
 		// Get the actor ID
 		const { actorId } = await queryActor(c, query, driver);
 		invariant(actorId, "Missing actor ID");
-		logger().debug("sse connection to actor", { actorId });
+		logger().debug({ msg: "sse connection to actor", actorId });
 
 		// Handle based on mode
-		logger().debug("using custom proxy mode for sse connection");
+		logger().debug({ msg: "using custom proxy mode for sse connection" });
 		const url = new URL("http://actor/connect/sse");
 
 		// Always build fresh request to prevent forwarding unwanted headers
@@ -1213,7 +1231,8 @@ async function handleSseConnectRequest(
 					});
 				}
 			} catch (serializeError) {
-				logger().error("failed to send error to sse client", {
+				logger().error({
+					msg: "failed to send error to sse client",
 					error: serializeError,
 				});
 				await stream.writeSSE({
@@ -1246,7 +1265,7 @@ async function handleWebSocketConnectRequest(
 
 	let encoding: Encoding | undefined;
 	try {
-		logger().debug("websocket connection request received");
+		logger().debug({ msg: "websocket connection request received" });
 
 		// Parse configuration from Sec-WebSocket-Protocol header
 		//
@@ -1264,7 +1283,7 @@ async function handleWebSocketConnectRequest(
 		try {
 			queryUnvalidated = JSON.parse(queryRaw!);
 		} catch (error) {
-			logger().error("invalid query json", { error });
+			logger().error({ msg: "invalid query json", error });
 			throw new errors.InvalidQueryJSON(error);
 		}
 
@@ -1275,7 +1294,7 @@ async function handleWebSocketConnectRequest(
 				connParamsUnvalidated = JSON.parse(connParamsRaw!);
 			}
 		} catch (error) {
-			logger().error("invalid conn params", { error });
+			logger().error({ msg: "invalid conn params", error });
 			throw new errors.InvalidParams(
 				`Invalid params JSON: ${stringifyError(error)}`,
 			);
@@ -1290,7 +1309,8 @@ async function handleWebSocketConnectRequest(
 			connParams: connParamsUnvalidated,
 		});
 		if (!params.success) {
-			logger().error("invalid connection parameters", {
+			logger().error({
+				msg: "invalid connection parameters",
 				error: params.error,
 			});
 			throw new errors.InvalidRequest(params.error);
@@ -1309,9 +1329,7 @@ async function handleWebSocketConnectRequest(
 
 		// Get the actor ID
 		const { actorId } = await queryActor(c, params.data.query, driver);
-		logger().debug("found actor for websocket connection", {
-			actorId,
-		});
+		logger().debug({ msg: "found actor for websocket connection", actorId });
 		invariant(actorId, "missing actor id");
 
 		// Proxy the WebSocket connection to the actor
@@ -1365,7 +1383,8 @@ async function handleWebSocketConnectRequest(
 						// Close the connection with an error code
 						ws.close(1011, code);
 					} catch (serializeError) {
-						logger().error("failed to send error to websocket client", {
+						logger().error({
+							msg: "failed to send error to websocket client",
 							error: serializeError,
 						});
 						ws.close(1011, "internal error during error handling");
@@ -1391,7 +1410,7 @@ async function handleMessageRequest(
 	_runConfig: RunConfig,
 	driver: ManagerDriver,
 ): Promise<Response> {
-	logger().debug("connection message request received");
+	logger().debug({ msg: "connection message request received" });
 	try {
 		const params = ConnMessageRequestSchema.safeParse({
 			actorId: c.req.header(HEADER_ACTOR_ID),
@@ -1400,7 +1419,8 @@ async function handleMessageRequest(
 			connToken: c.req.header(HEADER_CONN_TOKEN),
 		});
 		if (!params.success) {
-			logger().error("invalid connection parameters", {
+			logger().error({
+				msg: "invalid connection parameters",
 				error: params.error,
 			});
 			throw new errors.InvalidRequest(params.error);
@@ -1440,7 +1460,7 @@ async function handleMessageRequest(
 
 		return await driver.proxyRequest(c, proxyRequest, actorId);
 	} catch (error) {
-		logger().error("error proxying connection message", { error });
+		logger().error({ msg: "error proxying connection message", error });
 
 		// Use ProxyError if it's not already an ActorError
 		if (!errors.ActorError.isActorError(error)) {
@@ -1462,7 +1482,7 @@ async function handleActionRequest(
 ): Promise<Response> {
 	try {
 		const actionName = c.req.param("action");
-		logger().debug("action call received", { actionName });
+		logger().debug({ msg: "action call received", actionName });
 
 		const params = ConnectRequestSchema.safeParse({
 			query: getRequestQuery(c),
@@ -1471,7 +1491,8 @@ async function handleActionRequest(
 		});
 
 		if (!params.success) {
-			logger().error("invalid connection parameters", {
+			logger().error({
+				msg: "invalid connection parameters",
 				error: params.error,
 			});
 			throw new errors.InvalidRequest(params.error);
@@ -1494,7 +1515,7 @@ async function handleActionRequest(
 
 		// Get the actor ID
 		const { actorId } = await queryActor(c, params.data.query, driver);
-		logger().debug("found actor for action", { actorId });
+		logger().debug({ msg: "found actor for action", actorId });
 		invariant(actorId, "Missing actor ID");
 
 		const url = new URL(
@@ -1519,7 +1540,10 @@ async function handleActionRequest(
 
 		return await driver.proxyRequest(c, proxyRequest, actorId);
 	} catch (error) {
-		logger().error("error in action handler", { error: stringifyError(error) });
+		logger().error({
+			msg: "error in action handler",
+			error: stringifyError(error),
+		});
 
 		// Use ProxyError if it's not already an ActorError
 		if (!errors.ActorError.isActorError(error)) {
@@ -1539,14 +1563,15 @@ async function handleResolveRequest(
 	driver: ManagerDriver,
 ): Promise<Response> {
 	const encoding = getRequestEncoding(c.req);
-	logger().debug("resolve request encoding", { encoding });
+	logger().debug({ msg: "resolve request encoding", encoding });
 
 	const params = ResolveRequestSchema.safeParse({
 		query: getRequestQuery(c),
 		connParams: c.req.header(HEADER_CONN_PARAMS),
 	});
 	if (!params.success) {
-		logger().error("invalid connection parameters", {
+		logger().error({
+			msg: "invalid connection parameters",
 			error: params.error,
 		});
 		throw new errors.InvalidRequest(params.error);
@@ -1564,7 +1589,7 @@ async function handleResolveRequest(
 
 	// Get the actor ID
 	const { actorId } = await queryActor(c, query, driver);
-	logger().debug("resolved actor", { actorId });
+	logger().debug({ msg: "resolved actor", actorId });
 	invariant(actorId, "Missing actor ID");
 
 	// Format response according to protocol
@@ -1590,7 +1615,7 @@ async function handleRawHttpRequest(
 ): Promise<Response> {
 	try {
 		const subpath = c.req.path.split("/raw/http/")[1] || "";
-		logger().debug("raw http request received", { subpath });
+		logger().debug({ msg: "raw http request received", subpath });
 
 		// Get actor query from header (consistent with other endpoints)
 		const queryHeader = c.req.header(HEADER_ACTOR_QUERY);
@@ -1617,7 +1642,7 @@ async function handleRawHttpRequest(
 
 		// Get the actor ID
 		const { actorId } = await queryActor(c, query, driver);
-		logger().debug("found actor for raw http", { actorId });
+		logger().debug({ msg: "found actor for raw http", actorId });
 		invariant(actorId, "Missing actor ID");
 
 		// Preserve the original URL's query parameters
@@ -1628,10 +1653,7 @@ async function handleRawHttpRequest(
 
 		// Forward the request to the actor
 
-		logger().debug("rewriting http url", {
-			from: c.req.url,
-			to: url,
-		});
+		logger().debug({ msg: "rewriting http url", from: c.req.url, to: url });
 
 		const proxyRequestHeaders = new Headers(c.req.raw.headers);
 		if (connParams) {
@@ -1649,7 +1671,8 @@ async function handleRawHttpRequest(
 
 		return await driver.proxyRequest(c, proxyRequest, actorId);
 	} catch (error) {
-		logger().error("error in raw http handler", {
+		logger().error({
+			msg: "error in raw http handler",
 			error: stringifyError(error),
 		});
 
@@ -1678,7 +1701,7 @@ async function handleRawWebSocketRequest(
 
 	try {
 		const subpath = c.req.path.split("/raw/websocket/")[1] || "";
-		logger().debug("raw websocket request received", { subpath });
+		logger().debug({ msg: "raw websocket request received", subpath });
 
 		// Parse protocols from Sec-WebSocket-Protocol header
 		const protocols = c.req.header("sec-websocket-protocol");
@@ -1710,16 +1733,17 @@ async function handleRawWebSocketRequest(
 
 		// Get the actor ID
 		const { actorId } = await queryActor(c, query, driver);
-		logger().debug("found actor for raw websocket", { actorId });
+		logger().debug({ msg: "found actor for raw websocket", actorId });
 		invariant(actorId, "Missing actor ID");
 
-		logger().debug("using custom proxy mode for raw websocket");
+		logger().debug({ msg: "using custom proxy mode for raw websocket" });
 
 		// Preserve the original URL's query parameters
 		const originalUrl = new URL(c.req.url);
 		const proxyPath = `${PATH_RAW_WEBSOCKET_PREFIX}${subpath}${originalUrl.search}`;
 
-		logger().debug("manager router proxyWebSocket", {
+		logger().debug({
+			msg: "manager router proxyWebSocket",
 			originalUrl: c.req.url,
 			subpath,
 			search: originalUrl.search,

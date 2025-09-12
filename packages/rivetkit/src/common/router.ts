@@ -25,7 +25,8 @@ export function loggerMiddleware(logger: Logger) {
 		await next();
 
 		const duration = Date.now() - startTime;
-		logger.debug("http request", {
+		logger.debug({
+			msg: "http request",
 			method,
 			path,
 			status: c.res.status,
@@ -67,7 +68,8 @@ export function handleRouteError(
 	try {
 		encoding = getRequestEncoding(c.req);
 	} catch (err) {
-		logger().debug("failed to extract encoding", {
+		logger().debug({
+			msg: "failed to extract encoding",
 			error: stringifyError(err),
 		});
 		encoding = "json";

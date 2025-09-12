@@ -1,7 +1,5 @@
-import { getLogger } from "@/common//log";
-
-export const LOGGER_NAME = "actor-client";
+import { getLogger } from "@/common/log";
 
 export function logger() {
-	return getLogger(LOGGER_NAME);
+	return getLogger("actor-client");
 }

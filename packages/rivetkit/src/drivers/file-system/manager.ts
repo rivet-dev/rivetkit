@@ -237,7 +237,7 @@ export class FileSystemManagerDriver implements ManagerDriver {
 				key: actor.state.key as string[],
 			};
 		} catch (error) {
-			logger().error("failed to read actor state", { actorId, error });
+			logger().error({ msg: "failed to read actor state", actorId, error });
 			return undefined;
 		}
 	}

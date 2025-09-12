@@ -235,7 +235,8 @@ export class Conn<S, CP, CS, V, I, AD, DB extends AnyDatabaseProvider> {
 		const newLastSeen = Date.now();
 		const newStatus = isConnectionClosed ? "reconnecting" : "connected";
 
-		logger().debug("liveness probe for connection", {
+		logger().debug({
+			msg: "liveness probe for connection",
 			connId: this.id,
 			actorId: this.#actor.id,
 			readyState,

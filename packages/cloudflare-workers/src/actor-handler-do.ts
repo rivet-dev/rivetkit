@@ -87,7 +87,7 @@ export function createActorDurableObject(
 						const key = res.get(KEYS.KEY) as ActorKey;
 						if (!key) throw new Error("missing actor key");
 
-						logger().debug("already initialized", { name, key });
+						logger().debug({ msg: "already initialized", name, key });
 
 						this.#initialized = { name, key };
 						this.#initializedPromise.resolve();
@@ -164,7 +164,7 @@ export function createActorDurableObject(
 				key: req.key,
 			};
 
-			logger().debug("initialized actor", { key: req.key });
+			logger().debug({ msg: "initialized actor", key: req.key });
 
 			// Preemptively actor so the lifecycle hooks are called
 			await this.#loadActor();

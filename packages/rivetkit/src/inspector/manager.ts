@@ -35,7 +35,7 @@ export function createManagerInspectorRouter() {
 				});
 				return c.json(actors, 200);
 			} catch (error) {
-				inspectorLogger().error("Failed to fetch actors", error);
+				inspectorLogger().error({ msg: "Failed to fetch actors", error });
 				return c.json("Failed to fetch actors", 500);
 			}
 		})
@@ -81,6 +81,6 @@ export class ManagerInspector {
 
 	constructor(accessors: () => ManagerInspectorAccessors) {
 		this.accessors = accessors();
-		inspectorLogger().debug("Manager Inspector enabled and ready");
+		inspectorLogger().debug({ msg: "Manager Inspector enabled and ready" });
 	}
 }

@@ -262,7 +262,8 @@ export class ClientRaw {
 		actorId: string,
 		opts?: GetWithIdOptions,
 	): ActorHandle<AD> {
-		logger().debug("get handle to actor with id", {
+		logger().debug({
+			msg: "get handle to actor with id",
 			name,
 			actorId,
 			params: opts?.params,
@@ -296,7 +297,8 @@ export class ClientRaw {
 		// Convert string to array of strings
 		const keyArray: string[] = typeof key === "string" ? [key] : key || [];
 
-		logger().debug("get handle to actor", {
+		logger().debug({
+			msg: "get handle to actor",
 			name,
 			key: keyArray,
 			parameters: opts?.params,
@@ -330,7 +332,8 @@ export class ClientRaw {
 		// Convert string to array of strings
 		const keyArray: string[] = typeof key === "string" ? [key] : key || [];
 
-		logger().debug("get or create handle to actor", {
+		logger().debug({
+			msg: "get or create handle to actor",
 			name,
 			key: keyArray,
 			parameters: opts?.params,
@@ -377,7 +380,8 @@ export class ClientRaw {
 			},
 		} satisfies ActorQuery;
 
-		logger().debug("create actor handle", {
+		logger().debug({
+			msg: "create actor handle",
 			name,
 			key: keyArray,
 			parameters: opts?.params,
@@ -392,7 +396,8 @@ export class ClientRaw {
 			opts?.params,
 			opts?.signal ? { signal: opts.signal } : undefined,
 		);
-		logger().debug("created actor with ID", {
+		logger().debug({
+			msg: "created actor with ID",
 			name,
 			key: keyArray,
 			actorId,
@@ -441,12 +446,12 @@ export class ClientRaw {
 	 */
 	async dispose(): Promise<void> {
 		if (this.#disposed) {
-			logger().warn("client already disconnected");
+			logger().warn({ msg: "client already disconnected" });
 			return;
 		}
 		this.#disposed = true;
 
-		logger().debug("disposing client");
+		logger().debug({ msg: "disposing client" });
 
 		const disposePromises = [];
 

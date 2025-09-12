@@ -85,7 +85,10 @@ export async function authenticateRequest(
 			return dataOrPromise;
 		}
 	} catch (error) {
-		logger().info("authentication error", { error: stringifyError(error) });
+		logger().info({
+			msg: "authentication error",
+			error: stringifyError(error),
+		});
 		throw error;
 	}
 }

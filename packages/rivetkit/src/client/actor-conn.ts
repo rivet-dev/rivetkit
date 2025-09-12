@@ -160,7 +160,7 @@ export class ActorConnRaw {
 		args: Args;
 		signal?: AbortSignal;
 	}): Promise<Response> {
-		logger().debug("action", { name: opts.name, args: opts.args });
+		logger().debug({ msg: "action", name: opts.name, args: opts.args });
 
 		// If we have an active connection, use the websockactionId
 		const actionId = this.#actionIdCounter;
@@ -214,7 +214,8 @@ enc
 				maxTimeout: 30_000,
 
 				onFailedAttempt: (error) => {
-					logger().warn("failed to reconnect", {
+					logger().warn({
+						msg: "failed to reconnect",
 						attempt: error.attemptNumber,
 						error: stringifyError(error),
 					});
@@ -226,7 +227,7 @@ enc
 		} catch (err) {
 			if ((err as Error).name === "AbortError") {
 				// Ignore abortions
-				logger().info("connection retry aborted");
+				logger().info({ msg: "connection retry aborted" });
 				return;
 			} else {
 				// Unknown error
@@ -270,7 +271,7 @@ enc
 		);
 		this.#transport = { websocket: ws };
 		ws.addEventListener("open", () => {
-			logger().debug("websocket open");
+			logger().debug({ msg: "websocket open" });
 		});
 		ws.addEventListener("message", async (ev) => {
 			this.#handleOnMessage(ev.data);
@@ -293,7 +294,7 @@ enc
 		);
 		this.#transport = { sse: eventSource };
 		eventSource.onopen = () => {
-			logger().debug("eventsource open");
+			logger().debug({ msg: "eventsource open" });
 			// #handleOnOpen is called on "i" event
 		};
 		eventSource.onmessage = (ev: UniversalMessageEvent) => {
@@ -312,7 +313,8 @@ enc
 
 	/** Called by the onopen event from drivers. */
 	#handleOnOpen() {
-		logger().debug("socket open", {
+		logger().debug({
+			msg: "socket open",
 			messageQueueLength: this.#messageQueue.length,
 		});
 
@@ -320,7 +322,7 @@ enc
 		if (this.#onOpenPromise) {
 			this.#onOpenPromise.resolve(undefined);
 		} else {
-			logger().warn("#onOpenPromise is undefined");
+			logger().warn({ msg: "#onOpenPromise is undefined" });
 		}
 
 		// Resubscribe to all active events
@@ -340,7 +342,8 @@ enc
 
 	/** Called by the onmessage event from drivers. */
 	async #handleOnMessage(data: any) {
-		logger().trace("received message", {
+		logger().trace({
+			msg: "received message",
 			dataType: typeof data,
 			isBlob: data instanceof Blob,
 			isArrayBuffer: data instanceof ArrayBuffer,
@@ -348,12 +351,12 @@ enc
 
 		const response = await this.#parseMessage(data as ConnMessage);
 		logger().trace(
-			"parsed message",
 			getEnvUniversal("_RIVETKIT_LOG_MESSAGE")
 				? {
+						msg: "parsed message",
 						message: jsonStringifyCompat(response).substring(0, 100) + "...",
 					}
-				: {},
+				: { msg: "parsed message" },
 		);
 
 		if (response.body.tag === "Init") {
@@ -361,7 +364,8 @@ enc
 			this.#actorId = response.body.val.actorId;
 			this.#connectionId = response.body.val.connectionId;
 			this.#connectionToken = response.body.val.connectionToken;
-			logger().trace("received init message", {
+			logger().trace({
+				msg: "received init message",
 				actorId: this.#actorId,
 				connectionId: this.#connectionId,
 			});
@@ -373,7 +377,8 @@ enc
 			if (actionId) {
 				const inFlight = this.#takeActionInFlight(Number(actionId));
 
-				logger().warn("action error", {
+				logger().warn({
+					msg: "action error",
 					actionId: actionId,
 					actionName: inFlight?.name,
 					code,
@@ -383,7 +388,8 @@ enc
 
 				inFlight.reject(new errors.ActorError(code, message, metadata));
 			} else {
-				logger().warn("connection error", {
+				logger().warn({
+					msg: "connection error",
 					code,
 					message,
 					metadata,
@@ -409,18 +415,20 @@ enc
 		} else if (response.body.tag === "ActionResponse") {
 			// Action response OK
 			const { id: actionId } = response.body.val;
-			logger().trace("received action response", {
+			logger().trace({
+				msg: "received action response",
 				actionId,
 			});
 
 			const inFlight = this.#takeActionInFlight(Number(actionId));
-			logger().trace("resolving action promise", {
+			logger().trace({
+				msg: "resolving action promise",
 				actionId,
 				actionName: inFlight?.name,
 			});
 			inFlight.resolve(response.body.val);
 		} else if (response.body.tag === "Event") {
-			logger().trace("received event", { name: response.body.val.name });
+			logger().trace({ msg: "received event", name: response.body.val.name });
 			this.#dispatchEvent(response.body.val);
 		} else {
 			assertUnreachable(response.body);
@@ -442,13 +450,15 @@ enc
 		// These properties will be undefined
 		const closeEvent = event as CloseEvent;
 		if (closeEvent.wasClean) {
-			logger().info("socket closed", {
+			logger().info({
+				msg: "socket closed",
 				code: closeEvent.code,
 				reason: closeEvent.reason,
 				wasClean: closeEvent.wasClean,
 			});
 		} else {
-			logger().warn("socket closed", {
+			logger().warn({
+				msg: "socket closed",
 				code: closeEvent.code,
 				reason: closeEvent.reason,
 				wasClean: closeEvent.wasClean,
@@ -514,7 +524,8 @@ enc
 			try {
 				handler(error);
 			} catch (err) {
-				logger().error("Error in connection error handler", {
+				logger().error({
+					msg: "error in connection error handler",
 					error: stringifyError(err),
 				});
 			}
@@ -617,11 +628,13 @@ enc
 						TO_SERVER_VERSIONED,
 					);
 					this.#transport.websocket.send(messageSerialized);
-					logger().trace("sent websocket message", {
+					logger().trace({
+						msg: "sent websocket message",
 						len: messageLength(messageSerialized),
 					});
 				} catch (error) {
-					logger().warn("failed to send message, added to queue", {
+					logger().warn({
+						msg: "failed to send message, added to queue",
 						error,
 					});
 
@@ -644,7 +657,7 @@ enc
 
 		if (!opts?.ephemeral && queueMessage) {
 			this.#messageQueue.push(message);
-			logger().debug("queued connection message");
+			logger().debug({ msg: "queued connection message" });
 		}
 	}
 
@@ -657,12 +670,12 @@ enc
 				throw new errors.InternalError("Missing connection ID or token.");
 
 			logger().trace(
-				"sent http message",
 				getEnvUniversal("_RIVETKIT_LOG_MESSAGE")
 					? {
+							msg: "sent http message",
 							message: jsonStringifyCompat(message).substring(0, 100) + "...",
 						}
-					: {},
+					: { msg: "sent http message" },
 			);
 
 			await this.#driver.sendHttpMessage(
@@ -677,9 +690,7 @@ enc
 		} catch (error) {
 			// TODO: This will not automatically trigger a re-broadcast of HTTP events since SSE is separate from the HTTP action
 
-			logger().warn("failed to send message, added to queue", {
-				error,
-			});
+			logger().warn({ msg: "failed to send message, added to queue", error });
 
 			// Assuming the socket is disconnected and will be reconnected soon
 			//
@@ -725,12 +736,12 @@ enc
 		// Internally, this "disposes" the connection
 
 		if (this.#disposed) {
-			logger().warn("connection already disconnected");
+			logger().warn({ msg: "connection already disconnected" });
 			return;
 		}
 		this.#disposed = true;
 
-		logger().debug("disposing actor conn");
+		logger().debug({ msg: "disposing actor conn" });
 
 		// Clear interval so NodeJS process can exit
 		clearInterval(this.#keepNodeAliveInterval);
@@ -751,11 +762,11 @@ enc
 				ws.readyState === 2 /* CLOSING */ ||
 				ws.readyState === 3 /* CLOSED */
 			) {
-				logger().debug("ws already closed or closing");
+				logger().debug({ msg: "ws already closed or closing" });
 			} else {
 				const { promise, resolve } = Promise.withResolvers();
 				ws.addEventListener("close", () => {
-					logger().debug("ws closed");
+					logger().debug({ msg: "ws closed" });
 					resolve(undefined);
 				});
 				ws.close();

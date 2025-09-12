@@ -216,7 +216,8 @@ export function deconstructError(
 		message = getErrorMessage(error);
 		metadata = error.metadata;
 
-		logger.info("public error", {
+		logger.info({
+			msg: "public error",
 			code,
 			message,
 			issues: "https://github.com/rivet-gg/rivetkit/issues",
@@ -231,7 +232,8 @@ export function deconstructError(
 			message = getErrorMessage(error);
 			metadata = error.metadata;
 
-			logger.info("internal error", {
+			logger.info({
+				msg: "internal error",
 				code,
 				message,
 				issues: "https://github.com/rivet-gg/rivetkit/issues",
@@ -244,7 +246,8 @@ export function deconstructError(
 			code = errors.INTERNAL_ERROR_CODE;
 			message = getErrorMessage(error);
 
-			logger.info("internal error", {
+			logger.info({
+				msg: "internal error",
 				code,
 				message,
 				issues: "https://github.com/rivet-gg/rivetkit/issues",
@@ -261,7 +264,8 @@ export function deconstructError(
 			//url: `https://hub.rivet.gg/projects/${actorMetadata.project.slug}/environments/${actorMetadata.environment.slug}/actors?actorId=${actorMetadata.actor.id}`,
 		} satisfies errors.InternalErrorMetadata;
 
-		logger.warn("internal error", {
+		logger.warn({
+			msg: "internal error",
 			error: getErrorMessage(error),
 			stack: (error as Error)?.stack,
 			issues: "https://github.com/rivet-gg/rivetkit/issues",

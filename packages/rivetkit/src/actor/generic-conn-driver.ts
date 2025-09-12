@@ -58,7 +58,8 @@ export function createGenericWebSocketDriver(
 		) => {
 			const ws = globalState.websockets.get(conn.id);
 			if (!ws) {
-				logger().warn("missing ws for sendMessage", {
+				logger().warn({
+					msg: "missing ws for sendMessage",
 					actorId: actor.id,
 					connId: conn.id,
 					totalCount: globalState.websockets.size,
@@ -68,7 +69,8 @@ export function createGenericWebSocketDriver(
 
 			const serialized = message.serialize(state.encoding);
 
-			logger().debug("sending websocket message", {
+			logger().debug({
+				msg: "sending websocket message",
 				encoding: state.encoding,
 				dataType: typeof serialized,
 				isUint8Array: serialized instanceof Uint8Array,
@@ -87,18 +89,21 @@ export function createGenericWebSocketDriver(
 				if (buffer instanceof SharedArrayBuffer) {
 					const arrayBuffer = new ArrayBuffer(buffer.byteLength);
 					new Uint8Array(arrayBuffer).set(new Uint8Array(buffer));
-					logger().debug("converted SharedArrayBuffer to ArrayBuffer", {
+					logger().debug({
+						msg: "converted SharedArrayBuffer to ArrayBuffer",
 						byteLength: arrayBuffer.byteLength,
 					});
 					ws.send(arrayBuffer);
 				} else {
-					logger().debug("sending ArrayBuffer", {
+					logger().debug({
+						msg: "sending ArrayBuffer",
 						byteLength: buffer.byteLength,
 					});
 					ws.send(buffer);
 				}
 			} else {
-				logger().debug("sending string data", {
+				logger().debug({
+					msg: "sending string data",
 					length: (serialized as string).length,
 				});
 				ws.send(serialized);
@@ -113,7 +118,8 @@ export function createGenericWebSocketDriver(
 		) => {
 			const ws = globalState.websockets.get(conn.id);
 			if (!ws) {
-				logger().warn("missing ws for disconnect", {
+				logger().warn({
+					msg: "missing ws for disconnect",
 					actorId: actor.id,
 					connId: conn.id,
 					totalCount: globalState.websockets.size,
@@ -122,7 +128,7 @@ export function createGenericWebSocketDriver(
 			}
 			const raw = ws.raw as WebSocket;
 			if (!raw) {
-				logger().warn("ws.raw does not exist");
+				logger().warn({ msg: "ws.raw does not exist" });
 				return;
 			}
 
@@ -142,7 +148,8 @@ export function createGenericWebSocketDriver(
 		): ConnectionReadyState | undefined => {
 			const ws = globalState.websockets.get(conn.id);
 			if (!ws) {
-				logger().warn("missing ws for getConnectionReadyState", {
+				logger().warn({
+					msg: "missing ws for getConnectionReadyState",
 					connId: conn.id,
 				});
 				return undefined;
@@ -172,7 +179,8 @@ export function createGenericSseDriver(
 		) => {
 			const stream = globalState.sseStreams.get(conn.id);
 			if (!stream) {
-				logger().warn("missing sse stream for sendMessage", {
+				logger().warn({
+					msg: "missing sse stream for sendMessage",
 					connId: conn.id,
 				});
 				return;
@@ -190,7 +198,10 @@ export function createGenericSseDriver(
 		) => {
 			const stream = globalState.sseStreams.get(conn.id);
 			if (!stream) {
-				logger().warn("missing sse stream for disconnect", { connId: conn.id });
+				logger().warn({
+					msg: "missing sse stream for disconnect",
+					connId: conn.id,
+				});
 				return;
 			}
 
@@ -203,7 +214,8 @@ export function createGenericSseDriver(
 		): ConnectionReadyState | undefined => {
 			const stream = globalState.sseStreams.get(conn.id);
 			if (!stream) {
-				logger().warn("missing sse stream for getConnectionReadyState", {
+				logger().warn({
+					msg: "missing sse stream for getConnectionReadyState",
 					connId: conn.id,
 				});
 				return undefined;

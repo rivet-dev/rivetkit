@@ -50,7 +50,8 @@ export class CloudflareActorsManagerDriver implements ManagerDriver {
 	async sendRequest(actorId: string, actorRequest: Request): Promise<Response> {
 		const env = getCloudflareAmbientEnv();
 
-		logger().debug("sending request to durable object", {
+		logger().debug({
+			msg: "sending request to durable object",
 			actorId,
 			method: actorRequest.method,
 			url: actorRequest.url,
@@ -70,7 +71,11 @@ export class CloudflareActorsManagerDriver implements ManagerDriver {
 	): Promise<WebSocket> {
 		const env = getCloudflareAmbientEnv();
 
-		logger().debug("opening websocket to durable object", { actorId, path });
+		logger().debug({
+			msg: "opening websocket to durable object",
+			actorId,
+			path,
+		});
 
 		// Make a fetch request to the Durable Object with WebSocket upgrade
 		const id = env.ACTOR_DO.idFromString(actorId);
@@ -91,10 +96,7 @@ export class CloudflareActorsManagerDriver implements ManagerDriver {
 		// Use the path parameter to determine the URL
 		const url = `http://actor${path}`;
 
-		logger().debug("rewriting websocket url", {
-			from: path,
-			to: url,
-		});
+		logger().debug({ msg: "rewriting websocket url", from: path, to: url });
 
 		const response = await stub.fetch(url, {
 			headers,
@@ -107,7 +109,8 @@ export class CloudflareActorsManagerDriver implements ManagerDriver {
 			);
 		}
 
-		logger().debug("durable object websocket connection open", {
+		logger().debug({
+			msg: "durable object websocket connection open",
 			actorId,
 		});
 
@@ -130,7 +133,8 @@ export class CloudflareActorsManagerDriver implements ManagerDriver {
 		actorRequest: Request,
 		actorId: string,
 	): Promise<Response> {
-		logger().debug("forwarding request to durable object", {
+		logger().debug({
+			msg: "forwarding request to durable object",
 			actorId,
 			method: actorRequest.method,
 			url: actorRequest.url,
@@ -150,7 +154,8 @@ export class CloudflareActorsManagerDriver implements ManagerDriver {
 		params: unknown,
 		authData: unknown,
 	): Promise<Response> {
-		logger().debug("forwarding websocket to durable object", {
+		logger().debug({
+			msg: "forwarding websocket to durable object",
 			actorId,
 			path,
 		});
@@ -166,7 +171,8 @@ export class CloudflareActorsManagerDriver implements ManagerDriver {
 		const newUrl = new URL(`http://actor${path}`);
 		const actorRequest = new Request(newUrl, c.req.raw);
 
-		logger().debug("rewriting websocket url", {
+		logger().debug({
+			msg: "rewriting websocket url",
 			from: c.req.url,
 			to: actorRequest.url,
 		});
@@ -230,7 +236,7 @@ export class CloudflareActorsManagerDriver implements ManagerDriver {
 	> {
 		const env = getCloudflareAmbientEnv();
 
-		logger().debug("getWithKey: searching for actor", { name, key });
+		logger().debug({ msg: "getWithKey: searching for actor", name, key });
 
 		// Generate deterministic ID from the name and key
 		// This is aligned with how createActor generates IDs
@@ -243,7 +249,8 @@ export class CloudflareActorsManagerDriver implements ManagerDriver {
 		});
 
 		if (!actorData) {
-			logger().debug("getWithKey: no actor found with matching name and key", {
+			logger().debug({
+				msg: "getWithKey: no actor found with matching name and key",
 				name,
 				key,
 				actorId,
@@ -251,7 +258,8 @@ export class CloudflareActorsManagerDriver implements ManagerDriver {
 			return undefined;
 		}
 
-		logger().debug("getWithKey: found actor with matching name and key", {
+		logger().debug({
+			msg: "getWithKey: found actor with matching name and key",
 			actorId,
 			name,
 			key,

@@ -69,7 +69,8 @@ export function createTestInlineClientDriver(
 		): Promise<WebSocket> => {
 			const WebSocket = await importWebSocket();
 
-			logger().debug("creating websocket connection via test inline driver", {
+			logger().debug({
+				msg: "creating websocket connection via test inline driver",
 				actorQuery,
 				encodingKind,
 			});
@@ -87,7 +88,7 @@ export function createTestInlineClientDriver(
 			const wsProtocol = wsUrl.protocol === "https:" ? "wss:" : "ws:";
 			const finalWsUrl = `${wsProtocol}//${wsUrl.host}${wsUrl.pathname}${wsUrl.search}`;
 
-			logger().debug("connecting to websocket", { url: finalWsUrl });
+			logger().debug({ msg: "connecting to websocket", url: finalWsUrl });
 
 			// Create and return the WebSocket
 			// Node & browser WebSocket types are incompatible
@@ -105,7 +106,8 @@ export function createTestInlineClientDriver(
 			encodingKind: Encoding,
 			params: unknown,
 		): Promise<UniversalEventSource> => {
-			logger().debug("creating sse connection via test inline driver", {
+			logger().debug({
+				msg: "creating sse connection via test inline driver",
 				actorQuery,
 				encodingKind,
 				params,
@@ -134,7 +136,7 @@ export function createTestInlineClientDriver(
 				sseUrl.searchParams.set("params", paramsParam);
 			}
 
-			logger().debug("connecting to sse", { url: sseUrl.toString() });
+			logger().debug({ msg: "connecting to sse", url: sseUrl.toString() });
 
 			// Create and return the EventSource
 			const eventSource = new EventSourceConstructor(sseUrl.toString());
@@ -142,12 +144,12 @@ export function createTestInlineClientDriver(
 			// Wait for the connection to be established before returning
 			await new Promise<void>((resolve, reject) => {
 				eventSource.onopen = () => {
-					logger().debug("sse connection established");
+					logger().debug({ msg: "sse connection established" });
 					resolve();
 				};
 
 				eventSource.onerror = (event: Event) => {
-					logger().error("sse connection failed", { event });
+					logger().error({ msg: "sse connection failed", event });
 					reject(new Error("Failed to establish SSE connection"));
 				};
 
@@ -170,7 +172,8 @@ export function createTestInlineClientDriver(
 			connectionToken: string,
 			message: protocol.ToServer,
 		): Promise<void> => {
-			logger().debug("sending http message via test inline driver", {
+			logger().debug({
+				msg: "sending http message via test inline driver",
 				actorId,
 				encoding,
 				connectionId,
@@ -219,7 +222,8 @@ export function createTestInlineClientDriver(
 			// Normalize path to match other drivers
 			const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
 
-			logger().debug("sending raw http request via test inline driver", {
+			logger().debug({
+				msg: "sending raw http request via test inline driver",
 				actorQuery,
 				encoding,
 				path: normalizedPath,
@@ -228,10 +232,7 @@ export function createTestInlineClientDriver(
 			// Use the dedicated raw HTTP endpoint
 			const url = `${endpoint}/registry/.test/inline-driver/raw-http/${normalizedPath}`;
 
-			logger().debug("rewriting http url", {
-				from: path,
-				to: url,
-			});
+			logger().debug({ msg: "rewriting http url", from: path, to: url });
 
 			// Merge headers with our metadata
 			const headers = new Headers(init.headers);
@@ -290,21 +291,19 @@ export function createTestInlineClientDriver(
 			path: string,
 			protocols: string | string[] | undefined,
 		): Promise<WebSocket> => {
-			logger().debug("test inline driver rawWebSocket called");
+			logger().debug({ msg: "test inline driver rawWebSocket called" });
 			const WebSocket = await importWebSocket();
 
 			// Normalize path to match other drivers
 			const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
 
-			logger().debug(
-				"creating raw websocket connection via test inline driver",
-				{
-					actorQuery,
-					encoding,
-					path: normalizedPath,
-					protocols,
-				},
-			);
+			logger().debug({
+				msg: "creating raw websocket connection via test inline driver",
+				actorQuery,
+				encoding,
+				path: normalizedPath,
+				protocols,
+			});
 
 			// Create WebSocket connection to the test endpoint
 			const wsUrl = new URL(
@@ -322,9 +321,10 @@ export function createTestInlineClientDriver(
 			const wsProtocol = wsUrl.protocol === "https:" ? "wss:" : "ws:";
 			const finalWsUrl = `${wsProtocol}//${wsUrl.host}${wsUrl.pathname}${wsUrl.search}`;
 
-			logger().debug("connecting to raw websocket", { url: finalWsUrl });
+			logger().debug({ msg: "connecting to raw websocket", url: finalWsUrl });
 
-			logger().debug("rewriting websocket url", {
+			logger().debug({
+				msg: "rewriting websocket url",
 				from: path,
 				to: finalWsUrl,
 			});
@@ -336,7 +336,8 @@ export function createTestInlineClientDriver(
 				"rivetkit",
 			]) as any;
 
-			logger().debug("test inline driver created websocket", {
+			logger().debug({
+				msg: "test inline driver created websocket",
 				readyState: ws.readyState,
 				url: ws.url,
 			});
@@ -353,7 +354,8 @@ async function makeInlineRequest<T>(
 	method: string,
 	args: unknown[],
 ): Promise<T> {
-	logger().debug("sending inline request", {
+	logger().debug({
+		msg: "sending inline request",
 		encoding,
 		transport,
 		method,

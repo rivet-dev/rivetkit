@@ -7,10 +7,8 @@ import type {
 	UniversalMessageEvent,
 } from "@/common/eventsource-interface";
 
-export const LOGGER_NAME = "fake-event-source";
-
 export function logger() {
-	return getLogger(LOGGER_NAME);
+	return getLogger("fake-event-source");
 }
 
 /**
@@ -146,12 +144,12 @@ export class FakeEventSource implements UniversalEventSource {
 			return;
 		}
 
-		logger().debug("closing FakeEventSource");
+		logger().debug({ msg: "closing FakeEventSource" });
 		this.readyState = 2; // CLOSED
 
 		// Call the close callback
 		this.#onCloseCallback().catch((err) => {
-			logger().error("error in onClose callback", { error: err });
+			logger().error({ msg: "error in onClose callback", error: err });
 		});
 
 		// Dispatch close event
@@ -223,7 +221,10 @@ export class FakeEventSource implements UniversalEventSource {
 				try {
 					listener.call(this, event);
 				} catch (err) {
-					logger().error(`error in ${type} event listener`, { error: err });
+					logger().error({
+						msg: `error in ${type} event listener`,
+						error: err,
+					});
 				}
 			}
 		}
@@ -235,7 +236,7 @@ export class FakeEventSource implements UniversalEventSource {
 					try {
 						this.onopen.call(this as any, event);
 					} catch (err) {
-						logger().error("error in onopen handler", { error: err });
+						logger().error({ msg: "error in onopen handler", error: err });
 					}
 				}
 				break;
@@ -244,7 +245,7 @@ export class FakeEventSource implements UniversalEventSource {
 					try {
 						this.onmessage.call(this as any, event);
 					} catch (err) {
-						logger().error("error in onmessage handler", { error: err });
+						logger().error({ msg: "error in onmessage handler", error: err });
 					}
 				}
 				break;
@@ -253,7 +254,7 @@ export class FakeEventSource implements UniversalEventSource {
 					try {
 						this.onerror.call(this as any, event);
 					} catch (err) {
-						logger().error("error in onerror handler", { error: err });
+						logger().error({ msg: "error in onerror handler", error: err });
 					}
 				}
 				break;

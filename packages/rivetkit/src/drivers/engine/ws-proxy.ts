@@ -32,10 +32,11 @@ export async function createWebSocketProxy(
 
 	return {
 		onOpen: async (event: any, clientWs: WSContext) => {
-			logger().debug("client websocket connected", { targetUrl });
+			logger().debug({ msg: "client websocket connected", targetUrl });
 
 			if (clientWs.readyState !== 1) {
-				logger().warn("client websocket not open on connection", {
+				logger().warn({
+					msg: "client websocket not open on connection",
 					targetUrl,
 					readyState: clientWs.readyState,
 				});
@@ -49,10 +50,11 @@ export async function createWebSocketProxy(
 			// Setup connection promise
 			state.connectPromise = new Promise<void>((resolve, reject) => {
 				targetWs.addEventListener("open", () => {
-					logger().debug("target websocket connected", { targetUrl });
+					logger().debug({ msg: "target websocket connected", targetUrl });
 
 					if (clientWs.readyState !== 1) {
-						logger().warn("client websocket closed before target connected", {
+						logger().warn({
+							msg: "client websocket closed before target connected",
 							targetUrl,
 							clientReadyState: clientWs.readyState,
 						});
@@ -64,7 +66,8 @@ export async function createWebSocketProxy(
 				});
 
 				targetWs.addEventListener("error", (error) => {
-					logger().warn("target websocket error during connection", {
+					logger().warn({
+						msg: "target websocket error during connection",
 						targetUrl,
 					});
 					reject(error);
@@ -86,7 +89,8 @@ export async function createWebSocketProxy(
 			});
 
 			state.targetWs.addEventListener("close", (event) => {
-				logger().debug("target websocket closed", {
+				logger().debug({
+					msg: "target websocket closed",
 					targetUrl,
 					code: event.code,
 					reason: event.reason,
@@ -95,14 +99,14 @@ export async function createWebSocketProxy(
 			});
 
 			state.targetWs.addEventListener("error", (error) => {
-				logger().error("target websocket error", { targetUrl, error });
+				logger().error({ msg: "target websocket error", targetUrl, error });
 				closeWebSocketIfOpen(clientWs, 1011, "Target WebSocket error");
 			});
 		},
 
 		onMessage: async (event: any, clientWs: WSContext) => {
 			if (!state.targetWs || !state.connectPromise) {
-				logger().error("websocket state not initialized", { targetUrl });
+				logger().error({ msg: "websocket state not initialized", targetUrl });
 				return;
 			}
 
@@ -111,13 +115,15 @@ export async function createWebSocketProxy(
 				if (state.targetWs.readyState === WebSocket.OPEN) {
 					state.targetWs.send(event.data);
 				} else {
-					logger().warn("target websocket not open", {
+					logger().warn({
+						msg: "target websocket not open",
 						targetUrl,
 						readyState: state.targetWs.readyState,
 					});
 				}
 			} catch (error) {
-				logger().error("failed to connect to target websocket", {
+				logger().error({
+					msg: "failed to connect to target websocket",
 					targetUrl,
 					error,
 				});
@@ -126,7 +132,8 @@ export async function createWebSocketProxy(
 		},
 
 		onClose: (event: any, clientWs: WSContext) => {
-			logger().debug("client websocket closed", {
+			logger().debug({
+				msg: "client websocket closed",
 				targetUrl,
 				code: event.code,
 				reason: event.reason,
@@ -144,7 +151,7 @@ export async function createWebSocketProxy(
 		},
 
 		onError: (event: any, clientWs: WSContext) => {
-			logger().error("client websocket error", { targetUrl, event });
+			logger().error({ msg: "client websocket error", targetUrl, event });
 
 			if (state.targetWs) {
 				if (state.targetWs.readyState === WebSocket.OPEN) {

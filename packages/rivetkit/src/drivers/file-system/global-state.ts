@@ -109,10 +109,11 @@ export class FileSystemGlobalState {
 				const actorIds = fsSync.readdirSync(this.#stateDir);
 				this.#actorCountOnStartup = actorIds.length;
 			} catch (error) {
-				logger().error("failed to count actors", { error });
+				logger().error({ msg: "failed to count actors", error });
 			}
 
-			logger().debug("file system driver ready", {
+			logger().debug({
+				msg: "file system driver ready",
 				dir: this.#storagePath,
 				actorCount: this.#actorCountOnStartup,
 			});
@@ -121,10 +122,10 @@ export class FileSystemGlobalState {
 			try {
 				this.#cleanupTempFilesSync();
 			} catch (err) {
-				logger().error("failed to cleanup temp files", { error: err });
+				logger().error({ msg: "failed to cleanup temp files", error: err });
 			}
 		} else {
-			logger().debug("memory driver ready");
+			logger().debug({ msg: "memory driver ready" });
 		}
 	}
 
@@ -165,7 +166,7 @@ export class FileSystemGlobalState {
 				const state = await this.loadActorStateOrError(actorId);
 				yield state;
 			} catch (error) {
-				logger().error("failed to load actor state", { actorId, error });
+				logger().error({ msg: "failed to load actor state", actorId, error });
 			}
 		}
 	}
@@ -353,7 +354,7 @@ export class FileSystemGlobalState {
 				try {
 					await fs.unlink(tempPath);
 				} catch {}
-				logger().error("failed to write alarm", { actorId, error });
+				logger().error({ msg: "failed to write alarm", actorId, error });
 				throw new Error(`Failed to write alarm: ${error}`);
 			}
 		}
@@ -398,7 +399,7 @@ export class FileSystemGlobalState {
 			} catch {
 				// Ignore cleanup errors
 			}
-			logger().error("failed to save actor state", { actorId, error });
+			logger().error({ msg: "failed to save actor state", actorId, error });
 			throw new Error(`Failed to save actor state: ${error}`);
 		}
 	}
@@ -433,7 +434,7 @@ export class FileSystemGlobalState {
 		try {
 			this.#loadAlarmsSync();
 		} catch (err) {
-			logger().error("failed to load alarms on startup", { error: err });
+			logger().error({ msg: "failed to load alarms on startup", error: err });
 		}
 	}
 
@@ -538,17 +539,18 @@ export class FileSystemGlobalState {
 					if (Number.isFinite(timestamp)) {
 						this.#scheduleAlarmTimeout(alarmData.actorId, timestamp);
 					} else {
-						logger().debug("invalid alarm file contents", { file });
+						logger().debug({ msg: "invalid alarm file contents", file });
 					}
 				} catch (err) {
-					logger().error("failed to read alarm file", {
+					logger().error({
+						msg: "failed to read alarm file",
 						file,
 						error: stringifyError(err),
 					});
 				}
 			}
 		} catch (err) {
-			logger().error("failed to list alarms directory", { error: err });
+			logger().error({ msg: "failed to list alarms directory", error: err });
 		}
 	}
 
@@ -563,7 +565,8 @@ export class FileSystemGlobalState {
 			entry.alarmTimestamp !== undefined &&
 			timestamp >= entry.alarmTimestamp
 		) {
-			logger().debug("skipping alarm schedule (later than existing)", {
+			logger().debug({
+				msg: "skipping alarm schedule (later than existing)",
 				actorId,
 				timestamp,
 				current: entry.alarmTimestamp,
@@ -571,7 +574,7 @@ export class FileSystemGlobalState {
 			return;
 		}
 
-		logger().debug("scheduling alarm", { actorId, timestamp });
+		logger().debug({ msg: "scheduling alarm", actorId, timestamp });
 
 		// Cancel existing timeout and update the current scheduled timestamp
 		entry.alarmTimeout?.abort();
@@ -587,7 +590,8 @@ export class FileSystemGlobalState {
 					await fs.unlink(this.getActorAlarmPath(actorId));
 				} catch (err: any) {
 					if (err?.code !== "ENOENT") {
-						logger().debug("failed to remove alarm file", {
+						logger().debug({
+							msg: "failed to remove alarm file",
 							actorId,
 							error: stringifyError(err),
 						});
@@ -596,7 +600,7 @@ export class FileSystemGlobalState {
 			}
 
 			try {
-				logger().debug("triggering alarm", { actorId, timestamp });
+				logger().debug({ msg: "triggering alarm", actorId, timestamp });
 
 				// Ensure actor state exists and start actor if needed
 				const loaded = await this.loadActor(actorId);
@@ -618,7 +622,8 @@ export class FileSystemGlobalState {
 				invariant(loaded.actor, "actor should be loaded after wake");
 				await loaded.actor._onAlarm();
 			} catch (err) {
-				logger().error("failed to handle alarm", {
+				logger().error({
+					msg: "failed to handle alarm",
 					actorId,
 					error: stringifyError(err),
 				});
@@ -655,17 +660,22 @@ export class FileSystemGlobalState {
 					// Remove if older than 1 hour
 					if (stat.mtimeMs < oneHourAgo) {
 						fsSync.unlinkSync(fullPath);
-						logger().info("cleaned up stale temp file", { file: tempFile });
+						logger().info({
+							msg: "cleaned up stale temp file",
+							file: tempFile,
+						});
 					}
 				} catch (err) {
-					logger().debug("failed to cleanup temp file", {
+					logger().debug({
+						msg: "failed to cleanup temp file",
 						file: tempFile,
 						error: err,
 					});
 				}
 			}
 		} catch (err) {
-			logger().error("failed to read actors directory for cleanup", {
+			logger().error({
+				msg: "failed to read actors directory for cleanup",
 				error: err,
 			});
 		}
