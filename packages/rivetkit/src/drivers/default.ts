@@ -1,5 +1,5 @@
 import { UserError } from "@/actor/errors";
-import { logger } from "@/actor/log";
+import { loggerWithoutContext } from "@/actor/log";
 import { createEngineDriver } from "@/drivers/engine/mod";
 import { createFileSystemOrMemoryDriver } from "@/drivers/file-system/mod";
 import type { DriverConfig, RunConfig } from "@/registry/run-config";
@@ -22,13 +22,13 @@ export function chooseDefaultDriver(runConfig: RunConfig): DriverConfig {
 	}
 
 	if (engineEndpoint) {
-		logger().debug({
+		loggerWithoutContext().debug({
 			msg: "using rivet engine driver",
 			endpoint: engineEndpoint,
 		});
 		return createEngineDriver({ endpoint: engineEndpoint });
 	}
 
-	logger().debug({ msg: "using default file system driver" });
+	loggerWithoutContext().debug({ msg: "using default file system driver" });
 	return createFileSystemOrMemoryDriver(true);
 }

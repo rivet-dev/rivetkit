@@ -18,7 +18,6 @@ import { assertUnreachable, bufferToArrayBuffer } from "../../utils";
 import { ActionContext } from "../action";
 import type { Conn } from "../connection";
 import type { ActorInstance } from "../instance";
-import { logger } from "../log";
 
 export const TransportSchema = z.enum(["websocket", "sse"]);
 
@@ -134,7 +133,7 @@ export async function processMessage<
 			actionName = name;
 			const args = cbor.decode(new Uint8Array(argsRaw));
 
-			logger().debug({
+			actor.rLog.debug({
 				msg: "processing action request",
 				actionId: id,
 				actionName: name,
@@ -149,7 +148,7 @@ export async function processMessage<
 			// This will wait for async actions to complete
 			const output = await handler.onExecuteAction(ctx, name, args);
 
-			logger().debug({
+			actor.rLog.debug({
 				msg: "sending action response",
 				actionId: id,
 				actionName: name,
@@ -173,7 +172,7 @@ export async function processMessage<
 				),
 			);
 
-			logger().debug({ msg: "action response sent", id, name: name });
+			actor.rLog.debug({ msg: "action response sent", id, name: name });
 		} else if (message.body.tag === "SubscriptionRequest") {
 			// Subscription request
 
@@ -185,7 +184,7 @@ export async function processMessage<
 			}
 
 			const { eventName, subscribe } = message.body.val;
-			logger().debug({
+			actor.rLog.debug({
 				msg: "processing subscription request",
 				eventName,
 				subscribe,
@@ -197,7 +196,7 @@ export async function processMessage<
 				await handler.onUnsubscribe(eventName, conn);
 			}
 
-			logger().debug({
+			actor.rLog.debug({
 				msg: "subscription request completed",
 				eventName,
 				subscribe,
@@ -206,13 +205,13 @@ export async function processMessage<
 			assertUnreachable(message.body);
 		}
 	} catch (error) {
-		const { code, message, metadata } = deconstructError(error, logger(), {
+		const { code, message, metadata } = deconstructError(error, actor.rLog, {
 			connectionId: conn.id,
 			actionId,
 			actionName,
 		});
 
-		logger().debug({
+		actor.rLog.debug({
 			msg: "sending error response",
 			actionId,
 			actionName,
@@ -238,7 +237,7 @@ export async function processMessage<
 			),
 		);
 
-		logger().debug({ msg: "error response sent", actionId, actionName });
+		actor.rLog.debug({ msg: "error response sent", actionId, actionName });
 	}
 }
 
@@ -260,7 +259,7 @@ export async function processMessage<
 //export async function deserialize(data: InputData, encoding: Encoding) {
 //	if (encoding === "json") {
 //		if (typeof data !== "string") {
-//			logger().warn("received non-string for json parse");
+//			actor.rLog.warn("received non-string for json parse");
 //			throw new errors.MalformedMessage();
 //		} else {
 //			return JSON.parse(data);
@@ -277,7 +276,7 @@ export async function processMessage<
 //		) {
 //			return cbor.decode(new Uint8Array(data));
 //		} else {
-//			logger().warn("received non-binary type for cbor parse");
+//			actor.rLog.warn("received non-binary type for cbor parse");
 //			throw new errors.MalformedMessage();
 //		}
 //	} else {

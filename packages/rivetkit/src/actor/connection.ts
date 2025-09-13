@@ -6,7 +6,7 @@ import type { AnyDatabaseProvider } from "./database";
 import { type ConnDriver, ConnectionReadyState } from "./driver";
 import * as errors from "./errors";
 import type { ActorInstance } from "./instance";
-import { logger } from "./log";
+import { loggerWithoutContext } from "./log";
 import type { PersistedConn } from "./persisted";
 import { CachedSerializer } from "./protocol/serde";
 import { generateSecureToken } from "./utils";
@@ -235,7 +235,7 @@ export class Conn<S, CP, CS, V, I, AD, DB extends AnyDatabaseProvider> {
 		const newLastSeen = Date.now();
 		const newStatus = isConnectionClosed ? "reconnecting" : "connected";
 
-		logger().debug({
+		this.#actor.rLog.debug({
 			msg: "liveness probe for connection",
 			connId: this.id,
 			actorId: this.#actor.id,

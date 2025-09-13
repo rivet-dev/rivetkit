@@ -16,7 +16,7 @@ import type { AnyActorInstance } from "@/actor/instance";
 import type { CachedSerializer, Encoding } from "@/actor/protocol/serde";
 import { encodeDataToString } from "@/actor/protocol/serde";
 import type * as protocol from "@/schemas/client-protocol/mod";
-import { logger } from "./log";
+import { loggerWithoutContext } from "./log";
 
 // This state is different than `PersistedConn` state since the connection-specific state is persisted & must be serializable. This is also part of the connection driver, not part of the core actor.
 //
@@ -58,7 +58,7 @@ export function createGenericWebSocketDriver(
 		) => {
 			const ws = globalState.websockets.get(conn.id);
 			if (!ws) {
-				logger().warn({
+				actor.rLog.warn({
 					msg: "missing ws for sendMessage",
 					actorId: actor.id,
 					connId: conn.id,
@@ -69,7 +69,7 @@ export function createGenericWebSocketDriver(
 
 			const serialized = message.serialize(state.encoding);
 
-			logger().debug({
+			actor.rLog.debug({
 				msg: "sending websocket message",
 				encoding: state.encoding,
 				dataType: typeof serialized,
@@ -89,20 +89,20 @@ export function createGenericWebSocketDriver(
 				if (buffer instanceof SharedArrayBuffer) {
 					const arrayBuffer = new ArrayBuffer(buffer.byteLength);
 					new Uint8Array(arrayBuffer).set(new Uint8Array(buffer));
-					logger().debug({
+					actor.rLog.debug({
 						msg: "converted SharedArrayBuffer to ArrayBuffer",
 						byteLength: arrayBuffer.byteLength,
 					});
 					ws.send(arrayBuffer);
 				} else {
-					logger().debug({
+					actor.rLog.debug({
 						msg: "sending ArrayBuffer",
 						byteLength: buffer.byteLength,
 					});
 					ws.send(buffer);
 				}
 			} else {
-				logger().debug({
+				actor.rLog.debug({
 					msg: "sending string data",
 					length: (serialized as string).length,
 				});
@@ -118,7 +118,7 @@ export function createGenericWebSocketDriver(
 		) => {
 			const ws = globalState.websockets.get(conn.id);
 			if (!ws) {
-				logger().warn({
+				actor.rLog.warn({
 					msg: "missing ws for disconnect",
 					actorId: actor.id,
 					connId: conn.id,
@@ -128,7 +128,7 @@ export function createGenericWebSocketDriver(
 			}
 			const raw = ws.raw as WebSocket;
 			if (!raw) {
-				logger().warn({ msg: "ws.raw does not exist" });
+				actor.rLog.warn({ msg: "ws.raw does not exist" });
 				return;
 			}
 
@@ -143,12 +143,12 @@ export function createGenericWebSocketDriver(
 		},
 
 		getConnectionReadyState: (
-			_actor: AnyActorInstance,
+			actor: AnyActorInstance,
 			conn: AnyConn,
 		): ConnectionReadyState | undefined => {
 			const ws = globalState.websockets.get(conn.id);
 			if (!ws) {
-				logger().warn({
+				actor.rLog.warn({
 					msg: "missing ws for getConnectionReadyState",
 					connId: conn.id,
 				});
@@ -172,14 +172,14 @@ export function createGenericSseDriver(
 ): ConnDriver<GenericSseDriverState> {
 	return {
 		sendMessage: (
-			_actor: AnyActorInstance,
+			actor: AnyActorInstance,
 			conn: AnyConn,
 			state: GenericSseDriverState,
 			message: CachedSerializer<protocol.ToClient>,
 		) => {
 			const stream = globalState.sseStreams.get(conn.id);
 			if (!stream) {
-				logger().warn({
+				actor.rLog.warn({
 					msg: "missing sse stream for sendMessage",
 					connId: conn.id,
 				});
@@ -191,14 +191,14 @@ export function createGenericSseDriver(
 		},
 
 		disconnect: async (
-			_actor: AnyActorInstance,
+			actor: AnyActorInstance,
 			conn: AnyConn,
 			_state: GenericSseDriverState,
 			_reason?: string,
 		) => {
 			const stream = globalState.sseStreams.get(conn.id);
 			if (!stream) {
-				logger().warn({
+				actor.rLog.warn({
 					msg: "missing sse stream for disconnect",
 					connId: conn.id,
 				});
@@ -209,12 +209,12 @@ export function createGenericSseDriver(
 		},
 
 		getConnectionReadyState: (
-			_actor: AnyActorInstance,
+			actor: AnyActorInstance,
 			conn: AnyConn,
 		): ConnectionReadyState | undefined => {
 			const stream = globalState.sseStreams.get(conn.id);
 			if (!stream) {
-				logger().warn({
+				actor.rLog.warn({
 					msg: "missing sse stream for getConnectionReadyState",
 					connId: conn.id,
 				});

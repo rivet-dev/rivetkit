@@ -3,7 +3,7 @@ import { z } from "zod";
 import * as errors from "@/actor/errors";
 import type { VersionedDataHandler } from "@/common/versioned-data";
 import { serializeWithEncoding } from "@/serde";
-import { logger } from "../log";
+import { loggerWithoutContext } from "../log";
 import { assertUnreachable } from "../utils";
 
 /** Data that can be deserialized. */

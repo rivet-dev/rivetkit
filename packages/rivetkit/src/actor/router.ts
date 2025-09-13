@@ -34,7 +34,7 @@ import { secureInspector } from "@/inspector/utils";
 import type { RunConfig } from "@/registry/run-config";
 import type { ActorDriver } from "./driver";
 import { InternalError } from "./errors";
-import { logger } from "./log";
+import { loggerWithoutContext } from "./log";
 
 export const PATH_CONNECT_WEBSOCKET = "/connect/websocket";
 export const PATH_RAW_WEBSOCKET_PREFIX = "/raw/websocket/";
@@ -64,7 +64,7 @@ export function createActorRouter(
 ): ActorRouter {
 	const router = new Hono<{ Bindings: ActorRouterBindings }>({ strict: false });
 
-	router.use("*", loggerMiddleware(logger()));
+	router.use("*", loggerMiddleware(loggerWithoutContext()));
 
 	router.get("/", (c) => {
 		return c.text(
@@ -176,7 +176,7 @@ export function createActorRouter(
 			body: c.req.raw.body,
 		});
 
-		logger().debug({
+		loggerWithoutContext().debug({
 			msg: "rewriting http url",
 			from: c.req.url,
 			to: correctedRequest.url,
@@ -213,7 +213,7 @@ export function createActorRouter(
 				const url = new URL(c.req.url);
 				const pathWithQuery = c.req.path + url.search;
 
-				logger().debug({
+				loggerWithoutContext().debug({
 					msg: "actor router raw websocket",
 					path: c.req.path,
 					url: c.req.url,
