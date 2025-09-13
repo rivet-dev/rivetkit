@@ -1,8 +1,8 @@
 import * as errors from "./errors";
-import { logger } from "./log";
+import { loggerWithoutContext } from "./log";
 
 export function assertUnreachable(x: never): never {
-	logger().error({
+	loggerWithoutContext().error({
 		msg: "unreachable",
 		value: `${x}`,
 		stack: new Error().stack,

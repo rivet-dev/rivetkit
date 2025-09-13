@@ -38,7 +38,7 @@ import type {
 	GenericSseDriverState,
 	GenericWebSocketDriverState,
 } from "./generic-conn-driver";
-import { logger } from "./log";
+import { loggerWithoutContext } from "./log";
 import { parseMessage } from "./protocol/old";
 
 export interface ConnectWebSocketOpts {
@@ -137,7 +137,7 @@ export async function handleWebSocketConnect(
 			onOpen: (_evt: any, ws: WSContext) => {
 				const { code } = deconstructError(
 					error,
-					logger(),
+					actor.rLog,
 					{
 						wsEvent: "open",
 					},
@@ -155,7 +155,7 @@ export async function handleWebSocketConnect(
 
 	return {
 		onOpen: (_evt: any, ws: WSContext) => {
-			logger().debug("websocket open");
+			actor.rLog.debug("websocket open");
 
 			// Run async operations in background
 			(async () => {
@@ -168,7 +168,7 @@ export async function handleWebSocketConnect(
 					const connGlobalState =
 						actorDriver.getGenericConnGlobalState(actorId);
 					connGlobalState.websockets.set(connId, ws);
-					logger().debug({
+					actor.rLog.debug({
 						msg: "registered websocket for conn",
 						actorId,
 						totalCount: connGlobalState.websockets.size,
@@ -192,7 +192,7 @@ export async function handleWebSocketConnect(
 
 					const { code } = deconstructError(
 						error,
-						logger(),
+						actor.rLog,
 						{
 							wsEvent: "open",
 						},
@@ -206,7 +206,7 @@ export async function handleWebSocketConnect(
 			// Handle message asynchronously
 			handlersPromise
 				.then(({ conn, actor }) => {
-					logger().debug({ msg: "received message" });
+					actor.rLog.debug({ msg: "received message" });
 
 					const value = evt.data.valueOf() as InputData;
 					parseMessage(value, {
@@ -217,7 +217,7 @@ export async function handleWebSocketConnect(
 							actor.processMessage(message, conn).catch((error) => {
 								const { code } = deconstructError(
 									error,
-									logger(),
+									actor.rLog,
 									{
 										wsEvent: "message",
 									},
@@ -229,7 +229,7 @@ export async function handleWebSocketConnect(
 						.catch((error) => {
 							const { code } = deconstructError(
 								error,
-								logger(),
+								actor.rLog,
 								{
 									wsEvent: "message",
 								},
@@ -241,7 +241,7 @@ export async function handleWebSocketConnect(
 				.catch((error) => {
 					const { code } = deconstructError(
 						error,
-						logger(),
+						actor.rLog,
 						{
 							wsEvent: "message",
 						},
@@ -259,14 +259,14 @@ export async function handleWebSocketConnect(
 			ws: WSContext,
 		) => {
 			if (event.wasClean) {
-				logger().info({
+				actor.rLog.info({
 					msg: "websocket closed",
 					code: event.code,
 					reason: event.reason,
 					wasClean: event.wasClean,
 				});
 			} else {
-				logger().warn({
+				actor.rLog.warn({
 					msg: "websocket closed",
 					code: event.code,
 					reason: event.reason,
@@ -285,12 +285,12 @@ export async function handleWebSocketConnect(
 						actorDriver.getGenericConnGlobalState(actorId);
 					const didDelete = connGlobalState.websockets.delete(connId);
 					if (didDelete) {
-						logger().info({
+						actor.rLog.info({
 							msg: "removing websocket for conn",
 							totalCount: connGlobalState.websockets.size,
 						});
 					} else {
-						logger().warn({
+						actor.rLog.warn({
 							msg: "websocket does not exist for conn",
 							actorId,
 							totalCount: connGlobalState.websockets.size,
@@ -302,7 +302,7 @@ export async function handleWebSocketConnect(
 				.catch((error) => {
 					deconstructError(
 						error,
-						logger(),
+						actor.rLog,
 						{ wsEvent: "close" },
 						exposeInternalError,
 					);
@@ -311,11 +311,11 @@ export async function handleWebSocketConnect(
 		onError: (_error: unknown) => {
 			try {
 				// Actors don't need to know about this, since it's abstracted away
-				logger().warn({ msg: "websocket error" });
+				actor.rLog.warn({ msg: "websocket error" });
 			} catch (error) {
 				deconstructError(
 					error,
-					logger(),
+					actor.rLog,
 					{ wsEvent: "error" },
 					exposeInternalError,
 				);
@@ -352,7 +352,7 @@ export async function handleSseConnect(
 			connToken = generateConnToken();
 			connState = await actor.prepareConn(parameters, c.req.raw);
 
-			logger().debug("sse open");
+			actor.rLog.debug("sse open");
 
 			// Save stream
 			actorDriver
@@ -375,8 +375,9 @@ export async function handleSseConnect(
 
 			// Handle stream abort (when client closes the connection)
 			stream.onAbort(async () => {
+				const rLog = actor?.rLog ?? loggerWithoutContext();
 				try {
-					logger().debug("sse stream aborted");
+					rLog.debug("sse stream aborted");
 
 					// Cleanup
 					if (connId) {
@@ -390,7 +391,7 @@ export async function handleSseConnect(
 
 					abortResolver.resolve(undefined);
 				} catch (error) {
-					logger().error({ msg: "error closing sse connection", error });
+					rLog.error({ msg: "error closing sse connection", error });
 					abortResolver.resolve(undefined);
 				}
 			});
@@ -403,7 +404,7 @@ export async function handleSseConnect(
 			// Wait until connection aborted
 			await abortResolver.promise;
 		} catch (error) {
-			logger().error({ msg: "error in sse connection", error });
+			loggerWithoutContext().error({ msg: "error in sse connection", error });
 
 			// Cleanup on error
 			if (connId !== undefined) {
@@ -435,8 +436,6 @@ export async function handleAction(
 	const encoding = getRequestEncoding(c.req);
 	const parameters = getRequestConnParams(c.req);
 
-	logger().debug({ msg: "handling action", actionName, encoding });
-
 	// Validate incoming request
 	const arrayBuffer = await c.req.arrayBuffer();
 	const request = deserializeWithEncoding(
@@ -452,6 +451,8 @@ export async function handleAction(
 	let output: unknown | undefined;
 	try {
 		actor = await actorDriver.loadActor(actorId);
+
+		actor.rLog.debug({ msg: "handling action", actionName, encoding });
 
 		// Create conn
 		const connState = await actor.prepareConn(parameters, c.req.raw);
@@ -561,7 +562,7 @@ export async function handleRawWebSocketHandler(
 				});
 			}
 
-			logger().debug({
+			actor.rLog.debug({
 				msg: "rewriting websocket url",
 				from: path,
 				to: newRequest.url,
@@ -625,7 +626,7 @@ export function getRequestQuery(c: HonoContext): unknown {
 	// Get query parameters for actor lookup
 	const queryParam = c.req.header(HEADER_ACTOR_QUERY);
 	if (!queryParam) {
-		logger().error({ msg: "missing query parameter" });
+		loggerWithoutContext().error({ msg: "missing query parameter" });
 		throw new errors.InvalidRequest("missing query");
 	}
 
@@ -634,7 +635,7 @@ export function getRequestQuery(c: HonoContext): unknown {
 		const parsed = JSON.parse(queryParam);
 		return parsed;
 	} catch (error) {
-		logger().error({ msg: "invalid query json", error });
+		loggerWithoutContext().error({ msg: "invalid query json", error });
 		throw new errors.InvalidQueryJSON(error);
 	}
 }

@@ -1,5 +1,5 @@
 import type { GenericConnGlobalState } from "@/actor/generic-conn-driver";
-import { logger } from "@/actor/log";
+import { loggerWithoutContext } from "@/actor/log";
 import type { AnyClient } from "@/client/client";
 import type {
 	ActorDriver,
