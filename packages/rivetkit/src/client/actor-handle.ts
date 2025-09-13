@@ -81,7 +81,8 @@ export class ActorHandleRaw {
 	 * @returns {ActorConn<AD>} A connection to the actor.
 	 */
 	connect(): ActorConn<AnyActorDefinition> {
-		logger().debug("establishing connection from handle", {
+		logger().debug({
+			msg: "establishing connection from handle",
 			query: this.#actorQuery,
 		});
 

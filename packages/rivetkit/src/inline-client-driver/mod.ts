@@ -63,11 +63,11 @@ export function createInlineClientDriver(
 			try {
 				// Get the actor ID
 				const { actorId } = await queryActor(c, actorQuery, managerDriver);
-				logger().debug("found actor for action", { actorId });
+				logger().debug({ msg: "found actor for action", actorId });
 				invariant(actorId, "Missing actor ID");
 
 				// Invoke the action
-				logger().debug("handling action", { actionName, encoding });
+				logger().debug({ msg: "handling action", actionName, encoding });
 				const responseData = await sendHttpRequest<
 					protocol.HttpActionRequest,
 					protocol.HttpActionResponse
@@ -112,7 +112,7 @@ export function createInlineClientDriver(
 		): Promise<string> => {
 			// Get the actor ID
 			const { actorId } = await queryActor(c, actorQuery, managerDriver);
-			logger().debug("resolved actor", { actorId });
+			logger().debug({ msg: "resolved actor", actorId });
 			invariant(actorId, "missing actor ID");
 
 			return actorId;
@@ -126,11 +126,15 @@ export function createInlineClientDriver(
 		): Promise<WebSocket> => {
 			// Get the actor ID
 			const { actorId } = await queryActor(c, actorQuery, managerDriver);
-			logger().debug("found actor for action", { actorId });
+			logger().debug({ msg: "found actor for action", actorId });
 			invariant(actorId, "Missing actor ID");
 
 			// Invoke the action
-			logger().debug("opening websocket", { actorId, encoding: encodingKind });
+			logger().debug({
+				msg: "opening websocket",
+				actorId,
+				encoding: encodingKind,
+			});
 
 			// Open WebSocket
 			const ws = await managerDriver.openWebSocket(
@@ -152,10 +156,11 @@ export function createInlineClientDriver(
 		): Promise<UniversalEventSource> => {
 			// Get the actor ID
 			const { actorId } = await queryActor(c, actorQuery, managerDriver);
-			logger().debug("found actor for sse connection", { actorId });
+			logger().debug({ msg: "found actor for sse connection", actorId });
 			invariant(actorId, "Missing actor ID");
 
-			logger().debug("opening sse connection", {
+			logger().debug({
+				msg: "opening sse connection",
 				actorId,
 				encoding: encodingKind,
 			});
@@ -190,7 +195,7 @@ export function createInlineClientDriver(
 			connectionToken: string,
 			message: protocol.ToServer,
 		): Promise<void> => {
-			logger().debug("sending http message", { actorId, connectionId });
+			logger().debug({ msg: "sending http message", actorId, connectionId });
 
 			// Send an HTTP request to the connections endpoint
 			await sendHttpRequest({
@@ -222,7 +227,7 @@ export function createInlineClientDriver(
 			try {
 				// Get the actor ID
 				const { actorId } = await queryActor(c, actorQuery, managerDriver);
-				logger().debug("found actor for raw http", { actorId });
+				logger().debug({ msg: "found actor for raw http", actorId });
 				invariant(actorId, "Missing actor ID");
 
 				// Build the URL with normalized path
@@ -264,12 +269,13 @@ export function createInlineClientDriver(
 		): Promise<WebSocket> => {
 			// Get the actor ID
 			const { actorId } = await queryActor(c, actorQuery, managerDriver);
-			logger().debug("found actor for action", { actorId });
+			logger().debug({ msg: "found actor for action", actorId });
 			invariant(actorId, "Missing actor ID");
 
 			// Normalize path to match raw HTTP behavior
 			const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
-			logger().debug("opening websocket", {
+			logger().debug({
+				msg: "opening websocket",
 				actorId,
 				encoding,
 				path: normalizedPath,
@@ -299,7 +305,7 @@ export async function queryActor(
 	query: ActorQuery,
 	driver: ManagerDriver,
 ): Promise<{ actorId: string }> {
-	logger().debug("querying actor", { query });
+	logger().debug({ msg: "querying actor", query });
 	let actorOutput: { actorId: string };
 	if ("getForId" in query) {
 		const output = await driver.getForId({
@@ -347,9 +353,7 @@ export async function queryActor(
 		throw new errors.InvalidRequest("Invalid query format");
 	}
 
-	logger().debug("actor query result", {
-		actorId: actorOutput.actorId,
-	});
+	logger().debug({ msg: "actor query result", actorId: actorOutput.actorId });
 	return { actorId: actorOutput.actorId };
 }
 

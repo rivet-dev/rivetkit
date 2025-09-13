@@ -70,7 +70,8 @@ export class HonoWebSocketAdapter implements UniversalWebSocket {
 		}
 
 		try {
-			logger().debug("bridge sending data", {
+			logger().debug({
+				msg: "bridge sending data",
 				dataType: typeof data,
 				isString: typeof data === "string",
 				isArrayBuffer: data instanceof ArrayBuffer,
@@ -104,19 +105,23 @@ export class HonoWebSocketAdapter implements UniversalWebSocket {
 						(this.#ws as any).send(buffer);
 					})
 					.catch((error) => {
-						logger().error("failed to convert blob to arraybuffer", { error });
+						logger().error({
+							msg: "failed to convert blob to arraybuffer",
+							error,
+						});
 						this.#fireEvent("error", { type: "error", target: this, error });
 					});
 			} else {
 				// Try to convert to string as a fallback
-				logger().warn("unsupported data type, converting to string", {
+				logger().warn({
+					msg: "unsupported data type, converting to string",
 					dataType: typeof data,
 					data,
 				});
 				(this.#ws as any).send(String(data));
 			}
 		} catch (error) {
-			logger().error("error sending websocket data", { error });
+			logger().error({ msg: "error sending websocket data", error });
 			this.#fireEvent("error", { type: "error", target: this, error });
 			throw error;
 		}
@@ -144,7 +149,7 @@ export class HonoWebSocketAdapter implements UniversalWebSocket {
 				wasClean: code === 1000,
 			});
 		} catch (error) {
-			logger().error("error closing websocket", { error });
+			logger().error({ msg: "error closing websocket", error });
 			this.#readyState = this.CLOSED;
 			this.#fireEvent("close", {
 				type: "close",
@@ -177,7 +182,10 @@ export class HonoWebSocketAdapter implements UniversalWebSocket {
 				try {
 					listener(event);
 				} catch (error) {
-					logger().error(`error in ${event.type} event listener`, { error });
+					logger().error({
+						msg: `error in ${event.type} event listener`,
+						error,
+					});
 				}
 			}
 		}
@@ -201,7 +209,8 @@ export class HonoWebSocketAdapter implements UniversalWebSocket {
 			messageData = String(data);
 		}
 
-		logger().debug("bridge handling message", {
+		logger().debug({
+			msg: "bridge handling message",
 			dataType: typeof messageData,
 			isArrayBuffer: messageData instanceof ArrayBuffer,
 			dataStr: typeof messageData === "string" ? messageData : "<binary>",
@@ -251,7 +260,7 @@ export class HonoWebSocketAdapter implements UniversalWebSocket {
 				try {
 					listener(event);
 				} catch (error) {
-					logger().error(`error in ${type} event listener`, { error });
+					logger().error({ msg: `error in ${type} event listener`, error });
 				}
 			}
 		}
@@ -263,7 +272,7 @@ export class HonoWebSocketAdapter implements UniversalWebSocket {
 					try {
 						this.#onopen(event);
 					} catch (error) {
-						logger().error("error in onopen handler", { error });
+						logger().error({ msg: "error in onopen handler", error });
 					}
 				}
 				break;
@@ -272,7 +281,7 @@ export class HonoWebSocketAdapter implements UniversalWebSocket {
 					try {
 						this.#onclose(event);
 					} catch (error) {
-						logger().error("error in onclose handler", { error });
+						logger().error({ msg: "error in onclose handler", error });
 					}
 				}
 				break;
@@ -281,7 +290,7 @@ export class HonoWebSocketAdapter implements UniversalWebSocket {
 					try {
 						this.#onerror(event);
 					} catch (error) {
-						logger().error("error in onerror handler", { error });
+						logger().error({ msg: "error in onerror handler", error });
 					}
 				}
 				break;
@@ -290,7 +299,7 @@ export class HonoWebSocketAdapter implements UniversalWebSocket {
 					try {
 						this.#onmessage(event);
 					} catch (error) {
-						logger().error("error in onmessage handler", { error });
+						logger().error({ msg: "error in onmessage handler", error });
 					}
 				}
 				break;

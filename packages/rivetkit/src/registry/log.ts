@@ -1,7 +1,5 @@
-import { getLogger } from "@/common//log";
-
-export const LOGGER_NAME = "registry";
+import { getLogger } from "@/common/log";
 
 export function logger() {
-	return getLogger(LOGGER_NAME);
+	return getLogger("registry");
 }

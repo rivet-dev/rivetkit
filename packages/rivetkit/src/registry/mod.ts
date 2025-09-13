@@ -1,6 +1,10 @@
 import type { Hono } from "hono";
-import { createActorRouter } from "@/actor/router";
 import { type Client, createClientWithDriver } from "@/client/client";
+import {
+	configureBaseLogger,
+	configureDefaultLogger,
+	getPinoLevel,
+} from "@/common/log";
 import { chooseDefaultDriver } from "@/drivers/default";
 import { createInlineClientDriver } from "@/inline-client-driver/mod";
 import { getInspectorUrl } from "@/inspector/utils";
@@ -44,6 +48,16 @@ export class Registry<A extends RegistryActors> {
 	public createServer(inputConfig?: RunConfigInput): ServerOutput<this> {
 		const config = RunConfigSchema.parse(inputConfig);
 
+		// Configure logger
+		if (config.logging?.baseLogger) {
+			// Use provided base logger
+			configureBaseLogger(config.logging.baseLogger);
+		} else {
+			// Configure default logger with log level from config
+			// getPinoLevel will handle env variable priority
+			configureDefaultLogger(config.logging?.level);
+		}
+
 		// Choose the driver based on configuration
 		const driver = chooseDefaultDriver(config);
 
@@ -68,15 +82,14 @@ export class Registry<A extends RegistryActors> {
 		const client = createClientWithDriver<this>(clientDriver);
 
 		const driverLog = managerDriver.extraStartupLog?.() ?? {};
-		logger().info("rivetkit ready", {
+		logger().info({
+			msg: "rivetkit ready",
 			driver: driver.name,
 			definitions: Object.keys(this.#config.use).length,
 			...driverLog,
 		});
 		if (config.inspector?.enabled) {
-			logger().info("inspector ready", {
-				url: getInspectorUrl(config),
-			});
+			logger().info({ msg: "inspector ready", url: getInspectorUrl(config) });
 		}
 
 		// Create runner

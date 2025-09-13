@@ -314,7 +314,7 @@ export class ActorInstance<
 		}
 
 		// TODO: Exit process if this errors
-		logger().info("actor starting");
+		logger().info({ msg: "actor starting" });
 		if (this.#config.onStart) {
 			const result = this.#config.onStart(this.actorContext);
 			if (result instanceof Promise) {
@@ -327,9 +327,9 @@ export class ActorInstance<
 			const client = await this.#config.db.createClient({
 				getDatabase: () => actorDriver.getDatabase(this.#actorId),
 			});
-			logger().info("database migration starting");
+			logger().info({ msg: "database migration starting" });
 			await this.#config.db.onMigrate?.(client);
-			logger().info("database migration complete");
+			logger().info({ msg: "database migration complete" });
 			this.#db = client;
 		}
 
@@ -338,7 +338,7 @@ export class ActorInstance<
 			await this.#queueSetAlarm(this.#persist.scheduledEvents[0].timestamp);
 		}
 
-		logger().info("actor ready");
+		logger().info({ msg: "actor ready" });
 		this.#ready = true;
 
 		// Must be called after setting `#ready` or else it will not schedule sleep
@@ -365,7 +365,7 @@ export class ActorInstance<
 	}
 
 	async #scheduleEventInner(newEvent: PersistedScheduleEvent) {
-		this.actorContext.log.info("scheduling event", newEvent);
+		this.actorContext.log.info({ msg: "scheduling event", ...newEvent });
 
 		// Insert event in to index
 		const insertIndex = this.#persist.scheduledEvents.findIndex(
@@ -381,7 +381,8 @@ export class ActorInstance<
 		// - this is the newest event (i.e. at beginning of array) or
 		// - this is the only event (i.e. the only event in the array)
 		if (insertIndex === 0 || this.#persist.scheduledEvents.length === 1) {
-			this.actorContext.log.info("setting alarm", {
+			this.actorContext.log.info({
+				msg: "setting alarm",
 				timestamp: newEvent.timestamp,
 				eventCount: this.#persist.scheduledEvents.length,
 			});
@@ -391,7 +392,8 @@ export class ActorInstance<
 
 	async _onAlarm() {
 		const now = Date.now();
-		this.actorContext.log.debug("alarm triggered", {
+		this.actorContext.log.debug({
+			msg: "alarm triggered",
 			now,
 			events: this.#persist.scheduledEvents.length,
 		});
@@ -408,34 +410,34 @@ export class ActorInstance<
 		if (runIndex === -1) {
 			// No events are due yet. This will happen if timers fire slightly early.
 			// Ensure we reschedule the alarm for the next upcoming event to avoid losing it.
-			logger().warn("no events are due yet, time may have broken");
+			logger().warn({ msg: "no events are due yet, time may have broken" });
 			if (this.#persist.scheduledEvents.length > 0) {
 				const nextTs = this.#persist.scheduledEvents[0].timestamp;
-				this.actorContext.log.warn(
-					"alarm fired early, rescheduling for next event",
-					{
-						now,
-						nextTs,
-						delta: nextTs - now,
-					},
-				);
+				this.actorContext.log.warn({
+					msg: "alarm fired early, rescheduling for next event",
+					now,
+					nextTs,
+					delta: nextTs - now,
+				});
 				await this.#queueSetAlarm(nextTs);
 			}
-			this.actorContext.log.debug("no events to run", { now });
+			this.actorContext.log.debug({ msg: "no events to run", now });
 			return;
 		}
 		const scheduleEvents = this.#persist.scheduledEvents.splice(
 			0,
 			runIndex + 1,
 		);
-		this.actorContext.log.debug("running events", {
+		this.actorContext.log.debug({
+			msg: "running events",
 			count: scheduleEvents.length,
 		});
 
 		// Set alarm for next event
 		if (this.#persist.scheduledEvents.length > 0) {
 			const nextTs = this.#persist.scheduledEvents[0].timestamp;
-			this.actorContext.log.info("setting next alarm", {
+			this.actorContext.log.info({
+				msg: "setting next alarm",
 				nextTs,
 				remainingEvents: this.#persist.scheduledEvents.length,
 			});
@@ -445,7 +447,8 @@ export class ActorInstance<
 		// Iterate by event key in order to ensure we call the events in order
 		for (const event of scheduleEvents) {
 			try {
-				this.actorContext.log.info("running action for event", {
+				this.actorContext.log.info({
+					msg: "running action for event",
 					event: event.eventId,
 					timestamp: event.timestamp,
 					action: event.kind.generic.actionName,
@@ -470,7 +473,8 @@ export class ActorInstance<
 						: [];
 					await fn.call(undefined, this.actorContext, ...args);
 				} catch (error) {
-					this.actorContext.log.error("error while running event", {
+					this.actorContext.log.error({
+						msg: "error while running event",
 						error: stringifyError(error),
 						event: event.eventId,
 						timestamp: event.timestamp,
@@ -478,7 +482,8 @@ export class ActorInstance<
 					});
 				}
 			} catch (error) {
-				this.actorContext.log.error("internal error while running event", {
+				this.actorContext.log.error({
+					msg: "internal error while running event",
 					error: stringifyError(error),
 					...event,
 				});
@@ -557,7 +562,7 @@ export class ActorInstance<
 
 			if (this.#persistChanged) {
 				const finished = this.#persistWriteQueue.enqueue(async () => {
-					logger().debug("saving persist");
+					logger().debug({ msg: "saving persist" });
 
 					// There might be more changes while we're writing, so we set this
 					// before writing to KV in order to avoid a race condition.
@@ -570,7 +575,7 @@ export class ActorInstance<
 						PERSISTED_ACTOR_VERSIONED.serializeWithEmbeddedVersion(bareData),
 					);
 
-					logger().debug("persist saved");
+					logger().debug({ msg: "persist saved" });
 				});
 
 				await finished;
@@ -662,7 +667,8 @@ export class ActorInstance<
 							this.#persistRaw.state,
 						);
 					} catch (error) {
-						logger().error("error in `_onStateChange`", {
+						logger().error({
+							msg: "error in `_onStateChange`",
 							error: stringifyError(error),
 						});
 					} finally {
@@ -692,7 +698,8 @@ export class ActorInstance<
 		const persistData = this.#convertFromBarePersisted(bareData);
 
 		if (persistData.hasInitiated) {
-			logger().info("actor restoring", {
+			logger().info({
+				msg: "actor restoring",
 				connections: persistData.connections.length,
 			});
 
@@ -717,12 +724,12 @@ export class ActorInstance<
 				}
 			}
 		} else {
-			logger().info("actor creating");
+			logger().info({ msg: "actor creating" });
 
 			// Initialize actor state
 			let stateData: unknown;
 			if (this.stateEnabled) {
-				logger().info("actor state initializing");
+				logger().info({ msg: "actor state initializing" });
 
 				if ("createState" in this.#config) {
 					this.#config.createState;
@@ -746,7 +753,7 @@ export class ActorInstance<
 					throw new Error("Both 'createState' or 'state' were not defined");
 				}
 			} else {
-				logger().debug("state not enabled");
+				logger().debug({ msg: "state not enabled" });
 			}
 
 			// Save state and mark as initialized
@@ -754,7 +761,7 @@ export class ActorInstance<
 			persistData.hasInitiated = true;
 
 			// Update state
-			logger().debug("writing state");
+			logger().debug({ msg: "writing state" });
 			const bareData = this.#convertToBarePersisted(persistData);
 			await this.#actorDriver.writePersistedData(
 				this.#actorId,
@@ -779,7 +786,7 @@ export class ActorInstance<
 	 */
 	__removeConn(conn: Conn<S, CP, CS, V, I, AD, DB> | undefined) {
 		if (!conn) {
-			logger().warn("`conn` does not exist");
+			logger().warn({ msg: "`conn` does not exist" });
 			return;
 		}
 
@@ -791,7 +798,8 @@ export class ActorInstance<
 			this.#persist.connections.splice(connIdx, 1);
 			this.saveState({ immediate: true, allowStoppingState: true });
 		} else {
-			logger().warn("could not find persisted connection to remove", {
+			logger().warn({
+				msg: "could not find persisted connection to remove",
 				connId: conn.id,
 			});
 		}
@@ -811,13 +819,15 @@ export class ActorInstance<
 				if (result instanceof Promise) {
 					// Handle promise but don't await it to prevent blocking
 					result.catch((error) => {
-						logger().error("error in `onDisconnect`", {
+						logger().error({
+							msg: "error in `onDisconnect`",
 							error: stringifyError(error),
 						});
 					});
 				}
 			} catch (error) {
-				logger().error("error in `onDisconnect`", {
+				logger().error({
+					msg: "error in `onDisconnect`",
 					error: stringifyError(error),
 				});
 			}
@@ -944,7 +954,8 @@ export class ActorInstance<
 				if (result instanceof Promise) {
 					deadline(result, this.#config.options.onConnectTimeout).catch(
 						(error) => {
-							logger().error("error in `onConnect`, closing socket", {
+							logger().error({
+								msg: "error in `onConnect`, closing socket",
 								error,
 							});
 							conn?.disconnect("`onConnect` failed");
@@ -952,7 +963,8 @@ export class ActorInstance<
 					);
 				}
 			} catch (error) {
-				logger().error("error in `onConnect`", {
+				logger().error({
+					msg: "error in `onConnect`",
 					error: stringifyError(error),
 				});
 				conn?.disconnect("`onConnect` failed");
@@ -1022,7 +1034,7 @@ export class ActorInstance<
 		fromPersist: boolean,
 	) {
 		if (connection.subscriptions.has(eventName)) {
-			logger().debug("connection already has subscription", { eventName });
+			logger().debug({ msg: "connection already has subscription", eventName });
 			return;
 		}
 
@@ -1052,7 +1064,10 @@ export class ActorInstance<
 		fromRemoveConn: boolean,
 	) {
 		if (!connection.subscriptions.has(eventName)) {
-			logger().warn("connection does not have subscription", { eventName });
+			logger().warn({
+				msg: "connection does not have subscription",
+				eventName,
+			});
 			return;
 		}
 
@@ -1068,7 +1083,10 @@ export class ActorInstance<
 			if (subIdx !== -1) {
 				connection.__persist.subscriptions.splice(subIdx, 1);
 			} else {
-				logger().warn("subscription does not exist with name", { eventName });
+				logger().warn({
+					msg: "subscription does not exist with name",
+					eventName,
+				});
 			}
 
 			this.saveState({ immediate: true });
@@ -1097,17 +1115,18 @@ export class ActorInstance<
 	 * Sets up a recurring check based on the configured interval.
 	 */
 	#checkConnectionsLiveness() {
-		logger().debug("checking connections liveness");
+		logger().debug({ msg: "checking connections liveness" });
 
 		for (const conn of this.#connections.values()) {
 			const liveness = conn[CONNECTION_CHECK_LIVENESS_SYMBOL]();
 			if (liveness.status === "connected") {
-				logger().debug("connection is alive", { connId: conn.id });
+				logger().debug({ msg: "connection is alive", connId: conn.id });
 			} else {
 				const lastSeen = liveness.lastSeen;
 				const sinceLastSeen = Date.now() - lastSeen;
 				if (sinceLastSeen < this.#config.options.connectionLivenessTimeout) {
-					logger().debug("connection might be alive, will check later", {
+					logger().debug({
+						msg: "connection might be alive, will check later",
 						connId: conn.id,
 						lastSeen,
 						sinceLastSeen,
@@ -1116,7 +1135,8 @@ export class ActorInstance<
 				}
 
 				// Connection is dead, remove it
-				logger().warn("connection is dead, removing", {
+				logger().warn({
+					msg: "connection is dead, removing",
 					connId: conn.id,
 					lastSeen,
 				});
@@ -1162,14 +1182,15 @@ export class ActorInstance<
 
 		// Prevent calling private or reserved methods
 		if (!(actionName in this.#config.actions)) {
-			logger().warn("action does not exist", { actionName });
+			logger().warn({ msg: "action does not exist", actionName });
 			throw new errors.ActionNotFound(actionName);
 		}
 
 		// Check if the method exists on this object
 		const actionFunction = this.#config.actions[actionName];
 		if (typeof actionFunction !== "function") {
-			logger().warn("action is not a function", {
+			logger().warn({
+				msg: "action is not a function",
 				actionName: actionName,
 				type: typeof actionFunction,
 			});
@@ -1181,13 +1202,16 @@ export class ActorInstance<
 		// Call the function on this object with those arguments
 		try {
 			// Log when we start executing the action
-			logger().debug("executing action", { actionName: actionName, args });
+			logger().debug({ msg: "executing action", actionName: actionName, args });
 
 			const outputOrPromise = actionFunction.call(undefined, ctx, ...args);
 			let output: unknown;
 			if (outputOrPromise instanceof Promise) {
 				// Log that we're waiting for an async action
-				logger().debug("awaiting async action", { actionName: actionName });
+				logger().debug({
+					msg: "awaiting async action",
+					actionName: actionName,
+				});
 
 				output = await deadline(
 					outputOrPromise,
@@ -1195,7 +1219,10 @@ export class ActorInstance<
 				);
 
 				// Log that async action completed
-				logger().debug("async action completed", { actionName: actionName });
+				logger().debug({
+					msg: "async action completed",
+					actionName: actionName,
+				});
 			} else {
 				output = outputOrPromise;
 			}
@@ -1210,25 +1237,29 @@ export class ActorInstance<
 						output,
 					);
 					if (processedOutput instanceof Promise) {
-						logger().debug("awaiting onBeforeActionResponse", {
+						logger().debug({
+							msg: "awaiting onBeforeActionResponse",
 							actionName: actionName,
 						});
 						output = await processedOutput;
-						logger().debug("onBeforeActionResponse completed", {
+						logger().debug({
+							msg: "onBeforeActionResponse completed",
 							actionName: actionName,
 						});
 					} else {
 						output = processedOutput;
 					}
 				} catch (error) {
-					logger().error("error in `onBeforeActionResponse`", {
+					logger().error({
+						msg: "error in `onBeforeActionResponse`",
 						error: stringifyError(error),
 					});
 				}
 			}
 
 			// Log the output before returning
-			logger().debug("action completed", {
+			logger().debug({
+				msg: "action completed",
 				actionName: actionName,
 				outputType: typeof output,
 				isPromise: output instanceof Promise,
@@ -1242,7 +1273,8 @@ export class ActorInstance<
 			if (error instanceof DeadlineError) {
 				throw new errors.ActionTimedOut();
 			}
-			logger().error("action error", {
+			logger().error({
+				msg: "action error",
 				actionName: actionName,
 				error: stringifyError(error),
 			});
@@ -1284,9 +1316,7 @@ export class ActorInstance<
 			}
 			return response;
 		} catch (error) {
-			logger().error("onFetch error", {
-				error: stringifyError(error),
-			});
+			logger().error({ msg: "onFetch error", error: stringifyError(error) });
 			throw error;
 		} finally {
 			// Decrement active raw fetch counter and re-evaluate sleep
@@ -1340,7 +1370,8 @@ export class ActorInstance<
 				await this.saveState({ immediate: true });
 			}
 		} catch (error) {
-			logger().error("onWebSocket error", {
+			logger().error({
+				msg: "onWebSocket error",
 				error: stringifyError(error),
 			});
 			throw error;
@@ -1484,10 +1515,11 @@ export class ActorInstance<
 		// Add logging to promise and make it non-failable
 		const nonfailablePromise = promise
 			.then(() => {
-				logger().debug("wait until promise complete");
+				logger().debug({ msg: "wait until promise complete" });
 			})
 			.catch((error) => {
-				logger().error("wait until promise failed", {
+				logger().error({
+					msg: "wait until promise failed",
 					error: stringifyError(error),
 				});
 			});
@@ -1540,7 +1572,8 @@ export class ActorInstance<
 
 		const canSleep = this.#canSleep();
 
-		logger().debug("resetting sleep timer", {
+		logger().debug({
+			msg: "resetting sleep timer",
 			canSleep,
 			existingTimeout: !!this.#sleepTimeout,
 		});
@@ -1556,7 +1589,8 @@ export class ActorInstance<
 		if (canSleep) {
 			this.#sleepTimeout = setTimeout(() => {
 				this._sleep().catch((error) => {
-					logger().error("error during sleep", {
+					logger().error({
+						msg: "error during sleep",
 						error: stringifyError(error),
 					});
 				});
@@ -1592,12 +1626,12 @@ export class ActorInstance<
 		invariant(sleep, "no sleep on driver");
 
 		if (this.#sleepCalled) {
-			logger().warn("already sleeping actor");
+			logger().warn({ msg: "already sleeping actor" });
 			return;
 		}
 		this.#sleepCalled = true;
 
-		logger().info("actor sleeping");
+		logger().info({ msg: "actor sleeping" });
 
 		// Schedule sleep to happen on the next tick. This allows for any action that calls _sleep to complete.
 		setImmediate(async () => {
@@ -1611,12 +1645,12 @@ export class ActorInstance<
 	// MARK: Stop
 	async _stop() {
 		if (this.#stopCalled) {
-			logger().warn("already stopping actor");
+			logger().warn({ msg: "already stopping actor" });
 			return;
 		}
 		this.#stopCalled = true;
 
-		logger().info("actor stopping");
+		logger().info({ msg: "actor stopping" });
 
 		// Abort any listeners waiting for shutdown
 		try {
@@ -1626,17 +1660,18 @@ export class ActorInstance<
 		// Call onStop lifecycle hook if defined
 		if (this.#config.onStop) {
 			try {
-				logger().debug("calling onStop");
+				logger().debug({ msg: "calling onStop" });
 				const result = this.#config.onStop(this.actorContext);
 				if (result instanceof Promise) {
 					await deadline(result, this.#config.options.onStopTimeout);
 				}
-				logger().debug("onStop completed");
+				logger().debug({ msg: "onStop completed" });
 			} catch (error) {
 				if (error instanceof DeadlineError) {
-					logger().error("onStop timed out");
+					logger().error({ msg: "onStop timed out" });
 				} else {
-					logger().error("error in onStop", {
+					logger().error({
+						msg: "error in onStop",
 						error: stringifyError(error),
 					});
 				}
@@ -1672,9 +1707,9 @@ export class ActorInstance<
 		]);
 
 		if (await res) {
-			logger().warn(
-				"timed out waiting for connections to close, shutting down anyway",
-			);
+			logger().warn({
+				msg: "timed out waiting for connections to close, shutting down anyway",
+			});
 		}
 
 		// Wait for queues to finish
@@ -1693,7 +1728,7 @@ export class ActorInstance<
 	async #waitBackgroundPromises(timeoutMs: number) {
 		const pending = this.#backgroundPromises;
 		if (pending.length === 0) {
-			logger().debug("no background promises");
+			logger().debug({ msg: "no background promises" });
 			return;
 		}
 
@@ -1706,15 +1741,13 @@ export class ActorInstance<
 		]);
 
 		if (timedOut) {
-			logger().error(
-				"timed out waiting for background tasks, background promises may have leaked",
-				{
-					count: pending.length,
-					timeoutMs,
-				},
-			);
+			logger().error({
+				msg: "timed out waiting for background tasks, background promises may have leaked",
+				count: pending.length,
+				timeoutMs,
+			});
 		} else {
-			logger().debug("background promises finished");
+			logger().debug({ msg: "background promises finished" });
 		}
 	}
 

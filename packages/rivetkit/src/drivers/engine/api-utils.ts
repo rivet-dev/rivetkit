@@ -33,13 +33,14 @@ export async function apiCall<TInput = unknown, TOutput = unknown>(
 		options.body = JSON.stringify(body);
 	}
 
-	logger().debug("making api call", { method, url });
+	logger().debug({ msg: "making api call", method, url });
 
 	const response = await fetch(url, options);
 
 	if (!response.ok) {
 		const errorText = await response.text();
-		logger().error("api call failed", {
+		logger().error({
+			msg: "api call failed",
 			status: response.status,
 			statusText: response.statusText,
 			error: errorText,

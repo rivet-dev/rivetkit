@@ -134,7 +134,8 @@ export async function processMessage<
 			actionName = name;
 			const args = cbor.decode(new Uint8Array(argsRaw));
 
-			logger().debug("processing action request", {
+			logger().debug({
+				msg: "processing action request",
 				actionId: id,
 				actionName: name,
 			});
@@ -148,7 +149,8 @@ export async function processMessage<
 			// This will wait for async actions to complete
 			const output = await handler.onExecuteAction(ctx, name, args);
 
-			logger().debug("sending action response", {
+			logger().debug({
+				msg: "sending action response",
 				actionId: id,
 				actionName: name,
 				outputType: typeof output,
@@ -171,7 +173,7 @@ export async function processMessage<
 				),
 			);
 
-			logger().debug("action response sent", { id, name: name });
+			logger().debug({ msg: "action response sent", id, name: name });
 		} else if (message.body.tag === "SubscriptionRequest") {
 			// Subscription request
 
@@ -183,7 +185,8 @@ export async function processMessage<
 			}
 
 			const { eventName, subscribe } = message.body.val;
-			logger().debug("processing subscription request", {
+			logger().debug({
+				msg: "processing subscription request",
 				eventName,
 				subscribe,
 			});
@@ -194,7 +197,8 @@ export async function processMessage<
 				await handler.onUnsubscribe(eventName, conn);
 			}
 
-			logger().debug("subscription request completed", {
+			logger().debug({
+				msg: "subscription request completed",
 				eventName,
 				subscribe,
 			});
@@ -208,7 +212,8 @@ export async function processMessage<
 			actionName,
 		});
 
-		logger().debug("sending error response", {
+		logger().debug({
+			msg: "sending error response",
 			actionId,
 			actionName,
 			code,
@@ -233,7 +238,7 @@ export async function processMessage<
 			),
 		);
 
-		logger().debug("error response sent", { actionId, actionName });
+		logger().debug({ msg: "error response sent", actionId, actionName });
 	}
 }
 

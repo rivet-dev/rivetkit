@@ -45,7 +45,7 @@ export async function crossPlatformServe(
 		getEnvUniversal("PORT") ?? getEnvUniversal("PORT_HTTP") ?? "8080",
 	);
 	const server = serve({ fetch: app.fetch, port }, () =>
-		logger().info("server listening", { port }),
+		logger().info({ msg: "server listening", port }),
 	);
 	injectWebSocket(server);
 

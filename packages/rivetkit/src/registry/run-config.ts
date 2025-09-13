@@ -1,6 +1,8 @@
 import type { cors } from "hono/cors";
+import type { Logger } from "pino";
 import { z } from "zod";
 import type { ActorDriverBuilder } from "@/actor/driver";
+import { LogLevelSchema } from "@/common/log";
 import { InspectorConfigSchema } from "@/inspector/config";
 import type { ManagerDriverBuilder } from "@/manager/driver";
 import type { UpgradeWebSocket } from "@/utils";
@@ -47,6 +49,14 @@ export const RunConfigSchema = z
 		 * available at `/api/actors`.
 		 */
 		basePath: z.string().optional().default("/"),
+
+		logging: z
+			.object({
+				baseLogger: z.custom<Logger>().optional(),
+				level: LogLevelSchema.optional(),
+			})
+			.optional()
+			.default({}),
 	})
 	.default({});
 

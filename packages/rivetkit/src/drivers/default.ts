@@ -22,10 +22,13 @@ export function chooseDefaultDriver(runConfig: RunConfig): DriverConfig {
 	}
 
 	if (engineEndpoint) {
-		logger().debug("using rivet engine driver", { endpoint: engineEndpoint });
+		logger().debug({
+			msg: "using rivet engine driver",
+			endpoint: engineEndpoint,
+		});
 		return createEngineDriver({ endpoint: engineEndpoint });
 	}
 
-	logger().debug("using default file system driver");
+	logger().debug({ msg: "using default file system driver" });
 	return createFileSystemOrMemoryDriver(true);
 }

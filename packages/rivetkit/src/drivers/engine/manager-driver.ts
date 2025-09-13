@@ -48,7 +48,8 @@ export class EngineManagerDriver implements ManagerDriver {
 	}
 
 	async sendRequest(actorId: string, actorRequest: Request): Promise<Response> {
-		logger().debug("sending request to actor via guard", {
+		logger().debug({
+			msg: "sending request to actor via guard",
 			actorId,
 			method: actorRequest.method,
 			url: actorRequest.url,
@@ -68,7 +69,8 @@ export class EngineManagerDriver implements ManagerDriver {
 		// WebSocket connections go through guard
 		const guardUrl = `${this.#config.endpoint}${path}`;
 
-		logger().debug("opening websocket to actor via guard", {
+		logger().debug({
+			msg: "opening websocket to actor via guard",
 			actorId,
 			path,
 			guardUrl,
@@ -79,7 +81,7 @@ export class EngineManagerDriver implements ManagerDriver {
 			headers: buildGuardHeadersForWebSocket(actorId, encoding, params),
 		});
 
-		logger().debug("websocket connection opened", { actorId });
+		logger().debug({ msg: "websocket connection opened", actorId });
 
 		return ws;
 	}
@@ -89,7 +91,8 @@ export class EngineManagerDriver implements ManagerDriver {
 		actorRequest: Request,
 		actorId: string,
 	): Promise<Response> {
-		logger().debug("forwarding request to actor via guard", {
+		logger().debug({
+			msg: "forwarding request to actor via guard",
 			actorId,
 			method: actorRequest.method,
 			url: actorRequest.url,
@@ -113,7 +116,8 @@ export class EngineManagerDriver implements ManagerDriver {
 		const guardUrl = `${this.#config.endpoint}${path}`;
 		const wsGuardUrl = guardUrl.replace("http://", "ws://");
 
-		logger().debug("forwarding websocket to actor via guard", {
+		logger().debug({
+			msg: "forwarding websocket to actor via guard",
 			actorId,
 			path,
 			guardUrl,
@@ -153,7 +157,8 @@ export class EngineManagerDriver implements ManagerDriver {
 
 			// Validate name matches
 			if (response.actor.name !== name) {
-				logger().debug("actor name mismatch from api", {
+				logger().debug({
+					msg: "actor name mismatch from api",
 					actorId,
 					apiName: response.actor.name,
 					requestedName: name,
@@ -187,7 +192,7 @@ export class EngineManagerDriver implements ManagerDriver {
 		name,
 		key,
 	}: GetWithKeyInput): Promise<ActorOutput | undefined> {
-		logger().debug("getWithKey: searching for actor", { name, key });
+		logger().debug({ msg: "getWithKey: searching for actor", name, key });
 
 		// If not in local cache, fetch by key from API
 		try {
@@ -199,7 +204,8 @@ export class EngineManagerDriver implements ManagerDriver {
 
 			const actorId = response.actor_id;
 
-			logger().debug("getWithKey: found actor via api", {
+			logger().debug({
+				msg: "getWithKey: found actor via api",
 				actorId,
 				name,
 				key,
@@ -227,13 +233,11 @@ export class EngineManagerDriver implements ManagerDriver {
 	): Promise<ActorOutput> {
 		const { c, name, key, input: actorInput, region } = input;
 
-		logger().info(
-			"getOrCreateWithKey: getting or creating actor via engine api",
-			{
-				name,
-				key,
-			},
-		);
+		logger().info({
+			msg: "getOrCreateWithKey: getting or creating actor via engine api",
+			name,
+			key,
+		});
 
 		const response = await getOrCreateActorById(this.#config, {
 			name,
@@ -245,7 +249,8 @@ export class EngineManagerDriver implements ManagerDriver {
 
 		const actorId = response.actor_id;
 
-		logger().info("getOrCreateWithKey: actor ready", {
+		logger().info({
+			msg: "getOrCreateWithKey: actor ready",
 			actorId,
 			name,
 			key,
@@ -271,7 +276,7 @@ export class EngineManagerDriver implements ManagerDriver {
 			throw new ActorAlreadyExists(name, key);
 		}
 
-		logger().info("creating actor via engine api", { name, key });
+		logger().info({ msg: "creating actor via engine api", name, key });
 
 		// Create actor via engine API
 		const result = await createActor(this.#config, {
@@ -283,7 +288,7 @@ export class EngineManagerDriver implements ManagerDriver {
 		});
 		const actorId = result.actor.actor_id;
 
-		logger().info("actor created", { actorId, name, key });
+		logger().info({ msg: "actor created", actorId, name, key });
 
 		return {
 			actorId,
@@ -293,11 +298,11 @@ export class EngineManagerDriver implements ManagerDriver {
 	}
 
 	async destroyActor(actorId: string): Promise<void> {
-		logger().info("destroying actor via engine api", { actorId });
+		logger().info({ msg: "destroying actor via engine api", actorId });
 
 		await destroyActor(this.#config, actorId);
 
-		logger().info("actor destroyed", { actorId });
+		logger().info({ msg: "actor destroyed", actorId });
 	}
 
 	async #forwardHttpRequest(

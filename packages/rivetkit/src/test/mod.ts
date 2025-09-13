@@ -48,7 +48,8 @@ function serve(registry: Registry<any>, inputConfig?: InputConfig): ServerType {
 	});
 	nodeWebSocket.injectWebSocket(server);
 
-	logger().info("rivetkit started", {
+	logger().info({
+		msg: "rivetkit started",
 		hostname: config.hostname,
 		port: config.port,
 		definitions: Object.keys(registry.config.use).length,

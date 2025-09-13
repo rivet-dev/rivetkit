@@ -49,7 +49,8 @@ export async function sendHttpRequest<
 	RequestBody = unknown,
 	ResponseBody = unknown,
 >(opts: HttpRequestOpts<RequestBody, ResponseBody>): Promise<ResponseBody> {
-	logger().debug("sending http request", {
+	logger().debug({
+		msg: "sending http request",
 		url: opts.url,
 		encoding: opts.encoding,
 	});

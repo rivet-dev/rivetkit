@@ -73,7 +73,7 @@ export const sleepWithRawHttp = actor({
 
 		if (url.pathname === "/long-request") {
 			const duration = parseInt(url.searchParams.get("duration") || "1000");
-			c.log.info("starting long fetch request", { duration });
+			c.log.info({ msg: "starting long fetch request", duration });
 			await new Promise((resolve) => setTimeout(resolve, duration));
 			c.log.info("finished long fetch request");
 			return new Response(JSON.stringify({ completed: true }), {
@@ -108,7 +108,8 @@ export const sleepWithRawWebSocket = actor({
 	},
 	onWebSocket: (c, websocket: UniversalWebSocket, opts) => {
 		c.state.connectionCount += 1;
-		c.log.info("websocket connected", {
+		c.log.info({
+			msg: "websocket connected",
 			connectionCount: c.state.connectionCount,
 		});
 
@@ -146,7 +147,8 @@ export const sleepWithRawWebSocket = actor({
 
 		websocket.addEventListener("close", () => {
 			c.state.connectionCount -= 1;
-			c.log.info("websocket disconnected", {
+			c.log.info({
+				msg: "websocket disconnected",
 				connectionCount: c.state.connectionCount,
 			});
 		});

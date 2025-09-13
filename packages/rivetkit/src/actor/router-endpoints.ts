@@ -168,7 +168,8 @@ export async function handleWebSocketConnect(
 					const connGlobalState =
 						actorDriver.getGenericConnGlobalState(actorId);
 					connGlobalState.websockets.set(connId, ws);
-					logger().debug("registered websocket for conn", {
+					logger().debug({
+						msg: "registered websocket for conn",
 						actorId,
 						totalCount: connGlobalState.websockets.size,
 					});
@@ -205,7 +206,7 @@ export async function handleWebSocketConnect(
 			// Handle message asynchronously
 			handlersPromise
 				.then(({ conn, actor }) => {
-					logger().debug("received message");
+					logger().debug({ msg: "received message" });
 
 					const value = evt.data.valueOf() as InputData;
 					parseMessage(value, {
@@ -258,13 +259,15 @@ export async function handleWebSocketConnect(
 			ws: WSContext,
 		) => {
 			if (event.wasClean) {
-				logger().info("websocket closed", {
+				logger().info({
+					msg: "websocket closed",
 					code: event.code,
 					reason: event.reason,
 					wasClean: event.wasClean,
 				});
 			} else {
-				logger().warn("websocket closed", {
+				logger().warn({
+					msg: "websocket closed",
 					code: event.code,
 					reason: event.reason,
 					wasClean: event.wasClean,
@@ -282,11 +285,13 @@ export async function handleWebSocketConnect(
 						actorDriver.getGenericConnGlobalState(actorId);
 					const didDelete = connGlobalState.websockets.delete(connId);
 					if (didDelete) {
-						logger().info("removing websocket for conn", {
+						logger().info({
+							msg: "removing websocket for conn",
 							totalCount: connGlobalState.websockets.size,
 						});
 					} else {
-						logger().warn("websocket does not exist for conn", {
+						logger().warn({
+							msg: "websocket does not exist for conn",
 							actorId,
 							totalCount: connGlobalState.websockets.size,
 						});
@@ -306,7 +311,7 @@ export async function handleWebSocketConnect(
 		onError: (_error: unknown) => {
 			try {
 				// Actors don't need to know about this, since it's abstracted away
-				logger().warn("websocket error");
+				logger().warn({ msg: "websocket error" });
 			} catch (error) {
 				deconstructError(
 					error,
@@ -385,7 +390,7 @@ export async function handleSseConnect(
 
 					abortResolver.resolve(undefined);
 				} catch (error) {
-					logger().error("error closing sse connection", { error });
+					logger().error({ msg: "error closing sse connection", error });
 					abortResolver.resolve(undefined);
 				}
 			});
@@ -398,7 +403,7 @@ export async function handleSseConnect(
 			// Wait until connection aborted
 			await abortResolver.promise;
 		} catch (error) {
-			logger().error("error in sse connection", { error });
+			logger().error({ msg: "error in sse connection", error });
 
 			// Cleanup on error
 			if (connId !== undefined) {
@@ -430,7 +435,7 @@ export async function handleAction(
 	const encoding = getRequestEncoding(c.req);
 	const parameters = getRequestConnParams(c.req);
 
-	logger().debug("handling action", { actionName, encoding });
+	logger().debug({ msg: "handling action", actionName, encoding });
 
 	// Validate incoming request
 	const arrayBuffer = await c.req.arrayBuffer();
@@ -556,7 +561,8 @@ export async function handleRawWebSocketHandler(
 				});
 			}
 
-			logger().debug("rewriting websocket url", {
+			logger().debug({
+				msg: "rewriting websocket url",
 				from: path,
 				to: newRequest.url,
 			});
@@ -619,7 +625,7 @@ export function getRequestQuery(c: HonoContext): unknown {
 	// Get query parameters for actor lookup
 	const queryParam = c.req.header(HEADER_ACTOR_QUERY);
 	if (!queryParam) {
-		logger().error("missing query parameter");
+		logger().error({ msg: "missing query parameter" });
 		throw new errors.InvalidRequest("missing query");
 	}
 
@@ -628,7 +634,7 @@ export function getRequestQuery(c: HonoContext): unknown {
 		const parsed = JSON.parse(queryParam);
 		return parsed;
 	} catch (error) {
-		logger().error("invalid query json", { error });
+		logger().error({ msg: "invalid query json", error });
 		throw new errors.InvalidQueryJSON(error);
 	}
 }

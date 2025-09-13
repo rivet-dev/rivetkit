@@ -176,7 +176,8 @@ export function createActorRouter(
 			body: c.req.raw.body,
 		});
 
-		logger().debug("rewriting http url", {
+		logger().debug({
+			msg: "rewriting http url",
 			from: c.req.url,
 			to: correctedRequest.url,
 		});
@@ -212,7 +213,8 @@ export function createActorRouter(
 				const url = new URL(c.req.url);
 				const pathWithQuery = c.req.path + url.search;
 
-				logger().debug("actor router raw websocket", {
+				logger().debug({
+					msg: "actor router raw websocket",
 					path: c.req.path,
 					url: c.req.url,
 					search: url.search,
