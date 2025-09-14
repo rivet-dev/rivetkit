@@ -21,7 +21,7 @@ export function generateConnToken(): string {
 
 export type ConnId = string;
 
-export type AnyConn = Conn<any, any, any, any, any, any, any>;
+export type AnyConn = Conn<any, any, any, any, any, any>;
 
 export const CONNECTION_DRIVER_WEBSOCKET = "webSocket";
 export const CONNECTION_DRIVER_SSE = "sse";
@@ -43,13 +43,13 @@ export const CONNECTION_CHECK_LIVENESS_SYMBOL = Symbol("checkLiveness");
  *
  * @see {@link https://rivet.gg/docs/connections|Connection Documentation}
  */
-export class Conn<S, CP, CS, V, I, AD, DB extends AnyDatabaseProvider> {
+export class Conn<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 	subscriptions: Set<string> = new Set<string>();
 
 	#stateEnabled: boolean;
 
 	// TODO: Remove this cyclical reference
-	#actor: ActorInstance<S, CP, CS, V, I, AD, DB>;
+	#actor: ActorInstance<S, CP, CS, V, I, DB>;
 
 	#status: ConnectionStatus = "connected";
 
@@ -69,10 +69,6 @@ export class Conn<S, CP, CS, V, I, AD, DB extends AnyDatabaseProvider> {
 
 	public get params(): CP {
 		return this.__persist.params;
-	}
-
-	public get auth(): AD {
-		return this.__persist.authData as AD;
 	}
 
 	public get driver(): ConnectionDriver {
@@ -140,7 +136,7 @@ export class Conn<S, CP, CS, V, I, AD, DB extends AnyDatabaseProvider> {
 	 * @protected
 	 */
 	public constructor(
-		actor: ActorInstance<S, CP, CS, V, I, AD, DB>,
+		actor: ActorInstance<S, CP, CS, V, I, DB>,
 		persist: PersistedConn<CP, CS>,
 		driver: ConnDriver,
 		stateEnabled: boolean,

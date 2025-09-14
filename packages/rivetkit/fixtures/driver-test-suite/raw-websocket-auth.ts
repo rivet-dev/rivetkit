@@ -11,18 +11,18 @@ export const rawWebSocketAuthActor = actor({
 		connectionCount: 0,
 		messageCount: 0,
 	},
-	onAuth: (opts, params: { apiKey?: string }) => {
-		const apiKey = params.apiKey;
-		if (!apiKey) {
-			throw new UserError("API key required", { code: "missing_auth" });
-		}
-
-		if (apiKey !== "valid-api-key") {
-			throw new UserError("Invalid API key", { code: "invalid_auth" });
-		}
-
-		return { userId: "user123", token: apiKey };
-	},
+	// onAuth: (opts, params: { apiKey?: string }) => {
+	// 	const apiKey = params.apiKey;
+	// 	if (!apiKey) {
+	// 		throw new UserError("API key required", { code: "missing_auth" });
+	// 	}
+	//
+	// 	if (apiKey !== "valid-api-key") {
+	// 		throw new UserError("Invalid API key", { code: "invalid_auth" });
+	// 	}
+	//
+	// 	return { userId: "user123", token: apiKey };
+	// },
 	onWebSocket(ctx, websocket) {
 		ctx.state.connectionCount++;
 
@@ -104,9 +104,6 @@ export const rawWebSocketPublicActor = actor({
 	state: {
 		visitors: 0,
 	},
-	onAuth: () => {
-		return null; // Allow public access
-	},
 	onWebSocket(ctx, websocket) {
 		ctx.state.visitors++;
 
@@ -135,10 +132,6 @@ export const rawWebSocketCustomAuthActor = actor({
 	state: {
 		authorized: 0,
 		unauthorized: 0,
-	},
-	onAuth: () => {
-		// Allow all connections - auth will be handled in onWebSocket
-		return {};
 	},
 	onWebSocket(ctx, websocket, opts) {
 		// Check for auth token in URL or headers

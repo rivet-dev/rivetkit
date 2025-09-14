@@ -4,7 +4,6 @@ import { authenticate } from "./my-utils";
 export type Note = { id: string; content: string; updatedAt: number };
 
 export const notes = actor({
-	onAuth: () => {},
 	// Persistent state that survives restarts: https://rivet.gg/docs/actors/state
 	state: {
 		notes: [] as Note[],

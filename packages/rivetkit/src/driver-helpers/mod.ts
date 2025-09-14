@@ -8,7 +8,6 @@ export {
 	HEADER_CONN_PARAMS,
 	HEADER_CONN_TOKEN,
 	HEADER_ENCODING,
-	HEADER_EXPOSE_INTERNAL_ERROR,
 } from "@/actor/router-endpoints";
 export type {
 	ActorOutput,

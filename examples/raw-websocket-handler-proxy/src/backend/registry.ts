@@ -8,10 +8,6 @@ export const chatRoom = actor({
 			timestamp: number;
 		}>,
 	},
-	onAuth: () => {
-		// Skip auth, make WebSocket handler public
-		return {};
-	},
 	createVars: () => {
 		return {
 			sockets: new Set<any>(),

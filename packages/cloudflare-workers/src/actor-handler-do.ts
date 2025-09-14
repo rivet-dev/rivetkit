@@ -2,11 +2,7 @@ import { DurableObject, env } from "cloudflare:workers";
 import type { ExecutionContext } from "hono";
 import invariant from "invariant";
 import type { ActorKey, ActorRouter, Registry, RunConfig } from "rivetkit";
-import {
-	createActorRouter,
-	createClientWithDriver,
-	createInlineClientDriver,
-} from "rivetkit";
+import { createActorRouter, createClientWithDriver } from "rivetkit";
 import { serializeEmptyPersistData } from "rivetkit/driver-helpers";
 import {
 	CloudflareDurableObjectGlobalState,

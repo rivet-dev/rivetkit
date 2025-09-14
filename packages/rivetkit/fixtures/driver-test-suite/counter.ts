@@ -1,7 +1,6 @@
 import { actor } from "rivetkit";
 
 export const counter = actor({
-	onAuth: () => {},
 	state: { count: 0 },
 	actions: {
 		increment: (c, x: number) => {

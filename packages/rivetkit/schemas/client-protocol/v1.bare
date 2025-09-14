@@ -6,6 +6,7 @@ type Init struct {
 }
 
 type Error struct {
+	group: str
 	code: str
 	message: str
 	metadata: optional<data>
@@ -68,6 +69,7 @@ type HttpActionResponse struct {
 
 # MARK: HTTP Error
 type HttpResponseError struct {
+	group: str
 	code: str
 	message: str
 	metadata: optional<data>

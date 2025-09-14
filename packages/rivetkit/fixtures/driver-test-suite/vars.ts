@@ -2,7 +2,6 @@ import { actor } from "rivetkit";
 
 // Actor with static vars
 export const staticVarActor = actor({
-	onAuth: () => {},
 	state: { value: 0 },
 	connState: { hello: "world" },
 	vars: { counter: 42, name: "test-actor" },
@@ -18,7 +17,6 @@ export const staticVarActor = actor({
 
 // Actor with nested vars
 export const nestedVarActor = actor({
-	onAuth: () => {},
 	state: { value: 0 },
 	connState: { hello: "world" },
 	vars: {
@@ -45,7 +43,6 @@ export const nestedVarActor = actor({
 
 // Actor with dynamic vars
 export const dynamicVarActor = actor({
-	onAuth: () => {},
 	state: { value: 0 },
 	connState: { hello: "world" },
 	createVars: () => {
@@ -63,7 +60,6 @@ export const dynamicVarActor = actor({
 
 // Actor with unique vars per instance
 export const uniqueVarActor = actor({
-	onAuth: () => {},
 	state: { value: 0 },
 	connState: { hello: "world" },
 	createVars: () => {
@@ -80,7 +76,6 @@ export const uniqueVarActor = actor({
 
 // Actor that uses driver context
 export const driverCtxActor = actor({
-	onAuth: () => {},
 	state: { value: 0 },
 	connState: { hello: "world" },
 	createVars: (c, driverCtx: any) => {

@@ -1,8 +1,6 @@
 import type { Context as HonoContext } from "hono";
 import type { WSContext } from "hono/ws";
-import invariant from "invariant";
-import type { CloseEvent } from "ws";
-import { deconstructError, stringifyError } from "@/common/utils";
+import { stringifyError } from "@/common/utils";
 import { importWebSocket } from "@/common/websocket";
 import type { UpgradeWebSocketArgs } from "@/mod";
 import { logger } from "./log";

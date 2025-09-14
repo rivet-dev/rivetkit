@@ -15,20 +15,6 @@ interface Message {
 }
 
 export const chatRoom = actor({
-	// onAuth runs on the server & before connecting to the actor
-	onAuth: async (opts: OnAuthOptions) => {
-		// Access Better Auth session
-		const authResult = await auth.api.getSession({
-			headers: opts.request.headers,
-		});
-		if (!authResult) throw new Unauthorized();
-
-		// Passes auth data to the actor (c.conn.auth)
-		return {
-			user: authResult.user,
-			session: authResult.session,
-		};
-	},
 	state: {
 		messages: [],
 	} as State,

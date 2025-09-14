@@ -94,21 +94,20 @@ export interface ProcessMessageHandler<
 	CS,
 	V,
 	I,
-	AD,
 	DB extends AnyDatabaseProvider,
 > {
 	onExecuteAction?: (
-		ctx: ActionContext<S, CP, CS, V, I, AD, DB>,
+		ctx: ActionContext<S, CP, CS, V, I, DB>,
 		name: string,
 		args: unknown[],
 	) => Promise<unknown>;
 	onSubscribe?: (
 		eventName: string,
-		conn: Conn<S, CP, CS, V, I, AD, DB>,
+		conn: Conn<S, CP, CS, V, I, DB>,
 	) => Promise<void>;
 	onUnsubscribe?: (
 		eventName: string,
-		conn: Conn<S, CP, CS, V, I, AD, DB>,
+		conn: Conn<S, CP, CS, V, I, DB>,
 	) => Promise<void>;
 }
 
@@ -118,13 +117,12 @@ export async function processMessage<
 	CS,
 	V,
 	I,
-	AD,
 	DB extends AnyDatabaseProvider,
 >(
 	message: protocol.ToServer,
-	actor: ActorInstance<S, CP, CS, V, I, AD, DB>,
-	conn: Conn<S, CP, CS, V, I, AD, DB>,
-	handler: ProcessMessageHandler<S, CP, CS, V, I, AD, DB>,
+	actor: ActorInstance<S, CP, CS, V, I, DB>,
+	conn: Conn<S, CP, CS, V, I, DB>,
+	handler: ProcessMessageHandler<S, CP, CS, V, I, DB>,
 ) {
 	let actionId: bigint | undefined;
 	let actionName: string | undefined;
@@ -148,7 +146,7 @@ export async function processMessage<
 				actionName: name,
 			});
 
-			const ctx = new ActionContext<S, CP, CS, V, I, AD, DB>(
+			const ctx = new ActionContext<S, CP, CS, V, I, DB>(
 				actor.actorContext,
 				conn,
 			);
@@ -214,11 +212,15 @@ export async function processMessage<
 			assertUnreachable(message.body);
 		}
 	} catch (error) {
-		const { code, message, metadata } = deconstructError(error, actor.rLog, {
-			connectionId: conn.id,
-			actionId,
-			actionName,
-		});
+		const { group, code, message, metadata } = deconstructError(
+			error,
+			actor.rLog,
+			{
+				connectionId: conn.id,
+				actionId,
+				actionName,
+			},
+		);
 
 		actor.rLog.debug({
 			msg: "sending error response",
@@ -235,6 +237,7 @@ export async function processMessage<
 					body: {
 						tag: "Error",
 						val: {
+							group,
 							code,
 							message,
 							metadata: bufferToArrayBuffer(cbor.encode(metadata)),

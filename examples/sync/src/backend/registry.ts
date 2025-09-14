@@ -9,7 +9,6 @@ export type Contact = {
 };
 
 const contacts = actor({
-	onAuth: () => {},
 	// State is automatically persisted
 	// Persistent state that survives restarts: https://rivet.gg/docs/actors/state
 	state: {

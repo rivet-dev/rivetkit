@@ -3,7 +3,6 @@ import * as Y from "yjs";
 import { applyUpdate, encodeStateAsUpdate } from "yjs";
 
 export const yjsDocument = actor({
-	onAuth: () => {},
 	// Persistent state that survives restarts: https://rivet.gg/docs/actors/state
 	state: {
 		docData: "", // Base64 encoded Yjs document

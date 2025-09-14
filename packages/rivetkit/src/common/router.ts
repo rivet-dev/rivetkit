@@ -7,7 +7,7 @@ import {
 } from "@/actor/router-endpoints";
 import { HttpResponseError } from "@/schemas/client-protocol/mod";
 import { HTTP_RESPONSE_ERROR_VERSIONED } from "@/schemas/client-protocol/versioned";
-import { serializeWithEncoding } from "@/serde";
+import { encodingIsBinary, serializeWithEncoding } from "@/serde";
 import { bufferToArrayBuffer } from "@/utils";
 import { getLogger, type Logger } from "./log";
 import { deconstructError, stringifyError } from "./utils";
@@ -42,19 +42,10 @@ export function handleRouteNotFound(c: HonoContext) {
 	return c.text("Not Found (RivetKit)", 404);
 }
 
-export interface HandleRouterErrorOpts {
-	enableExposeInternalError?: boolean;
-}
+export function handleRouteError(error: unknown, c: HonoContext) {
+	const exposeInternalError = getRequestExposeInternalError(c.req.raw);
 
-export function handleRouteError(
-	opts: HandleRouterErrorOpts,
-	error: unknown,
-	c: HonoContext,
-) {
-	const exposeInternalError =
-		opts.enableExposeInternalError && getRequestExposeInternalError(c.req.raw);
-
-	const { statusCode, code, message, metadata } = deconstructError(
+	const { statusCode, group, code, message, metadata } = deconstructError(
 		error,
 		logger(),
 		{
@@ -67,20 +58,20 @@ export function handleRouteError(
 	let encoding: Encoding;
 	try {
 		encoding = getRequestEncoding(c.req);
-	} catch (err) {
-		logger().debug({
-			msg: "failed to extract encoding",
-			error: stringifyError(err),
-		});
+	} catch (_) {
 		encoding = "json";
 	}
 
 	const output = serializeWithEncoding(
 		encoding,
 		{
+			group,
 			code,
 			message,
-			metadata: bufferToArrayBuffer(cbor.encode(metadata)),
+			// TODO: Cannot serialize non-binary meta since it requires ArrayBuffer atm
+			metadata: encodingIsBinary(encoding)
+				? bufferToArrayBuffer(cbor.encode(metadata))
+				: null,
 		},
 		HTTP_RESPONSE_ERROR_VERSIONED,
 	);

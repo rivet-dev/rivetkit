@@ -21,7 +21,6 @@ export type ConnState = {
 };
 
 const tenant = actor({
-	onAuth: () => {},
 	// Persistent state that survives restarts: https://rivet.gg/docs/actors/state
 	state: {
 		orgId: "org-1",

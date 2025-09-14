@@ -7,7 +7,6 @@ export type RateLimitResult = {
 };
 
 export const rateLimiter = actor({
-	onAuth: () => {},
 	// Persistent state that survives restarts: https://rivet.gg/docs/actors/state
 	state: {
 		count: 0,

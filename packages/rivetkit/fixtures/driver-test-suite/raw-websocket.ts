@@ -5,10 +5,6 @@ export const rawWebSocketActor = actor({
 		connectionCount: 0,
 		messageCount: 0,
 	},
-	onAuth(params) {
-		// Allow all connections and pass through connection params
-		return { connParams: params };
-	},
 	onWebSocket(ctx, websocket, opts) {
 		ctx.state.connectionCount = ctx.state.connectionCount + 1;
 		console.log(`[ACTOR] New connection, count: ${ctx.state.connectionCount}`);
@@ -105,10 +101,6 @@ export const rawWebSocketActor = actor({
 });
 
 export const rawWebSocketBinaryActor = actor({
-	onAuth() {
-		// Allow all connections
-		return {};
-	},
 	onWebSocket(ctx, websocket, opts) {
 		// Handle binary data
 		websocket.addEventListener("message", (event: any) => {

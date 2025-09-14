@@ -3,7 +3,6 @@ import { actor, type UniversalWebSocket } from "rivetkit";
 export const SLEEP_TIMEOUT = 500;
 
 export const sleep = actor({
-	onAuth: () => {},
 	state: { startCount: 0, sleepCount: 0 },
 	onStart: (c) => {
 		c.state.startCount += 1;
@@ -31,7 +30,6 @@ export const sleep = actor({
 });
 
 export const sleepWithLongRpc = actor({
-	onAuth: () => {},
 	state: { startCount: 0, sleepCount: 0 },
 	createVars: () => ({}) as { longRunningResolve: PromiseWithResolvers<void> },
 	onStart: (c) => {
@@ -59,7 +57,6 @@ export const sleepWithLongRpc = actor({
 });
 
 export const sleepWithRawHttp = actor({
-	onAuth: () => {},
 	state: { startCount: 0, sleepCount: 0, requestCount: 0 },
 	onStart: (c) => {
 		c.state.startCount += 1;
@@ -98,7 +95,6 @@ export const sleepWithRawHttp = actor({
 });
 
 export const sleepWithRawWebSocket = actor({
-	onAuth: () => {},
 	state: { startCount: 0, sleepCount: 0, connectionCount: 0 },
 	onStart: (c) => {
 		c.state.startCount += 1;
@@ -168,7 +164,6 @@ export const sleepWithRawWebSocket = actor({
 });
 
 export const sleepWithNoSleepOption = actor({
-	onAuth: () => {},
 	state: { startCount: 0, sleepCount: 0 },
 	onStart: (c) => {
 		c.state.startCount += 1;

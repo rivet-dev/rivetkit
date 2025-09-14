@@ -19,7 +19,6 @@ export class ActionContext<
 	TConnState,
 	TVars,
 	TInput,
-	TAuthData,
 	TDatabase extends AnyDatabaseProvider,
 > {
 	#actorContext: ActorContext<
@@ -28,7 +27,6 @@ export class ActionContext<
 		TConnState,
 		TVars,
 		TInput,
-		TAuthData,
 		TDatabase
 	>;
 
@@ -45,7 +43,6 @@ export class ActionContext<
 			TConnState,
 			TVars,
 			TInput,
-			TAuthData,
 			TDatabase
 		>,
 		public readonly conn: Conn<
@@ -54,7 +51,6 @@ export class ActionContext<
 			TConnState,
 			TVars,
 			TInput,
-			TAuthData,
 			TDatabase
 		>,
 	) {
@@ -129,7 +125,7 @@ export class ActionContext<
 	 */
 	get conns(): Map<
 		ConnId,
-		Conn<TState, TConnParams, TConnState, TVars, TInput, TAuthData, TDatabase>
+		Conn<TState, TConnParams, TConnState, TVars, TInput, TDatabase>
 	> {
 		return this.#actorContext.conns;
 	}

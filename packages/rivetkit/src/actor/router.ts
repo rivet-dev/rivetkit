@@ -254,12 +254,7 @@ export function createActorRouter(
 	}
 
 	router.notFound(handleRouteNotFound);
-	router.onError(
-		handleRouteError.bind(undefined, {
-			// All headers to this endpoint are considered secure, so we can enable the expose internal error header for requests from the internal client
-			enableExposeInternalError: true,
-		}),
-	);
+	router.onError(handleRouteError);
 
 	return router;
 }

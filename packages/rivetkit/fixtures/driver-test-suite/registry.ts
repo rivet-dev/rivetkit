@@ -13,13 +13,6 @@ import {
 	syncActionActor,
 } from "./action-types";
 import { onStateChangeActor } from "./actor-onstatechange";
-import {
-	asyncAuthActor,
-	authActor,
-	intentAuthActor,
-	noAuthActor,
-	publicActor,
-} from "./auth";
 import { connLivenessActor } from "./conn-liveness";
 import { counterWithParams } from "./conn-params";
 import { connStateActor } from "./conn-state";
@@ -50,7 +43,6 @@ import {
 	rawWebSocketPublicActor,
 } from "./raw-websocket-auth";
 import { requestAccessActor } from "./request-access";
-import { requestAccessAuthActor } from "./request-access-auth";
 import { scheduled } from "./scheduled";
 import {
 	sleep,
@@ -112,12 +104,6 @@ export const registry = setup({
 		dynamicVarActor,
 		uniqueVarActor,
 		driverCtxActor,
-		// From auth.ts
-		authActor,
-		intentAuthActor,
-		publicActor,
-		noAuthActor,
-		asyncAuthActor,
 		// From raw-http.ts
 		rawHttpActor,
 		rawHttpNoHandlerActor,
@@ -140,7 +126,6 @@ export const registry = setup({
 		rawWebSocketCustomAuthActor,
 		// From request-access.ts
 		requestAccessActor,
-		requestAccessAuthActor,
 		// From actor-onstatechange.ts
 		onStateChangeActor,
 	},
