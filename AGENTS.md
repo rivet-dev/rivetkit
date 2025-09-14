@@ -17,7 +17,7 @@ Always include a README.md for new packages. The `README.md` should always follo
     ```md
     # RivetKit {subname, e.g. library: Rivet Actor, driver and platform: RivetKit Cloudflare Workers Adapter}
 
-    _Lightweight Libraries for Backends_
+    _Library to build and scale stateful workloads_
 
     [Learn More →](https://github.com/rivet-gg/rivetkit)
 
