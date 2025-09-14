@@ -18,6 +18,7 @@ import type {
 	GetWithKeyInput,
 	ManagerDriver,
 } from "@/driver-helpers/mod";
+import type { ManagerDisplayInformation } from "@/manager/driver";
 import { type Encoding, noopNext, type RunConfig } from "@/mod";
 import {
 	createActor,
@@ -133,6 +134,17 @@ export class EngineManagerDriver implements ManagerDriver {
 		const args = await createWebSocketProxy(c, wsGuardUrl, headers);
 
 		return await upgradeWebSocket(() => args)(c, noopNext());
+	}
+
+	displayInformation(): ManagerDisplayInformation {
+		return {
+			name: "Rivet Engine",
+			properties: {
+				Endpoint: this.#config.endpoint,
+				Namespace: this.#config.namespace,
+				Runner: this.#config.runnerName,
+			},
+		};
 	}
 
 	extraStartupLog() {

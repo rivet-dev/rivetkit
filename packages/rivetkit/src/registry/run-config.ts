@@ -50,6 +50,9 @@ export const RunConfigSchema = z
 		 */
 		basePath: z.string().optional().default("/"),
 
+		/** Disable welcome message. */
+		noWelcome: z.boolean().optional().default(false),
+
 		logging: z
 			.object({
 				baseLogger: z.custom<Logger>().optional(),

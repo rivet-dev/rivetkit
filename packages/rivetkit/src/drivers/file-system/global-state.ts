@@ -84,6 +84,10 @@ export class FileSystemGlobalState {
 		actorDriver: ActorDriver;
 	};
 
+	get persist(): boolean {
+		return this.#persist;
+	}
+
 	get storagePath() {
 		return this.#storagePath;
 	}

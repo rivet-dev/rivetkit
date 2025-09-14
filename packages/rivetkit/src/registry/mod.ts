@@ -9,6 +9,7 @@ import { chooseDefaultDriver } from "@/drivers/default";
 import { createInlineClientDriver } from "@/inline-client-driver/mod";
 import { getInspectorUrl } from "@/inspector/utils";
 import { createManagerRouter } from "@/manager/router";
+import pkg from "../../package.json" with { type: "json" };
 import {
 	type RegistryActors,
 	type RegistryConfig,
@@ -90,6 +91,21 @@ export class Registry<A extends RegistryActors> {
 		});
 		if (config.inspector?.enabled) {
 			logger().info({ msg: "inspector ready", url: getInspectorUrl(config) });
+		}
+
+		// Print welcome information
+		if (!config.noWelcome) {
+			const displayInfo = managerDriver.displayInformation();
+			console.log();
+			console.log(`  RivetKit ${pkg.version} (${displayInfo.name})`);
+			for (const [k, v] of Object.entries(displayInfo.properties)) {
+				const padding = " ".repeat(Math.max(0, 13 - k.length));
+				console.log(`  - ${k}:${padding}${v}`);
+			}
+			if (config.inspector?.enabled) {
+				console.log(`  - Inspector:    ${getInspectorUrl(config)}`);
+			}
+			console.log();
 		}
 
 		// Create runner
