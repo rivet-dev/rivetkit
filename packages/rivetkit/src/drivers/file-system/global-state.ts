@@ -418,7 +418,6 @@ export class FileSystemGlobalState {
 		actorDriver: ActorDriver,
 	) {
 		if (this.#runnerParams) {
-			logger().warn("already called onRunnerStart");
 			return;
 		}
 
