@@ -152,9 +152,6 @@ export class EngineManagerDriver implements ManagerDriver {
 			engine: this.#config.endpoint,
 			namespace: this.#config.namespace,
 			runner: this.#config.runnerName,
-			address: Object.values(this.#config.addresses)
-				.map((v) => `${v.host}:${v.port}`)
-				.join(", "),
 		};
 	}
 
