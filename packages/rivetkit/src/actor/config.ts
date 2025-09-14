@@ -11,7 +11,6 @@ export type InitContext = ActorContext<
 	undefined,
 	undefined,
 	undefined,
-	undefined,
 	undefined
 >;
 
@@ -21,7 +20,6 @@ export interface ActorTypes<
 	TConnState,
 	TVars,
 	TInput,
-	TAuthData,
 	TDatabase extends AnyDatabaseProvider,
 > {
 	state?: TState;
@@ -29,7 +27,6 @@ export interface ActorTypes<
 	connState?: TConnState;
 	vars?: TVars;
 	input?: TInput;
-	authData?: TAuthData;
 	database?: TDatabase;
 }
 
@@ -40,7 +37,6 @@ export interface ActorTypes<
 // (b) it makes the type definitions incredibly difficult to read as opposed to vanilla TypeScript.
 export const ActorConfigSchema = z
 	.object({
-		onAuth: z.function().optional(),
 		onCreate: z.function().optional(),
 		onStart: z.function().optional(),
 		onStop: z.function().optional(),
@@ -116,15 +112,7 @@ export interface OnConnectOptions {
 // This must have only one or the other or else TState will not be able to be inferred
 //
 // Data returned from this handler will be available on `c.state`.
-type CreateState<
-	TState,
-	TConnParams,
-	TConnState,
-	TVars,
-	TInput,
-	TAuthData,
-	TDatabase,
-> =
+type CreateState<TState, TConnParams, TConnState, TVars, TInput, TDatabase> =
 	| { state: TState }
 	| {
 			createState: (c: InitContext, input: TInput) => TState | Promise<TState>;
@@ -142,7 +130,6 @@ type CreateConnState<
 	TConnState,
 	TVars,
 	TInput,
-	TAuthData,
 	TDatabase,
 > =
 	| { connState: TConnState }
@@ -161,15 +148,7 @@ type CreateConnState<
 /**
  * @experimental
  */
-type CreateVars<
-	TState,
-	TConnParams,
-	TConnState,
-	TVars,
-	TInput,
-	TAuthData,
-	TDatabase,
-> =
+type CreateVars<TState, TConnParams, TConnState, TVars, TInput, TDatabase> =
 	| {
 			/**
 			 * @experimental
@@ -184,62 +163,16 @@ type CreateVars<
 	  }
 	| Record<never, never>;
 
-// Creates auth config
-//
-// This must have only one or the other or else TAuthData will not be able to be inferred
-type OnAuth<TConnParams, TAuthData> =
-	| {
-			/**
-			 * Called on the HTTP server before clients can interact with the actor.
-			 *
-			 * Only called for public endpoints. Calls to actors from within the backend
-			 * do not trigger this handler.
-			 *
-			 * Data returned from this handler will be available on `c.conn.auth`.
-			 *
-			 * This function is required for any public HTTP endpoint access. Use this hook
-			 * to validate client credentials and return authentication data that will be
-			 * available on connections. This runs on the HTTP server (not the actor)
-			 * in order to reduce load on the actor & prevent denial of server attacks
-			 * against individual actors.
-			 *
-			 * If you need access to actor state for authentication, use onBeforeConnect
-			 * with an empty onAuth function instead.
-			 *
-			 * You can also provide your own authentication middleware on your router if you
-			 * choose, then use onAuth to pass the authentication data (e.g. user ID) to the
-			 * actor itself.
-			 *
-			 * @param opts Authentication options including request and intent
-			 * @returns Authentication data to attach to connections (must be serializable)
-			 * @throws Throw an error to deny access to the actor
-			 */
-			onAuth: (
-				opts: OnAuthOptions,
-				params: TConnParams,
-			) => TAuthData | Promise<TAuthData>;
-	  }
-	| Record<never, never>;
-
 export interface Actions<
 	TState,
 	TConnParams,
 	TConnState,
 	TVars,
 	TInput,
-	TAuthData,
 	TDatabase extends AnyDatabaseProvider,
 > {
 	[Action: string]: (
-		c: ActionContext<
-			TState,
-			TConnParams,
-			TConnState,
-			TVars,
-			TInput,
-			TAuthData,
-			TDatabase
-		>,
+		c: ActionContext<TState, TConnParams, TConnState, TVars, TInput, TDatabase>,
 		...args: any[]
 	) => any;
 }
@@ -254,21 +187,12 @@ export interface Actions<
  */
 export type AuthIntent = "get" | "create" | "connect" | "action" | "message";
 
-export interface OnAuthOptions {
-	request: Request;
-	/**
-	 * @experimental
-	 */
-	intents: Set<AuthIntent>;
-}
-
 interface BaseActorConfig<
 	TState,
 	TConnParams,
 	TConnState,
 	TVars,
 	TInput,
-	TAuthData,
 	TDatabase extends AnyDatabaseProvider,
 	TActions extends Actions<
 		TState,
@@ -276,7 +200,6 @@ interface BaseActorConfig<
 		TConnState,
 		TVars,
 		TInput,
-		TAuthData,
 		TDatabase
 	>,
 > {
@@ -287,15 +210,7 @@ interface BaseActorConfig<
 	 * This is called before any other lifecycle hooks.
 	 */
 	onCreate?: (
-		c: ActorContext<
-			TState,
-			TConnParams,
-			TConnState,
-			TVars,
-			TInput,
-			TAuthData,
-			TDatabase
-		>,
+		c: ActorContext<TState, TConnParams, TConnState, TVars, TInput, TDatabase>,
 		input: TInput,
 	) => void | Promise<void>;
 
@@ -308,15 +223,7 @@ interface BaseActorConfig<
 	 * @returns Void or a Promise that resolves when startup is complete
 	 */
 	onStart?: (
-		c: ActorContext<
-			TState,
-			TConnParams,
-			TConnState,
-			TVars,
-			TInput,
-			TAuthData,
-			TDatabase
-		>,
+		c: ActorContext<TState, TConnParams, TConnState, TVars, TInput, TDatabase>,
 	) => void | Promise<void>;
 
 	/**
@@ -330,15 +237,7 @@ interface BaseActorConfig<
 	 * @returns Void or a Promise that resolves when shutdown is complete
 	 */
 	onStop?: (
-		c: ActorContext<
-			TState,
-			TConnParams,
-			TConnState,
-			TVars,
-			TInput,
-			TAuthData,
-			TDatabase
-		>,
+		c: ActorContext<TState, TConnParams, TConnState, TVars, TInput, TDatabase>,
 	) => void | Promise<void>;
 
 	/**
@@ -353,48 +252,22 @@ interface BaseActorConfig<
 	 * @param newState The updated state
 	 */
 	onStateChange?: (
-		c: ActorContext<
-			TState,
-			TConnParams,
-			TConnState,
-			TVars,
-			TInput,
-			TAuthData,
-			TDatabase
-		>,
+		c: ActorContext<TState, TConnParams, TConnState, TVars, TInput, TDatabase>,
 		newState: TState,
 	) => void;
 
 	/**
 	 * Called before a client connects to the actor.
 	 *
-	 * Unlike onAuth, this handler is still called for both internal and
-	 * public clients.
-	 *
 	 * Use this hook to determine if a connection should be accepted
-	 * and to initialize connection-specific state. Unlike onAuth, this runs
-	 * on the actor and has access to actor state, but uses slightly
-	 * more resources on the actor rather than authenticating with onAuth.
-	 *
-	 * For authentication without actor state access, prefer onAuth.
-	 *
-	 * For authentication with actor state, use onBeforeConnect with an empty
-	 * onAuth handler.
+	 * and to initialize connection-specific state.
 	 *
 	 * @param opts Connection parameters including client-provided data
 	 * @returns The initial connection state or a Promise that resolves to it
 	 * @throws Throw an error to reject the connection
 	 */
 	onBeforeConnect?: (
-		c: ActorContext<
-			TState,
-			TConnParams,
-			TConnState,
-			TVars,
-			TInput,
-			TAuthData,
-			TDatabase
-		>,
+		c: ActorContext<TState, TConnParams, TConnState, TVars, TInput, TDatabase>,
 		opts: OnConnectOptions,
 		params: TConnParams,
 	) => void | Promise<void>;
@@ -409,24 +282,8 @@ interface BaseActorConfig<
 	 * @returns Void or a Promise that resolves when connection handling is complete
 	 */
 	onConnect?: (
-		c: ActorContext<
-			TState,
-			TConnParams,
-			TConnState,
-			TVars,
-			TInput,
-			TAuthData,
-			TDatabase
-		>,
-		conn: Conn<
-			TState,
-			TConnParams,
-			TConnState,
-			TVars,
-			TInput,
-			TAuthData,
-			TDatabase
-		>,
+		c: ActorContext<TState, TConnParams, TConnState, TVars, TInput, TDatabase>,
+		conn: Conn<TState, TConnParams, TConnState, TVars, TInput, TDatabase>,
 	) => void | Promise<void>;
 
 	/**
@@ -439,24 +296,8 @@ interface BaseActorConfig<
 	 * @returns Void or a Promise that resolves when disconnect handling is complete
 	 */
 	onDisconnect?: (
-		c: ActorContext<
-			TState,
-			TConnParams,
-			TConnState,
-			TVars,
-			TInput,
-			TAuthData,
-			TDatabase
-		>,
-		conn: Conn<
-			TState,
-			TConnParams,
-			TConnState,
-			TVars,
-			TInput,
-			TAuthData,
-			TDatabase
-		>,
+		c: ActorContext<TState, TConnParams, TConnState, TVars, TInput, TDatabase>,
+		conn: Conn<TState, TConnParams, TConnState, TVars, TInput, TDatabase>,
 	) => void | Promise<void>;
 
 	/**
@@ -472,15 +313,7 @@ interface BaseActorConfig<
 	 * @returns The modified output to send to the client
 	 */
 	onBeforeActionResponse?: <Out>(
-		c: ActorContext<
-			TState,
-			TConnParams,
-			TConnState,
-			TVars,
-			TInput,
-			TAuthData,
-			TDatabase
-		>,
+		c: ActorContext<TState, TConnParams, TConnState, TVars, TInput, TDatabase>,
 		name: string,
 		args: unknown[],
 		output: Out,
@@ -496,17 +329,9 @@ interface BaseActorConfig<
 	 * @returns A Response object to send back, or void to continue with default routing
 	 */
 	onFetch?: (
-		c: ActorContext<
-			TState,
-			TConnParams,
-			TConnState,
-			TVars,
-			TInput,
-			TAuthData,
-			TDatabase
-		>,
+		c: ActorContext<TState, TConnParams, TConnState, TVars, TInput, TDatabase>,
 		request: Request,
-		opts: { auth: TAuthData },
+		opts: {},
 	) => Response | Promise<Response>;
 
 	/**
@@ -519,17 +344,9 @@ interface BaseActorConfig<
 	 * @param request The original HTTP upgrade request
 	 */
 	onWebSocket?: (
-		c: ActorContext<
-			TState,
-			TConnParams,
-			TConnState,
-			TVars,
-			TInput,
-			TAuthData,
-			TDatabase
-		>,
+		c: ActorContext<TState, TConnParams, TConnState, TVars, TInput, TDatabase>,
 		websocket: UniversalWebSocket,
-		opts: { request: Request; auth: TAuthData },
+		opts: { request: Request },
 	) => void | Promise<void>;
 
 	actions: TActions;
@@ -553,12 +370,10 @@ export type ActorConfig<
 	TConnState,
 	TVars,
 	TInput,
-	TAuthData,
 	TDatabase extends AnyDatabaseProvider,
 > = Omit<
 	z.infer<typeof ActorConfigSchema>,
 	| "actions"
-	| "onAuth"
 	| "onCreate"
 	| "onStart"
 	| "onStateChange"
@@ -582,46 +397,12 @@ export type ActorConfig<
 		TConnState,
 		TVars,
 		TInput,
-		TAuthData,
 		TDatabase,
-		Actions<
-			TState,
-			TConnParams,
-			TConnState,
-			TVars,
-			TInput,
-			TAuthData,
-			TDatabase
-		>
+		Actions<TState, TConnParams, TConnState, TVars, TInput, TDatabase>
 	> &
-	OnAuth<TConnParams, TAuthData> &
-	CreateState<
-		TState,
-		TConnParams,
-		TConnState,
-		TVars,
-		TInput,
-		TAuthData,
-		TDatabase
-	> &
-	CreateConnState<
-		TState,
-		TConnParams,
-		TConnState,
-		TVars,
-		TInput,
-		TAuthData,
-		TDatabase
-	> &
-	CreateVars<
-		TState,
-		TConnParams,
-		TConnState,
-		TVars,
-		TInput,
-		TAuthData,
-		TDatabase
-	> &
+	CreateState<TState, TConnParams, TConnState, TVars, TInput, TDatabase> &
+	CreateConnState<TState, TConnParams, TConnState, TVars, TInput, TDatabase> &
+	CreateVars<TState, TConnParams, TConnState, TVars, TInput, TDatabase> &
 	ActorDatabaseConfig<TDatabase>;
 
 // See description on `ActorConfig`
@@ -631,7 +412,6 @@ export type ActorConfigInput<
 	TConnState = undefined,
 	TVars = undefined,
 	TInput = undefined,
-	TAuthData = undefined,
 	TDatabase extends AnyDatabaseProvider = undefined,
 	TActions extends Actions<
 		TState,
@@ -639,23 +419,13 @@ export type ActorConfigInput<
 		TConnState,
 		TVars,
 		TInput,
-		TAuthData,
 		TDatabase
 	> = Record<never, never>,
 > = {
-	types?: ActorTypes<
-		TState,
-		TConnParams,
-		TConnState,
-		TVars,
-		TInput,
-		TAuthData,
-		TDatabase
-	>;
+	types?: ActorTypes<TState, TConnParams, TConnState, TVars, TInput, TDatabase>;
 } & Omit<
 	z.input<typeof ActorConfigSchema>,
 	| "actions"
-	| "onAuth"
 	| "onCreate"
 	| "onStart"
 	| "onStop"
@@ -680,38 +450,12 @@ export type ActorConfigInput<
 		TConnState,
 		TVars,
 		TInput,
-		TAuthData,
 		TDatabase,
 		TActions
 	> &
-	OnAuth<TConnParams, TAuthData> &
-	CreateState<
-		TState,
-		TConnParams,
-		TConnState,
-		TVars,
-		TInput,
-		TAuthData,
-		TDatabase
-	> &
-	CreateConnState<
-		TState,
-		TConnParams,
-		TConnState,
-		TVars,
-		TInput,
-		TAuthData,
-		TDatabase
-	> &
-	CreateVars<
-		TState,
-		TConnParams,
-		TConnState,
-		TVars,
-		TInput,
-		TAuthData,
-		TDatabase
-	> &
+	CreateState<TState, TConnParams, TConnState, TVars, TInput, TDatabase> &
+	CreateConnState<TState, TConnParams, TConnState, TVars, TInput, TDatabase> &
+	CreateVars<TState, TConnParams, TConnState, TVars, TInput, TDatabase> &
 	ActorDatabaseConfig<TDatabase>;
 
 // For testing type definitions:
@@ -721,7 +465,6 @@ export function test<
 	TConnState,
 	TVars,
 	TInput,
-	TAuthData,
 	TDatabase extends AnyDatabaseProvider,
 	TActions extends Actions<
 		TState,
@@ -729,7 +472,6 @@ export function test<
 		TConnState,
 		TVars,
 		TInput,
-		TAuthData,
 		TDatabase
 	>,
 >(
@@ -739,26 +481,16 @@ export function test<
 		TConnState,
 		TVars,
 		TInput,
-		TAuthData,
 		TDatabase,
 		TActions
 	>,
-): ActorConfig<
-	TState,
-	TConnParams,
-	TConnState,
-	TVars,
-	TInput,
-	TAuthData,
-	TDatabase
-> {
+): ActorConfig<TState, TConnParams, TConnState, TVars, TInput, TDatabase> {
 	const config = ActorConfigSchema.parse(input) as ActorConfig<
 		TState,
 		TConnParams,
 		TConnState,
 		TVars,
 		TInput,
-		TAuthData,
 		TDatabase
 	>;
 	return config;

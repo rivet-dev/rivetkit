@@ -1,7 +1,6 @@
 import { actor, UserError } from "rivetkit";
 
 export const errorHandlingActor = actor({
-	onAuth: () => {},
 	state: {
 		errorLog: [] as string[],
 	},

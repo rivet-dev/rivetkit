@@ -5,7 +5,6 @@ import { type TestContext, vi } from "vitest";
 import { type Client, createClient } from "@/client/mod";
 import { chooseDefaultDriver } from "@/drivers/default";
 import { createFileSystemOrMemoryDriver } from "@/drivers/file-system/mod";
-import { createInlineClientDriver } from "@/inline-client-driver/mod";
 import { getInspectorUrl } from "@/inspector/utils";
 import { createManagerRouter } from "@/manager/router";
 import type { Registry } from "@/registry/mod";
@@ -28,11 +27,9 @@ function serve(registry: Registry<any>, inputConfig?: InputConfig): ServerType {
 	const runConfig = RunConfigSchema.parse(inputConfig);
 	const driver = inputConfig.driver ?? createFileSystemOrMemoryDriver(false);
 	const managerDriver = driver.manager(registry.config, config);
-	const inlineClientDriver = createInlineClientDriver(managerDriver);
 	const { router } = createManagerRouter(
 		registry.config,
 		runConfig,
-		inlineClientDriver,
 		managerDriver,
 		false,
 	);
@@ -89,18 +86,21 @@ export async function setupTest<A extends Registry<any>>(
 		async () => await new Promise((resolve) => server.close(() => resolve())),
 	);
 
-	// Create client
-	const client = createClient<A>(`http://127.0.0.1:${port}`);
-	c.onTestFinished(async () => await client.dispose());
+	throw "TODO: Fix engine port";
 
-	return {
-		client,
-		mockDriver: {
-			actorDriver: {
-				setCreateVarsContext: setDriverContextFn,
-			},
-		},
-	};
+	// // TODO: Figure out how to make this the correct endpoint
+	// // Create client
+	// const client = createClient<A>(`http://127.0.0.1:${port}`);
+	// c.onTestFinished(async () => await client.dispose());
+	//
+	// return {
+	// 	client,
+	// 	mockDriver: {
+	// 		actorDriver: {
+	// 			setCreateVarsContext: setDriverContextFn,
+	// 		},
+	// 	},
+	// };
 }
 
 export async function getPort(): Promise<number> {

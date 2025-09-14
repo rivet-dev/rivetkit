@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import type { ActorError } from "@/client/mod";
 import type { DriverTestConfig } from "../mod";
 import { setupDriverTest } from "../utils";
 
@@ -73,6 +74,38 @@ export function runActorHandleTests(driverTestConfig: DriverTestConfig) {
 
 				const retrievedCount = await handle.getCount();
 				expect(retrievedCount).toBe(9);
+			});
+
+			test("errors when calling create twice with the same key", async (c) => {
+				const { client } = await setupDriverTest(c, driverTestConfig);
+
+				const key = ["duplicate-create-handle", crypto.randomUUID()];
+
+				// First create should succeed
+				await client.counter.create(key);
+
+				// Second create with same key should throw ActorAlreadyExists
+				try {
+					await client.counter.create(key);
+					expect.fail("did not error on duplicate create");
+				} catch (err) {
+					expect((err as ActorError).group).toBe("actor");
+					expect((err as ActorError).code).toBe("already_exists");
+				}
+			});
+
+			test(".get().resolve() errors for non-existent actor", async (c) => {
+				const { client } = await setupDriverTest(c, driverTestConfig);
+
+				const missingId = `nonexistent-${crypto.randomUUID()}`;
+
+				try {
+					await client.counter.get([missingId]).resolve();
+					expect.fail("did not error for get().resolve() on missing actor");
+				} catch (err) {
+					expect((err as ActorError).group).toBe("actor");
+					expect((err as ActorError).code).toBe("not_found");
+				}
 			});
 		});
 

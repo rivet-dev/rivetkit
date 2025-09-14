@@ -21,7 +21,8 @@ export async function crossPlatformServe(
 	}
 
 	// Mount registry
-	app.route("/registry", rivetKitRouter);
+	// app.route("/registry", rivetKitRouter);
+	app.route("/", rivetKitRouter);
 
 	// Import @hono/node-ws
 	let createNodeWebSocket: any;
@@ -41,9 +42,7 @@ export async function crossPlatformServe(
 	});
 
 	// Start server
-	const port = Number.parseInt(
-		getEnvUniversal("PORT") ?? getEnvUniversal("PORT_HTTP") ?? "8080",
-	);
+	const port = 6420;
 	const server = serve({ fetch: app.fetch, port }, () =>
 		logger().info({ msg: "server listening", port }),
 	);

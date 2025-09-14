@@ -1,10 +1,11 @@
 import type { Registry } from "@/registry/mod";
+import { RemoteManagerDriver } from "@/remote-manager-driver/mod";
 import {
 	type Client,
-	type ClientOptions,
+	type ClientConfigInput,
 	createClientWithDriver,
 } from "./client";
-import { createHttpClientDriver } from "./http-client-driver";
+import { ClientConfigSchema } from "./config";
 
 export {
 	ActorDefinition,
@@ -28,7 +29,6 @@ export { ActorHandleRaw } from "./actor-handle";
 export type {
 	ActorAccessor,
 	Client,
-	ClientOptions,
 	ClientRaw,
 	CreateOptions,
 	ExtractActorsFromRegistry,
@@ -41,16 +41,20 @@ export type {
 
 /**
  * Creates a client with the actor accessor proxy.
- *
- * @template A The actor application type.
- * @param {string} managerEndpoint - The manager endpoint.
- * @param {ClientOptions} [opts] - Options for configuring the client.
- * @returns {Client<A>} - A proxied client that supports the `client.myActor.connect()` syntax.
  */
 export function createClient<A extends Registry<any>>(
-	endpoint: string,
-	opts?: ClientOptions,
+	endpointOrConfig?: string | ClientConfigInput,
 ): Client<A> {
-	const driver = createHttpClientDriver(endpoint);
-	return createClientWithDriver<A>(driver, opts);
+	// Parse config
+	const configInput =
+		endpointOrConfig === undefined
+			? {}
+			: typeof endpointOrConfig === "string"
+				? { engine: endpointOrConfig }
+				: endpointOrConfig;
+	const config = ClientConfigSchema.parse(configInput);
+
+	// Create client
+	const driver = new RemoteManagerDriver(config);
+	return createClientWithDriver<A>(driver, config);
 }

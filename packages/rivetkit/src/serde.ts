@@ -40,13 +40,16 @@ export function wsBinaryTypeForEncoding(
 export function serializeWithEncoding<T>(
 	encoding: Encoding,
 	value: T,
-	versionedDataHandler: VersionedDataHandler<T>,
+	versionedDataHandler: VersionedDataHandler<T> | undefined,
 ): Uint8Array | string {
 	if (encoding === "json") {
 		return jsonStringifyCompat(value);
 	} else if (encoding === "cbor") {
 		return cbor.encode(value);
 	} else if (encoding === "bare") {
+		if (!versionedDataHandler) {
+			throw new Error("VersionedDataHandler is required for 'bare' encoding");
+		}
 		return versionedDataHandler.serializeWithEmbeddedVersion(value);
 	} else {
 		assertUnreachable(encoding);
@@ -56,7 +59,7 @@ export function serializeWithEncoding<T>(
 export function deserializeWithEncoding<T>(
 	encoding: Encoding,
 	buffer: Uint8Array | string,
-	versionedDataHandler: VersionedDataHandler<T>,
+	versionedDataHandler: VersionedDataHandler<T> | undefined,
 ): T {
 	if (encoding === "json") {
 		if (typeof buffer === "string") {
@@ -77,6 +80,9 @@ export function deserializeWithEncoding<T>(
 			typeof buffer !== "string",
 			"buffer cannot be string for bare encoding",
 		);
+		if (!versionedDataHandler) {
+			throw new Error("VersionedDataHandler is required for 'bare' encoding");
+		}
 		return versionedDataHandler.deserializeWithEmbeddedVersion(buffer);
 	} else {
 		assertUnreachable(encoding);

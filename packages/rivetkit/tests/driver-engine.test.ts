@@ -2,7 +2,6 @@ import { join } from "node:path";
 import { createClientWithDriver } from "@/client/client";
 import { createTestRuntime, runDriverTests } from "@/driver-test-suite/mod";
 import { createEngineDriver } from "@/drivers/engine/mod";
-import { createInlineClientDriver } from "@/inline-client-driver/mod";
 import { RunConfigSchema } from "@/registry/run-config";
 import { getPort } from "@/test/mod";
 
@@ -20,6 +19,7 @@ runDriverTests({
 				// Get configuration from environment or use defaults
 				const endpoint = process.env.RIVET_ENDPOINT || "http://localhost:6420";
 				const namespace = `test-${crypto.randomUUID().slice(0, 8)}`;
+				const runnerName = "test-runner";
 
 				// Create namespace
 				const response = await fetch(`${endpoint}/namespaces`, {
@@ -40,7 +40,7 @@ runDriverTests({
 				const driverConfig = createEngineDriver({
 					endpoint,
 					namespace,
-					runnerName: "test-runner",
+					runnerName,
 					totalSlots: 1000,
 				});
 
@@ -50,8 +50,7 @@ runDriverTests({
 					getUpgradeWebSocket: () => undefined,
 				});
 				const managerDriver = driverConfig.manager(registry.config, runConfig);
-				const inlineClientDriver = createInlineClientDriver(managerDriver);
-				const inlineClient = createClientWithDriver(inlineClientDriver);
+				const inlineClient = createClientWithDriver(managerDriver, runConfig);
 				const actorDriver = driverConfig.actor(
 					registry.config,
 					runConfig,
@@ -60,6 +59,11 @@ runDriverTests({
 				);
 
 				return {
+					rivetEngine: {
+						endpoint: "http://127.0.0.1:6420",
+						namespace: namespace,
+						runnerName: runnerName,
+					},
 					driver: driverConfig,
 					cleanup: async () => {
 						await actorDriver.shutdown?.(true);

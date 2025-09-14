@@ -2,7 +2,6 @@ import { actor } from "rivetkit";
 import type { registry } from "./registry";
 
 export const inlineClientActor = actor({
-	onAuth: () => {},
 	state: { messages: [] as string[] },
 	actions: {
 		// Action that uses client to call another actor (stateless)

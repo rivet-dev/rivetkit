@@ -571,7 +571,6 @@ export async function handleRawWebSocketHandler(
 			// Call the actor's onWebSocket handler with the adapted WebSocket
 			actor.handleWebSocket(adapter, {
 				request: newRequest,
-				auth: authData,
 			});
 		},
 		onMessage: (event: any, ws: any) => {
@@ -613,13 +612,9 @@ export function getRequestEncoding(req: HonoRequest): Encoding {
 	return result.data;
 }
 
-export function getRequestExposeInternalError(req: Request): boolean {
-	const param = req.headers.get(HEADER_EXPOSE_INTERNAL_ERROR);
-	if (!param) {
-		return false;
-	}
-
-	return param === "true";
+export function getRequestExposeInternalError(_req: Request): boolean {
+	// Unipmlemented
+	return false;
 }
 
 export function getRequestQuery(c: HonoContext): unknown {
@@ -643,9 +638,6 @@ export function getRequestQuery(c: HonoContext): unknown {
 export const HEADER_ACTOR_QUERY = "X-RivetKit-Query";
 
 export const HEADER_ENCODING = "X-RivetKit-Encoding";
-
-// Internal header
-export const HEADER_EXPOSE_INTERNAL_ERROR = "X-RivetKit-Expose-Internal-Error";
 
 // IMPORTANT: Params must be in headers or in an E2EE part of the request (i.e. NOT the URL or query string) in order to ensure that tokens can be securely passed in params.
 export const HEADER_CONN_PARAMS = "X-RivetKit-Conn-Params";

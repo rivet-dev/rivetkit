@@ -2,7 +2,6 @@ import { actor, UserError } from "rivetkit";
 
 // Actor with synchronous actions
 export const syncActionActor = actor({
-	onAuth: () => {},
 	state: { value: 0 },
 	actions: {
 		// Simple synchronous action that returns a value directly
@@ -26,7 +25,6 @@ export const syncActionActor = actor({
 
 // Actor with asynchronous actions
 export const asyncActionActor = actor({
-	onAuth: () => {},
 	state: { value: 0, data: null as any },
 	actions: {
 		// Async action with a delay
@@ -59,7 +57,6 @@ export const asyncActionActor = actor({
 
 // Actor with promise actions
 export const promiseActor = actor({
-	onAuth: () => {},
 	state: { results: [] as string[] },
 	actions: {
 		// Action that returns a resolved promise

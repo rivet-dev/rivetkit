@@ -17,7 +17,6 @@ import type {
 	GetWithKeyInput,
 	ManagerDriver,
 } from "@/driver-helpers/mod";
-import { createInlineClientDriver } from "@/inline-client-driver/mod";
 import { ManagerInspector } from "@/inspector/manager";
 import { type Actor, ActorFeature, type ActorId } from "@/inspector/mod";
 import type { ManagerDisplayInformation } from "@/manager/driver";
@@ -28,6 +27,7 @@ import {
 	PATH_RAW_WEBSOCKET_PREFIX,
 	type RegistryConfig,
 	type RunConfig,
+	type UniversalWebSocket,
 } from "@/mod";
 import type * as schema from "@/schemas/file-system-driver/mod";
 import type { FileSystemGlobalState } from "./global-state";
@@ -120,7 +120,7 @@ export class FileSystemManagerDriver implements ManagerDriver {
 		}
 
 		// Actors run on the same node as the manager, so we create a dummy actor router that we route requests to
-		const inlineClient = createClientWithDriver(createInlineClientDriver(this));
+		const inlineClient = createClientWithDriver(this);
 		this.#actorDriver = this.#driverConfig.actor(
 			registryConfig,
 			runConfig,
@@ -141,7 +141,7 @@ export class FileSystemManagerDriver implements ManagerDriver {
 		actorId: string,
 		encoding: Encoding,
 		params: unknown,
-	): Promise<WebSocket> {
+	): Promise<UniversalWebSocket> {
 		// TODO:
 
 		// Handle raw WebSocket paths

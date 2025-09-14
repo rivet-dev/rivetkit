@@ -5,7 +5,6 @@ export type Input = { x: number; y: number };
 export type Player = { id: string; position: Position; input: Input };
 
 const gameRoom = actor({
-	onAuth: () => {},
 	// Persistent state that survives restarts: https://rivet.gg/docs/actors/state
 	state: {
 		players: {} as Record<string, Player>,

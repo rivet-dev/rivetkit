@@ -4,13 +4,12 @@ import { bundleRequire } from "bundle-require";
 import invariant from "invariant";
 import { describe } from "vitest";
 import type { Transport } from "@/client/mod";
-import { createInlineClientDriver } from "@/inline-client-driver/mod";
 import { createManagerRouter } from "@/manager/router";
 import type { DriverConfig, Registry, RunConfig } from "@/mod";
 import { RunConfigSchema } from "@/registry/run-config";
 import { getPort } from "@/test/mod";
+import { logger } from "./log";
 import { runActionFeaturesTests } from "./tests/action-features";
-import { runActorAuthTests } from "./tests/actor-auth";
 import { runActorConnTests } from "./tests/actor-conn";
 import { runActorConnStateTests } from "./tests/actor-conn-state";
 import {
@@ -68,6 +67,8 @@ type ClientType = "http" | "inline";
 
 export interface DriverDeployOutput {
 	endpoint: string;
+	namespace: string;
+	runnerName: string;
 
 	/** Cleans up the test. */
 	cleanup(): Promise<void>;
@@ -114,8 +115,6 @@ export function runDriverTests(
 
 			runActorErrorHandlingTests(driverTestConfig);
 
-			runActorAuthTests(driverTestConfig);
-
 			runActorInlineClientTests(driverTestConfig);
 
 			runRawHttpTests(driverTestConfig);
@@ -141,6 +140,7 @@ export function runDriverTests(
 export async function createTestRuntime(
 	registryPath: string,
 	driverFactory: (registry: Registry<any>) => Promise<{
+		rivetEngine?: { endpoint: string; namespace: string; runnerName: string };
 		driver: DriverConfig;
 		cleanup?: () => Promise<void>;
 	}>,
@@ -156,58 +156,84 @@ export async function createTestRuntime(
 	registry.config.test.enabled = true;
 
 	// Build drivers
-	const { driver, cleanup: driverCleanup } = await driverFactory(registry);
-
-	// Build driver config
-	let injectWebSocket: NodeWebSocket["injectWebSocket"] | undefined;
-	let upgradeWebSocket: any;
-	const config: RunConfig = RunConfigSchema.parse({
+	const {
 		driver,
-		getUpgradeWebSocket: () => upgradeWebSocket!,
-		inspector: {
-			enabled: true,
-			token: () => "token",
-		},
-	});
+		cleanup: driverCleanup,
+		rivetEngine,
+	} = await driverFactory(registry);
 
-	// Create router
-	const managerDriver = driver.manager(registry.config, config);
-	const inlineDriver = createInlineClientDriver(managerDriver);
-	const { router } = createManagerRouter(
-		registry.config,
-		config,
-		inlineDriver,
-		managerDriver,
-		false,
-	);
+	if (rivetEngine) {
+		// TODO: We don't need createTestRuntime fort his
+		// Using external Rivet engine
 
-	// Inject WebSocket
-	const nodeWebSocket = createNodeWebSocket({ app: router });
-	upgradeWebSocket = nodeWebSocket.upgradeWebSocket;
-	injectWebSocket = nodeWebSocket.injectWebSocket;
+		const cleanup = async () => {
+			await driverCleanup?.();
+		};
 
-	// Start server
-	const port = await getPort();
-	const server = honoServe({
-		fetch: router.fetch,
-		hostname: "127.0.0.1",
-		port,
-	});
-	invariant(injectWebSocket !== undefined, "should have injectWebSocket");
-	injectWebSocket(server);
-	const endpoint = `http://127.0.0.1:${port}`;
+		return {
+			endpoint: rivetEngine.endpoint,
+			namespace: rivetEngine.namespace,
+			runnerName: rivetEngine.runnerName,
+			cleanup,
+		};
+	} else {
+		// Start server for Rivet engine
 
-	// Cleanup
-	const cleanup = async () => {
-		// Stop server
-		await new Promise((resolve) => server.close(() => resolve(undefined)));
+		// Build driver config
+		// biome-ignore lint/style/useConst: Assigned later
+		let upgradeWebSocket: any;
+		const config: RunConfig = RunConfigSchema.parse({
+			driver,
+			getUpgradeWebSocket: () => upgradeWebSocket!,
+			inspector: {
+				enabled: true,
+				token: () => "token",
+			},
+		});
 
-		// Extra cleanup
-		await driverCleanup?.();
-	};
+		// Create router
+		const managerDriver = driver.manager(registry.config, config);
+		const { router } = createManagerRouter(
+			registry.config,
+			config,
+			managerDriver,
+			false,
+		);
 
-	return {
-		endpoint,
-		cleanup,
-	};
+		// Inject WebSocket
+		const nodeWebSocket = createNodeWebSocket({ app: router });
+		upgradeWebSocket = nodeWebSocket.upgradeWebSocket;
+
+		// Start server
+		const port = await getPort();
+		const server = honoServe({
+			fetch: router.fetch,
+			hostname: "127.0.0.1",
+			port,
+		});
+		invariant(
+			nodeWebSocket.injectWebSocket !== undefined,
+			"should have injectWebSocket",
+		);
+		nodeWebSocket.injectWebSocket(server);
+		const serverEndpoint = `http://127.0.0.1:${port}`;
+
+		logger().info({ msg: "test serer listening", port });
+
+		// Cleanup
+		const cleanup = async () => {
+			// Stop server
+			await new Promise((resolve) => server.close(() => resolve(undefined)));
+
+			// Extra cleanup
+			await driverCleanup?.();
+		};
+
+		return {
+			endpoint: serverEndpoint,
+			namespace: "default",
+			runnerName: "rivetkit",
+			cleanup,
+		};
+	}
 }

@@ -1,7 +1,7 @@
 import * as cbor from "cbor-x";
 import invariant from "invariant";
 import pRetry from "p-retry";
-import type { CloseEvent, WebSocket } from "ws";
+import type { CloseEvent } from "ws";
 import type { AnyActorDefinition } from "@/actor/definition";
 import { inputDataToBuffer } from "@/actor/protocol/old";
 import { type Encoding, jsonStringifyCompat } from "@/actor/protocol/serde";
@@ -11,7 +11,14 @@ import type {
 	UniversalMessageEvent,
 } from "@/common/eventsource-interface";
 import { assertUnreachable, stringifyError } from "@/common/utils";
+import {
+	HEADER_CONN_ID,
+	HEADER_CONN_TOKEN,
+	HEADER_ENCODING,
+	type ManagerDriver,
+} from "@/driver-helpers/mod";
 import type { ActorQuery } from "@/manager/protocol/query";
+import { PATH_CONNECT_WEBSOCKET, type UniversalWebSocket } from "@/mod";
 import type * as protocol from "@/schemas/client-protocol/mod";
 import {
 	TO_CLIENT_VERSIONED,
@@ -24,15 +31,15 @@ import {
 } from "@/serde";
 import { bufferToArrayBuffer, getEnvUniversal } from "@/utils";
 import type { ActorDefinitionActions } from "./actor-common";
-import {
-	ACTOR_CONNS_SYMBOL,
-	type ClientDriver,
-	type ClientRaw,
-	TRANSPORT_SYMBOL,
-} from "./client";
+import { queryActor } from "./actor-query";
+import { ACTOR_CONNS_SYMBOL, type ClientRaw, TRANSPORT_SYMBOL } from "./client";
 import * as errors from "./errors";
 import { logger } from "./log";
-import { type WebSocketMessage as ConnMessage, messageLength } from "./utils";
+import {
+	type WebSocketMessage as ConnMessage,
+	messageLength,
+	sendHttpRequest,
+} from "./utils";
 
 interface ActionInFlight {
 	name: string;
@@ -65,7 +72,7 @@ export interface SendHttpMessageOpts {
 }
 
 export type ConnTransport =
-	| { websocket: WebSocket }
+	| { websocket: UniversalWebSocket }
 	| { sse: UniversalEventSource };
 
 export const CONNECT_SYMBOL = Symbol("connect");
@@ -112,9 +119,9 @@ export class ActorConnRaw {
 	#onOpenPromise?: PromiseWithResolvers<undefined>;
 
 	#client: ClientRaw;
-	#driver: ClientDriver;
+	#driver: ManagerDriver;
 	#params: unknown;
-	#encodingKind: Encoding;
+	#encoding: Encoding;
 	#actorQuery: ActorQuery;
 
 	// TODO: ws message queue
@@ -128,15 +135,15 @@ export class ActorConnRaw {
 	 */
 	public constructor(
 		client: ClientRaw,
-		driver: ClientDriver,
+		driver: ManagerDriver,
 		params: unknown,
-		encodingKind: Encoding,
+		encoding: Encoding,
 		actorQuery: ActorQuery,
 	) {
 		this.#client = client;
 		this.#driver = driver;
 		this.#params = params;
-		this.#encodingKind = encodingKind;
+		this.#encoding = encoding;
 		this.#actorQuery = actorQuery;
 
 		this.#keepNodeAliveInterval = setInterval(() => 60_000);
@@ -261,13 +268,17 @@ enc
 		}
 	}
 
-	async #connectWebSocket({ signal }: { signal?: AbortSignal } = {}) {
-		const ws = await this.#driver.connectWebSocket(
+	async #connectWebSocket() {
+		const { actorId } = await queryActor(
 			undefined,
 			this.#actorQuery,
-			this.#encodingKind,
+			this.#driver,
+		);
+		const ws = await this.#driver.openWebSocket(
+			PATH_CONNECT_WEBSOCKET,
+			actorId,
+			this.#encoding,
 			this.#params,
-			signal ? { signal } : undefined,
 		);
 		this.#transport = { websocket: ws };
 		ws.addEventListener("open", () => {
@@ -284,31 +295,66 @@ enc
 		});
 	}
 
-	async #connectSse({ signal }: { signal?: AbortSignal } = {}) {
-		const eventSource = await this.#driver.connectSse(
-			undefined,
-			this.#actorQuery,
-			this.#encodingKind,
-			this.#params,
-			signal ? { signal } : undefined,
-		);
-		this.#transport = { sse: eventSource };
-		eventSource.onopen = () => {
-			logger().debug({ msg: "eventsource open" });
-			// #handleOnOpen is called on "i" event
-		};
-		eventSource.onmessage = (ev: UniversalMessageEvent) => {
-			this.#handleOnMessage(ev.data);
-		};
-		eventSource.onerror = (_ev: UniversalErrorEvent) => {
-			if (eventSource.readyState === eventSource.CLOSED) {
-				// This error indicates a close event
-				this.#handleOnClose(new Event("error"));
-			} else {
-				// Log error since event source is still open
-				this.#handleOnError();
-			}
-		};
+	async #connectSse() {
+		throw "TODO";
+
+		// OLD:
+		// const eventSource = await this.#driver.connectSse(
+		// 	undefined,
+		// 	this.#actorQuery,
+		// 	this.#encodingKind,
+		// 	this.#params,
+		// 	signal ? { signal } : undefined,
+		// );
+		// this.#transport = { sse: eventSource };
+		// eventSource.onopen = () => {
+		// 	logger().debug({ msg: "eventsource open" });
+		// 	// #handleOnOpen is called on "i" event
+		// };
+		// eventSource.onmessage = (ev: UniversalMessageEvent) => {
+		// 	this.#handleOnMessage(ev.data);
+		// };
+		// eventSource.onerror = (_ev: UniversalErrorEvent) => {
+		// 	if (eventSource.readyState === eventSource.CLOSED) {
+		// 		// This error indicates a close event
+		// 		this.#handleOnClose(new Event("error"));
+		// 	} else {
+		// 		// Log error since event source is still open
+		// 		this.#handleOnError();
+		// 	}
+		// };
+
+		// NEW:
+		// const EventSource = await importEventSource();
+		//
+		// // Get the actor ID
+		// const { actorId } = await managerDriver.queryActor(c, actorQuery);
+		// logger().debug({ msg: "found actor for sse connection", actorId });
+		// invariant(actorId, "Missing actor ID");
+		//
+		// logger().debug({
+		// 	msg: "opening sse connection",
+		// 	actorId,
+		// 	encoding: encodingKind,
+		// });
+		//
+		// const eventSource = new EventSource("http://actor/connect/sse", {
+		// 	fetch: (input, init) => {
+		// 		return fetch(input, {
+		// 			...init,
+		// 			headers: {
+		// 				...init?.headers,
+		// 				"User-Agent": httpUserAgent(),
+		// 				[HEADER_ENCODING]: encodingKind,
+		// 				...(params !== undefined
+		// 					? { [HEADER_CONN_PARAMS]: JSON.stringify(params) }
+		// 					: {}),
+		// 			},
+		// 		});
+		// 	},
+		// }) as UniversalEventSource;
+		//
+		// return eventSource;
 	}
 
 	/** Called by the onopen event from drivers. */
@@ -372,7 +418,7 @@ enc
 			this.#handleOnOpen();
 		} else if (response.body.tag === "Error") {
 			// Connection error
-			const { code, message, metadata, actionId } = response.body.val;
+			const { group, code, message, metadata, actionId } = response.body.val;
 
 			if (actionId) {
 				const inFlight = this.#takeActionInFlight(Number(actionId));
@@ -381,22 +427,29 @@ enc
 					msg: "action error",
 					actionId: actionId,
 					actionName: inFlight?.name,
+					group,
 					code,
 					message,
 					metadata,
 				});
 
-				inFlight.reject(new errors.ActorError(code, message, metadata));
+				inFlight.reject(new errors.ActorError(group, code, message, metadata));
 			} else {
 				logger().warn({
 					msg: "connection error",
+					group,
 					code,
 					message,
 					metadata,
 				});
 
 				// Create a connection error
-				const actorError = new errors.ActorError(code, message, metadata);
+				const actorError = new errors.ActorError(
+					group,
+					code,
+					message,
+					metadata,
+				);
 
 				// If we have an onOpenPromise, reject it with the error
 				if (this.#onOpenPromise) {
@@ -623,7 +676,7 @@ enc
 			if (this.#transport.websocket.readyState === 1) {
 				try {
 					const messageSerialized = serializeWithEncoding(
-						this.#encodingKind,
+						this.#encoding,
 						message,
 						TO_SERVER_VERSIONED,
 					);
@@ -673,20 +726,33 @@ enc
 				getEnvUniversal("_RIVETKIT_LOG_MESSAGE")
 					? {
 							msg: "sent http message",
-							message: jsonStringifyCompat(message).substring(0, 100) + "...",
+							message: `${jsonStringifyCompat(message).substring(0, 100)}...`,
 						}
 					: { msg: "sent http message" },
 			);
 
-			await this.#driver.sendHttpMessage(
-				undefined,
-				this.#actorId,
-				this.#encodingKind,
-				this.#connectionId,
-				this.#connectionToken,
-				message,
-				opts?.signal ? { signal: opts.signal } : undefined,
-			);
+			logger().debug({
+				msg: "sending http message",
+				actorId: this.#actorId,
+				connectionId: this.#connectionId,
+			});
+
+			// Send an HTTP request to the connections endpoint
+			await sendHttpRequest({
+				url: "http://actor/connections/message",
+				method: "POST",
+				headers: {
+					[HEADER_ENCODING]: this.#encoding,
+					[HEADER_CONN_ID]: this.#connectionId,
+					[HEADER_CONN_TOKEN]: this.#connectionToken,
+				},
+				body: message,
+				encoding: this.#encoding,
+				skipParseResponse: true,
+				customFetch: this.#driver.sendRequest.bind(this.#driver, this.#actorId),
+				requestVersionedDataHandler: TO_SERVER_VERSIONED,
+				responseVersionedDataHandler: TO_CLIENT_VERSIONED,
+			});
 		} catch (error) {
 			// TODO: This will not automatically trigger a re-broadcast of HTTP events since SSE is separate from the HTTP action
 
@@ -705,7 +771,7 @@ enc
 		invariant(this.#transport, "transport must be defined");
 
 		// Decode base64 since SSE sends raw strings
-		if (encodingIsBinary(this.#encodingKind) && "sse" in this.#transport) {
+		if (encodingIsBinary(this.#encoding) && "sse" in this.#transport) {
 			if (typeof data === "string") {
 				const binaryString = atob(data);
 				data = new Uint8Array(
@@ -720,11 +786,7 @@ enc
 
 		const buffer = await inputDataToBuffer(data);
 
-		return deserializeWithEncoding(
-			this.#encodingKind,
-			buffer,
-			TO_CLIENT_VERSIONED,
-		);
+		return deserializeWithEncoding(this.#encoding, buffer, TO_CLIENT_VERSIONED);
 	}
 
 	/**

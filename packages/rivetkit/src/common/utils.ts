@@ -186,6 +186,7 @@ export interface DeconstructedError {
 	__type: "ActorError";
 	statusCode: ContentfulStatusCode;
 	public: boolean;
+	group: string;
 	code: string;
 	message: string;
 	metadata?: unknown;
@@ -203,6 +204,7 @@ export function deconstructError(
 	// We log the error here instead of after generating the code & message because we need to log the original error, not the masked internal error.
 	let statusCode: ContentfulStatusCode;
 	let public_: boolean;
+	let group: string;
 	let code: string;
 	let message: string;
 	let metadata: unknown;
@@ -212,12 +214,14 @@ export function deconstructError(
 			"statusCode" in error && error.statusCode ? error.statusCode : 400
 		) as ContentfulStatusCode;
 		public_ = true;
+		group = error.group;
 		code = error.code;
 		message = getErrorMessage(error);
 		metadata = error.metadata;
 
 		logger.info({
 			msg: "public error",
+			group,
 			code,
 			message,
 			issues: "https://github.com/rivet-gg/rivetkit/issues",
@@ -228,12 +232,14 @@ export function deconstructError(
 		if (errors.ActorError.isActorError(error)) {
 			statusCode = 500;
 			public_ = false;
+			group = error.group;
 			code = error.code;
 			message = getErrorMessage(error);
 			metadata = error.metadata;
 
 			logger.info({
 				msg: "internal error",
+				group,
 				code,
 				message,
 				issues: "https://github.com/rivet-gg/rivetkit/issues",
@@ -243,11 +249,13 @@ export function deconstructError(
 		} else {
 			statusCode = 500;
 			public_ = false;
+			group = "internal";
 			code = errors.INTERNAL_ERROR_CODE;
 			message = getErrorMessage(error);
 
 			logger.info({
 				msg: "internal error",
+				group,
 				code,
 				message,
 				issues: "https://github.com/rivet-gg/rivetkit/issues",
@@ -258,6 +266,7 @@ export function deconstructError(
 	} else {
 		statusCode = 500;
 		public_ = false;
+		group = "internal";
 		code = errors.INTERNAL_ERROR_CODE;
 		message = errors.INTERNAL_ERROR_DESCRIPTION;
 		metadata = {
@@ -278,6 +287,7 @@ export function deconstructError(
 		__type: "ActorError",
 		statusCode,
 		public: public_,
+		group,
 		code,
 		message,
 		metadata,

@@ -26,10 +26,6 @@ describe("ActorDefinition", () => {
 				bar: string;
 			}
 
-			interface TestAuthData {
-				baz: string;
-			}
-
 			interface TestDatabase {
 				createClient: (ctx: {
 					getDatabase: () => Promise<string | unknown>;
@@ -46,7 +42,6 @@ describe("ActorDefinition", () => {
 				TestConnState,
 				TestVars,
 				TestInput,
-				TestAuthData,
 				TestDatabase,
 				TestActions
 			>;
@@ -59,7 +54,6 @@ describe("ActorDefinition", () => {
 					TestConnState,
 					TestVars,
 					TestInput,
-					TestAuthData,
 					TestDatabase
 				>
 			>();
@@ -76,7 +70,6 @@ describe("ActorDefinition", () => {
 					TestConnState,
 					TestVars,
 					TestInput,
-					TestAuthData,
 					TestDatabase
 				>
 			>();

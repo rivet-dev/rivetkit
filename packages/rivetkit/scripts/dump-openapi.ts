@@ -1,6 +1,5 @@
 import * as fs from "node:fs/promises";
 import { resolve } from "node:path";
-import type { ClientDriver } from "@/client/client";
 import { createFileSystemOrMemoryDriver } from "@/drivers/file-system/mod";
 import type { ManagerDriver } from "@/manager/driver";
 import { createManagerRouter } from "@/manager/router";
@@ -19,16 +18,6 @@ function main() {
 		getUpgradeWebSocket: () => () => unimplemented(),
 	});
 
-	const inlineClientDriver: ClientDriver = {
-		action: unimplemented,
-		resolveActorId: unimplemented,
-		connectWebSocket: unimplemented,
-		connectSse: unimplemented,
-		sendHttpMessage: unimplemented,
-		rawHttpRequest: unimplemented,
-		rawWebSocket: unimplemented,
-	};
-
 	const managerDriver: ManagerDriver = {
 		getForId: unimplemented,
 		getWithKey: unimplemented,
@@ -44,7 +33,6 @@ function main() {
 	const { openapi } = createManagerRouter(
 		registryConfig,
 		driverConfig,
-		inlineClientDriver,
 		managerDriver,
 		true,
 	);

@@ -14,7 +14,6 @@ export function actor<
 	TConnState,
 	TVars,
 	TInput,
-	TAuthData,
 	TDatabase extends AnyDatabaseProvider,
 	TActions extends Actions<
 		TState,
@@ -22,7 +21,6 @@ export function actor<
 		TConnState,
 		TVars,
 		TInput,
-		TAuthData,
 		TDatabase
 	>,
 >(
@@ -32,7 +30,6 @@ export function actor<
 		TConnState,
 		TVars,
 		TInput,
-		TAuthData,
 		TDatabase,
 		TActions
 	>,
@@ -42,7 +39,6 @@ export function actor<
 	TConnState,
 	TVars,
 	TInput,
-	TAuthData,
 	TDatabase,
 	TActions
 > {
@@ -52,7 +48,6 @@ export function actor<
 		TConnState,
 		TVars,
 		TInput,
-		TAuthData,
 		TDatabase
 	>;
 	return new ActorDefinition(config);

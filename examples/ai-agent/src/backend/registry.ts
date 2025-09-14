@@ -11,7 +11,6 @@ export type Message = {
 };
 
 export const aiAgent = actor({
-	onAuth: () => {},
 	// Persistent state that survives restarts: https://rivet.gg/docs/actors/state
 	state: {
 		messages: [] as Message[],

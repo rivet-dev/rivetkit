@@ -4,7 +4,6 @@ import { actor } from "rivetkit";
  * Test fixture to verify request object access in all lifecycle hooks
  */
 export const requestAccessActor = actor({
-	onAuth: () => {}, // Allow unauthenticated connections
 	state: {
 		// Track request info from different hooks
 		onBeforeConnectRequest: {
