@@ -18,11 +18,8 @@ runDriverTests({
 			join(projectPath, "registry.ts"),
 			async (registry) => {
 				// Get configuration from environment or use defaults
-				const endpoint = process.env.RIVET_ENDPOINT || "http://localhost:7080";
+				const endpoint = process.env.RIVET_ENDPOINT || "http://localhost:6420";
 				const namespace = `test-${crypto.randomUUID().slice(0, 8)}`;
-
-				// Pick port
-				const port = await getPort();
 
 				// Create namespace
 				const response = await fetch(`${endpoint}/namespaces`, {
@@ -44,13 +41,7 @@ runDriverTests({
 					endpoint,
 					namespace,
 					runnerName: "test-runner",
-					totalSlots: 100,
-					addresses: {
-						main: {
-							host: "127.0.0.1",
-							port: port,
-						},
-					},
+					totalSlots: 1000,
 				});
 
 				// Start the actor driver
