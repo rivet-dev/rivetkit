@@ -1,10 +1,6 @@
 import type { Hono } from "hono";
 import { type Client, createClientWithDriver } from "@/client/client";
-import {
-	configureBaseLogger,
-	configureDefaultLogger,
-	getPinoLevel,
-} from "@/common/log";
+import { configureBaseLogger, configureDefaultLogger } from "@/common/log";
 import { chooseDefaultDriver } from "@/drivers/default";
 import { getInspectorUrl } from "@/inspector/utils";
 import { createManagerRouter } from "@/manager/router";
@@ -86,7 +82,7 @@ export class Registry<A extends RegistryActors> {
 			definitions: Object.keys(this.#config.use).length,
 			...driverLog,
 		});
-		if (config.inspector?.enabled) {
+		if (config.inspector?.enabled && managerDriver.inspector) {
 			logger().info({ msg: "inspector ready", url: getInspectorUrl(config) });
 		}
 
@@ -100,7 +96,7 @@ export class Registry<A extends RegistryActors> {
 				const padding = " ".repeat(Math.max(0, 13 - k.length));
 				console.log(`  - ${k}:${padding}${v}`);
 			}
-			if (config.inspector?.enabled) {
+			if (config.inspector?.enabled && managerDriver.inspector) {
 				console.log(`  - Inspector:    ${getInspectorUrl(config)}`);
 			}
 			console.log();

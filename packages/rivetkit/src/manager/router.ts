@@ -1,14 +1,14 @@
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import * as cbor from "cbor-x";
-import type { Hono } from "hono";
-import { cors } from "hono/cors";
+import { Hono } from "hono";
+import { cors as corsMiddleware } from "hono/cors";
+import { createMiddleware } from "hono/factory";
 import { z } from "zod";
 import {
-	ActorError,
 	ActorNotFound,
 	FeatureNotImplemented,
 	MissingActorHeader,
-	RouteNotFound,
+	Unsupported,
 	WebSocketsNotEnabled,
 } from "@/actor/errors";
 import {
@@ -16,6 +16,8 @@ import {
 	handleRouteNotFound,
 	loggerMiddleware,
 } from "@/common/router";
+import { createManagerInspectorRouter } from "@/inspector/manager";
+import { secureInspector } from "@/inspector/utils";
 import {
 	type ActorsCreateRequest,
 	ActorsCreateRequestSchema,
@@ -68,12 +70,12 @@ export function createManagerRouter(
 
 	router.use("*", loggerMiddleware(logger()));
 
-	if (runConfig.cors) {
-		router.use("*", cors(runConfig.cors));
-	}
+	const cors = runConfig.cors
+		? corsMiddleware(runConfig.cors)
+		: createMiddleware((_c, next) => next());
 
 	// Actor proxy middleware - intercept requests with x-rivet-target=actor
-	router.use("*", async (c, next) => {
+	router.use("*", cors, async (c, next) => {
 		const target = c.req.header("x-rivet-target");
 		const actorId = c.req.header("x-rivet-actor");
 
@@ -135,7 +137,7 @@ export function createManagerRouter(
 	});
 
 	// GET /
-	router.get("/", (c) => {
+	router.get("/", cors, (c) => {
 		return c.text(
 			"This is a RivetKit server.\n\nLearn more at https://rivetkit.org",
 		);
@@ -144,6 +146,7 @@ export function createManagerRouter(
 	// GET /actors/by-id
 	{
 		const route = createRoute({
+			middleware: [cors],
 			method: "get",
 			path: "/actors/by-id",
 			request: {
@@ -177,6 +180,7 @@ export function createManagerRouter(
 	// PUT /actors/by-id
 	{
 		const route = createRoute({
+			cors: [cors],
 			method: "put",
 			path: "/actors/by-id",
 			request: {
@@ -241,6 +245,7 @@ export function createManagerRouter(
 	// GET /actors/{actor_id}
 	{
 		const route = createRoute({
+			middleware: [cors],
 			method: "get",
 			path: "/actors/{actor_id}",
 			request: {
@@ -287,6 +292,7 @@ export function createManagerRouter(
 	// POST /actors
 	{
 		const route = createRoute({
+			middleware: [cors],
 			method: "post",
 			path: "/actors",
 			request: {
@@ -346,6 +352,7 @@ export function createManagerRouter(
 	// DELETE /actors/{actor_id}
 	{
 		const route = createRoute({
+			middleware: [cors],
 			method: "delete",
 			path: "/actors/{actor_id}",
 			request: {
@@ -368,6 +375,23 @@ export function createManagerRouter(
 				"Actor deletion - ManagerDriver lacks deleteActor method",
 			);
 		});
+	}
+
+	if (runConfig.inspector?.enabled) {
+		if (!managerDriver.inspector) {
+			throw new Unsupported("inspector");
+		}
+		router.route(
+			"/inspect",
+			new Hono<{ Variables: { inspector: any } }>()
+				.use(corsMiddleware(runConfig.inspector.cors))
+				.use(secureInspector(runConfig))
+				.use((c, next) => {
+					c.set("inspector", managerDriver.inspector!);
+					return next();
+				})
+				.route("/", createManagerInspectorRouter()),
+		);
 	}
 
 	// Error handling

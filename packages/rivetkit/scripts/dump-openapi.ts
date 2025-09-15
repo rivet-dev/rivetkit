@@ -16,6 +16,9 @@ function main() {
 	const driverConfig: RunConfig = RunConfigSchema.parse({
 		driver: createFileSystemOrMemoryDriver(false),
 		getUpgradeWebSocket: () => () => unimplemented(),
+		inspector: {
+			enabled: false,
+		},
 	});
 
 	const managerDriver: ManagerDriver = {
