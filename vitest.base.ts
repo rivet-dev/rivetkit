@@ -7,14 +7,15 @@ export default {
 		// Enable parallelism
 		sequence: {
 			// TODO: This breaks fake timers, unsure how to make tests run in parallel within the same file
-			// concurrent: true,
+			concurrent: true,
 		},
 		env: {
 			// Enable logging
-			_LOG_LEVEL: "DEBUG",
-			_LOG_TARGET: "1",
-			_LOG_TIMESTAMP: "1",
+			LOG_LEVEL: "DEBUG",
+			LOG_TARGET: "1",
+			LOG_TIMESTAMP: "1",
 			_RIVETKIT_ERROR_STACK: "1",
+			_RIVETKIT_LOG_MESSAGE: "1",
 		},
 	},
 } satisfies ViteUserConfig;

@@ -1,18 +1,4 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "extends": ["//"],
-  "tasks": {
-    "dump-openapi": {
-      "inputs": ["package.json", "packages/rivetkit/src/manager/router.ts"]
-    },
-    "build": {
-      "dependsOn": ["^build", "dump-openapi"],
-      "inputs": ["src/**", "tsconfig.json", "tsup.config.ts", "package.json"],
-      "outputs": ["dist/**"]
-    },
-    "test": {
-      "dependsOn": ["^test", "build"],
-      "inputs": ["src/**", "tests/**", "fixtures/**"]
-    }
-  }
+  "extends": ["//"]
 }

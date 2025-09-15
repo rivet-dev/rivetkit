@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "version": "2.0.2",
+    "version": "2.0.3",
     "title": "RivetKit API"
   },
   "components": {
@@ -14,7 +14,9 @@
             "example": "actor-123"
           }
         },
-        "required": ["i"]
+        "required": [
+          "i"
+        ]
       },
       "ResolveQuery": {
         "type": "object",
