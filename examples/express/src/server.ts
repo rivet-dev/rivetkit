@@ -1,5 +1,5 @@
 import express from "express";
-import { registry } from "./registry";
+import { registry } from "./registry.js";
 
 // Start RivetKit
 const { client, handler } = registry.createServer();
@@ -23,3 +23,5 @@ app.post("/increment/:name", async (req, res) => {
 app.listen(8080, () => {
 	console.log("Listening at http://localhost:8080");
 });
+
+export default app;
