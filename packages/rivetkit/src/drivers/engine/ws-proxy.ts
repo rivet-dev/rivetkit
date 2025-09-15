@@ -2,6 +2,7 @@ import type { Context as HonoContext } from "hono";
 import type { WSContext } from "hono/ws";
 import invariant from "invariant";
 import type { CloseEvent } from "ws";
+import { deconstructError, stringifyError } from "@/common/utils";
 import { importWebSocket } from "@/common/websocket";
 import type { UpgradeWebSocketArgs } from "@/mod";
 import { logger } from "./log";
@@ -99,7 +100,11 @@ export async function createWebSocketProxy(
 			});
 
 			state.targetWs.addEventListener("error", (error) => {
-				logger().error({ msg: "target websocket error", targetUrl, error });
+				logger().error({
+					msg: "target websocket error",
+					targetUrl,
+					error: stringifyError(error),
+				});
 				closeWebSocketIfOpen(clientWs, 1011, "Target WebSocket error");
 			});
 		},
