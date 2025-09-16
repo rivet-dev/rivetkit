@@ -157,11 +157,17 @@ export class FileSystemManagerDriver implements ManagerDriver {
 				undefined,
 			);
 			return new InlineWebSocketAdapter2(wsHandler);
-		} else if (path.startsWith(PATH_RAW_WEBSOCKET_PREFIX)) {
+		} else if (
+			path.startsWith(PATH_RAW_WEBSOCKET_PREFIX) ||
+			path === "/raw/websocket"
+		) {
 			// Handle websocket proxy
+			// Normalize path to include trailing slash if missing
+			const normalizedPath =
+				path === "/raw/websocket" ? "/raw/websocket/" : path;
 			const wsHandler = await handleRawWebSocketHandler(
 				undefined,
-				path,
+				normalizedPath,
 				this.#actorDriver,
 				actorId,
 				undefined,
@@ -207,11 +213,17 @@ export class FileSystemManagerDriver implements ManagerDriver {
 			);
 
 			return upgradeWebSocket(() => wsHandler)(c, noopNext());
-		} else if (path.startsWith(PATH_RAW_WEBSOCKET_PREFIX)) {
+		} else if (
+			path.startsWith(PATH_RAW_WEBSOCKET_PREFIX) ||
+			path === "/raw/websocket"
+		) {
 			// Handle websocket proxy
+			// Normalize path to include trailing slash if missing
+			const normalizedPath =
+				path === "/raw/websocket" ? "/raw/websocket/" : path;
 			const wsHandler = await handleRawWebSocketHandler(
 				c.req.raw,
-				path,
+				normalizedPath,
 				this.#actorDriver,
 				actorId,
 				authData,

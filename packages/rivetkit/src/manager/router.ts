@@ -111,9 +111,14 @@ export function createManagerRouter(
 					c.req.header("X-RivetKit-Auth-Data") ||
 					c.req.header("x-rivet-auth-data");
 
+				// Include query string if present
+				const pathWithQuery = c.req.url.includes("?")
+					? c.req.path + c.req.url.substring(c.req.url.indexOf("?"))
+					: c.req.path;
+
 				return await managerDriver.proxyWebSocket(
 					c,
-					c.req.path,
+					pathWithQuery,
 					actorId,
 					encoding as any, // Will be validated by driver
 					connParams ? JSON.parse(connParams) : undefined,
