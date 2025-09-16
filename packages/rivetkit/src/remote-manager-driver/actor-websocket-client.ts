@@ -34,6 +34,9 @@ export async function openWebSocketToActor(
 		headers: buildGuardHeadersForWebSocket(actorId, encoding, params),
 	});
 
+	// Set binary type to arraybuffer for proper encoding support
+	ws.binaryType = "arraybuffer";
+
 	logger().debug({ msg: "websocket connection opened", actorId });
 
 	return ws as UniversalWebSocket;

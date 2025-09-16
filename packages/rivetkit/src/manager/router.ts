@@ -100,9 +100,16 @@ export function createManagerRouter(
 
 				// For WebSocket, use the driver's proxyWebSocket method
 				// Extract any additional headers that might be needed
-				const encoding = c.req.header("x-rivet-encoding") || "json";
-				const connParams = c.req.header("x-rivet-conn-params");
-				const authData = c.req.header("x-rivet-auth-data");
+				const encoding =
+					c.req.header("X-RivetKit-Encoding") ||
+					c.req.header("x-rivet-encoding") ||
+					"json";
+				const connParams =
+					c.req.header("X-RivetKit-Conn-Params") ||
+					c.req.header("x-rivet-conn-params");
+				const authData =
+					c.req.header("X-RivetKit-Auth-Data") ||
+					c.req.header("x-rivet-auth-data");
 
 				return await managerDriver.proxyWebSocket(
 					c,
