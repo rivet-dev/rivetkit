@@ -119,9 +119,7 @@ export function createActorDurableObject(
 			);
 
 			// Create inline client
-			const inlineClient = createClientWithDriver(
-				createInlineClientDriver(managerDriver),
-			);
+			const inlineClient = createClientWithDriver(managerDriver);
 
 			// Create actor driver
 			const actorDriver = runConfig.driver.actor(
@@ -185,9 +183,7 @@ export function createActorDurableObject(
 				registry.config,
 				runConfig,
 			);
-			const inlineClient = createClientWithDriver(
-				createInlineClientDriver(managerDriver),
-			);
+			const inlineClient = createClientWithDriver(managerDriver);
 			const actorDriver = runConfig.driver.actor(
 				registry.config,
 				runConfig,

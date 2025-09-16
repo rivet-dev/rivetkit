@@ -124,7 +124,7 @@ export class CloudflareActorsManagerDriver implements ManagerDriver {
 			(webSocket as any).dispatchEvent(event);
 		}, 0);
 
-		return webSocket as unknown as WebSocket;
+		return webSocket as unknown as UniversalWebSocket;
 	}
 
 	async proxyRequest(

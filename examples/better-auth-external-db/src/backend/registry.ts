@@ -1,6 +1,4 @@
-import { actor, type OnAuthOptions, setup } from "rivetkit";
-import { Unauthorized } from "rivetkit/errors";
-import { auth } from "./auth";
+import { actor, setup } from "rivetkit";
 
 interface State {
 	messages: Message[];
@@ -20,19 +18,20 @@ export const chatRoom = actor({
 	} as State,
 	actions: {
 		sendMessage: (c, message: string) => {
-			// Access Better Auth with c.conn.auth
-			const newMessage = {
-				id: crypto.randomUUID(),
-				userId: c.conn.auth.user.id,
-				username: c.conn.auth.user.name,
-				message,
-				timestamp: Date.now(),
-			};
-
-			c.state.messages.push(newMessage);
-			c.broadcast("newMessage", newMessage);
-
-			return newMessage;
+			// TODO: Add back using onBeforeConnect
+			// // Access Better Auth with c.conn.auth
+			// const newMessage = {
+			// 	id: crypto.randomUUID(),
+			// 	userId: c.conn.auth.user.id,
+			// 	username: c.conn.auth.user.name,
+			// 	message,
+			// 	timestamp: Date.now(),
+			// };
+			//
+			// c.state.messages.push(newMessage);
+			// c.broadcast("newMessage", newMessage);
+			//
+			// return newMessage;
 		},
 		getMessages: (c) => {
 			return c.state.messages;
