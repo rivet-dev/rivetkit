@@ -17,9 +17,9 @@ import type {
 	GetWithKeyInput,
 	ManagerDriver,
 } from "@/driver-helpers/mod";
-import { createInlineClientDriver } from "@/inline-client-driver/mod";
 import { ManagerInspector } from "@/inspector/manager";
 import { type Actor, ActorFeature, type ActorId } from "@/inspector/mod";
+import type { ManagerDisplayInformation } from "@/manager/driver";
 import {
 	type DriverConfig,
 	type Encoding,
@@ -27,6 +27,7 @@ import {
 	PATH_RAW_WEBSOCKET_PREFIX,
 	type RegistryConfig,
 	type RunConfig,
+	type UniversalWebSocket,
 } from "@/mod";
 import type * as schema from "@/schemas/file-system-driver/mod";
 import type { FileSystemGlobalState } from "./global-state";
@@ -119,7 +120,7 @@ export class FileSystemManagerDriver implements ManagerDriver {
 		}
 
 		// Actors run on the same node as the manager, so we create a dummy actor router that we route requests to
-		const inlineClient = createClientWithDriver(createInlineClientDriver(this));
+		const inlineClient = createClientWithDriver(this);
 		this.#actorDriver = this.#driverConfig.actor(
 			registryConfig,
 			runConfig,
@@ -140,7 +141,7 @@ export class FileSystemManagerDriver implements ManagerDriver {
 		actorId: string,
 		encoding: Encoding,
 		params: unknown,
-	): Promise<WebSocket> {
+	): Promise<UniversalWebSocket> {
 		// TODO:
 
 		// Handle raw WebSocket paths
@@ -156,11 +157,17 @@ export class FileSystemManagerDriver implements ManagerDriver {
 				undefined,
 			);
 			return new InlineWebSocketAdapter2(wsHandler);
-		} else if (path.startsWith(PATH_RAW_WEBSOCKET_PREFIX)) {
+		} else if (
+			path.startsWith(PATH_RAW_WEBSOCKET_PREFIX) ||
+			path === "/raw/websocket"
+		) {
 			// Handle websocket proxy
+			// Normalize path to include trailing slash if missing
+			const normalizedPath =
+				path === "/raw/websocket" ? "/raw/websocket/" : path;
 			const wsHandler = await handleRawWebSocketHandler(
 				undefined,
-				path,
+				normalizedPath,
 				this.#actorDriver,
 				actorId,
 				undefined,
@@ -206,11 +213,17 @@ export class FileSystemManagerDriver implements ManagerDriver {
 			);
 
 			return upgradeWebSocket(() => wsHandler)(c, noopNext());
-		} else if (path.startsWith(PATH_RAW_WEBSOCKET_PREFIX)) {
+		} else if (
+			path.startsWith(PATH_RAW_WEBSOCKET_PREFIX) ||
+			path === "/raw/websocket"
+		) {
 			// Handle websocket proxy
+			// Normalize path to include trailing slash if missing
+			const normalizedPath =
+				path === "/raw/websocket" ? "/raw/websocket/" : path;
 			const wsHandler = await handleRawWebSocketHandler(
 				c.req.raw,
-				path,
+				normalizedPath,
 				this.#actorDriver,
 				actorId,
 				authData,
@@ -294,6 +307,16 @@ export class FileSystemManagerDriver implements ManagerDriver {
 			actorId,
 			name,
 			key,
+		};
+	}
+
+	displayInformation(): ManagerDisplayInformation {
+		return {
+			name: this.#state.persist ? "File System" : "Memory",
+			properties: {
+				...(this.#state.persist ? { Data: this.#state.storagePath } : {}),
+				Instances: this.#state.actorCountOnStartup.toString(),
+			},
 		};
 	}
 

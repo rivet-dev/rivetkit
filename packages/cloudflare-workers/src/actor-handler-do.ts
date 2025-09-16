@@ -2,11 +2,7 @@ import { DurableObject, env } from "cloudflare:workers";
 import type { ExecutionContext } from "hono";
 import invariant from "invariant";
 import type { ActorKey, ActorRouter, Registry, RunConfig } from "rivetkit";
-import {
-	createActorRouter,
-	createClientWithDriver,
-	createInlineClientDriver,
-} from "rivetkit";
+import { createActorRouter, createClientWithDriver } from "rivetkit";
 import { serializeEmptyPersistData } from "rivetkit/driver-helpers";
 import {
 	CloudflareDurableObjectGlobalState,
@@ -123,9 +119,7 @@ export function createActorDurableObject(
 			);
 
 			// Create inline client
-			const inlineClient = createClientWithDriver(
-				createInlineClientDriver(managerDriver),
-			);
+			const inlineClient = createClientWithDriver(managerDriver);
 
 			// Create actor driver
 			const actorDriver = runConfig.driver.actor(
@@ -189,9 +183,7 @@ export function createActorDurableObject(
 				registry.config,
 				runConfig,
 			);
-			const inlineClient = createClientWithDriver(
-				createInlineClientDriver(managerDriver),
-			);
+			const inlineClient = createClientWithDriver(managerDriver);
 			const actorDriver = runConfig.driver.actor(
 				registry.config,
 				runConfig,

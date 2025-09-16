@@ -8,7 +8,6 @@ export type ConnState = {
 };
 
 export const connStateActor = actor({
-	onAuth: () => {},
 	state: {
 		sharedCounter: 0,
 		disconnectionCount: 0,

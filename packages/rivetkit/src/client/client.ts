@@ -1,12 +1,9 @@
-import type { Context as HonoContext } from "hono";
-import type { WebSocket } from "ws";
 import type { AnyActorDefinition } from "@/actor/definition";
 import type { Transport } from "@/actor/protocol/old";
 import type { Encoding } from "@/actor/protocol/serde";
-import type { UniversalEventSource } from "@/common/eventsource-interface";
+import type { ManagerDriver } from "@/driver-helpers/mod";
 import type { ActorQuery } from "@/manager/protocol/query";
 import type { Registry } from "@/mod";
-import type { ToServer } from "@/schemas/client-protocol/mod";
 import type { ActorActionFunction } from "./actor-common";
 import {
 	type ActorConn,
@@ -14,7 +11,11 @@ import {
 	CONNECT_SYMBOL,
 } from "./actor-conn";
 import { type ActorHandle, ActorHandleRaw } from "./actor-handle";
+import { queryActor } from "./actor-query";
+import type { ClientConfig } from "./config";
 import { logger } from "./log";
+
+export type { ClientConfig, ClientConfigInput } from "./config";
 
 /** Extract the actor registry from the registry definition. */
 export type ExtractActorsFromRegistry<A extends Registry<any>> =
@@ -79,15 +80,6 @@ export interface ActorAccessor<AD extends AnyActorDefinition> {
 }
 
 /**
- * Options for configuring the client.
- * @typedef {Object} ClientOptions
- */
-export interface ClientOptions {
-	encoding?: Encoding;
-	transport?: Transport;
-}
-
-/**
  * Options for querying actors.
  * @typedef {Object} QueryOptions
  * @property {unknown} [parameters] - Parameters to pass to the connection.
@@ -140,8 +132,8 @@ export interface CreateOptions extends QueryOptions {
  * @typedef {Object} Region
  * @property {string} id - The region ID.
  * @property {string} name - The region name.
- * @see {@link https://rivet.gg/docs/edge|Edge Networking}
- * @see {@link https://rivet.gg/docs/regions|Available Regions}
+ * @see {@link https://rivet.dev/docs/edge|Edge Networking}
+ * @see {@link https://rivet.dev/docs/regions|Available Regions}
  */
 export interface Region {
 	/**
@@ -159,89 +151,29 @@ export const ACTOR_CONNS_SYMBOL = Symbol("actorConns");
 export const CREATE_ACTOR_CONN_PROXY = Symbol("createActorConnProxy");
 export const TRANSPORT_SYMBOL = Symbol("transport");
 
-export interface ClientDriver {
-	action<Args extends Array<unknown> = unknown[], Response = unknown>(
-		c: HonoContext | undefined,
-		actorQuery: ActorQuery,
-		encoding: Encoding,
-		params: unknown,
-		name: string,
-		args: Args,
-		opts: { signal?: AbortSignal } | undefined,
-	): Promise<Response>;
-	resolveActorId(
-		c: HonoContext | undefined,
-		actorQuery: ActorQuery,
-		encodingKind: Encoding,
-		params: unknown,
-		opts: { signal?: AbortSignal } | undefined,
-	): Promise<string>;
-	connectWebSocket(
-		c: HonoContext | undefined,
-		actorQuery: ActorQuery,
-		encodingKind: Encoding,
-		params: unknown,
-		opts: { signal?: AbortSignal } | undefined,
-	): Promise<WebSocket>;
-	connectSse(
-		c: HonoContext | undefined,
-		actorQuery: ActorQuery,
-		encodingKind: Encoding,
-		params: unknown,
-		opts: { signal?: AbortSignal } | undefined,
-	): Promise<UniversalEventSource>;
-	sendHttpMessage(
-		c: HonoContext | undefined,
-		actorId: string,
-		encoding: Encoding,
-		connectionId: string,
-		connectionToken: string,
-		message: ToServer,
-		opts: { signal?: AbortSignal } | undefined,
-	): Promise<void>;
-	rawHttpRequest(
-		c: HonoContext | undefined,
-		actorQuery: ActorQuery,
-		encoding: Encoding,
-		params: unknown,
-		path: string,
-		init: RequestInit,
-		opts: { signal?: AbortSignal } | undefined,
-	): Promise<Response>;
-	rawWebSocket(
-		c: HonoContext | undefined,
-		actorQuery: ActorQuery,
-		encoding: Encoding,
-		params: unknown,
-		path: string,
-		protocols: string | string[] | undefined,
-		opts: { signal?: AbortSignal } | undefined,
-	): Promise<WebSocket>;
-}
-
 /**
  * Client for managing & connecting to actors.
  *
  * @template A The actors map type that defines the available actors.
- * @see {@link https://rivet.gg/docs/manage|Create & Manage Actors}
+ * @see {@link https://rivet.dev/docs/manage|Create & Manage Actors}
  */
 export class ClientRaw {
 	#disposed = false;
 
 	[ACTOR_CONNS_SYMBOL] = new Set<ActorConnRaw>();
 
-	#driver: ClientDriver;
+	#driver: ManagerDriver;
 	#encodingKind: Encoding;
 	[TRANSPORT_SYMBOL]: Transport;
 
 	/**
 	 * Creates an instance of Client.
 	 *
-	 * @param {string} managerEndpoint - The manager endpoint. See {@link https://rivet.gg/docs/setup|Initial Setup} for instructions on getting the manager endpoint.
-	 * @param {ClientOptions} [opts] - Options for configuring the client.
-	 * @see {@link https://rivet.gg/docs/setup|Initial Setup}
+	 * @param {string} managerEndpoint - The manager endpoint. See {@link https://rivet.dev/docs/setup|Initial Setup} for instructions on getting the manager endpoint.
+	 * @param {ClientConfig} [opts] - Options for configuring the client.
+	 * @see {@link https://rivet.dev/docs/setup|Initial Setup}
 	 */
-	public constructor(driver: ClientDriver, opts?: ClientOptions) {
+	public constructor(driver: ManagerDriver, opts?: ClientConfig) {
 		this.#driver = driver;
 
 		this.#encodingKind = opts?.encoding ?? "bare";
@@ -389,13 +321,7 @@ export class ClientRaw {
 		});
 
 		// Create the actor
-		const actorId = await this.#driver.resolveActorId(
-			undefined,
-			createQuery,
-			this.#encodingKind,
-			opts?.params,
-			opts?.signal ? { signal: opts.signal } : undefined,
-		);
+		const { actorId } = await queryActor(undefined, createQuery, this.#driver);
 		logger().debug({
 			msg: "created actor with ID",
 			name,
@@ -479,10 +405,10 @@ export type Client<A extends Registry<any>> = ClientRaw & {
 export type AnyClient = Client<Registry<any>>;
 
 export function createClientWithDriver<A extends Registry<any>>(
-	driver: ClientDriver,
-	opts?: ClientOptions,
+	driver: ManagerDriver,
+	config?: ClientConfig,
 ): Client<A> {
-	const client = new ClientRaw(driver, opts);
+	const client = new ClientRaw(driver, config);
 
 	// Create proxy for accessing actors by name
 	return new Proxy(client, {

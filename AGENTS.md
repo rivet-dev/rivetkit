@@ -17,11 +17,11 @@ Always include a README.md for new packages. The `README.md` should always follo
     ```md
     # RivetKit {subname, e.g. library: Rivet Actor, driver and platform: RivetKit Cloudflare Workers Adapter}
 
-    _Lightweight Libraries for Backends_
+    _Library to build and scale stateful workloads_
 
-    [Learn More →](https://github.com/rivet-gg/rivetkit)
+    [Learn More →](https://github.com/rivet-dev/rivetkit)
 
-    [Discord](https://rivet.gg/discord) — [Documentation](https://rivetkit.org) — [Issues](https://github.com/rivet-gg/rivetkit/issues)
+    [Discord](https://rivet.dev/discord) — [Documentation](https://rivetkit.org) — [Issues](https://github.com/rivet-dev/rivetkit/issues)
 
     ## License
 
@@ -159,9 +159,9 @@ Always include a README.md. The `README.md` should always follow this structure:
 
     Example project demonstrating {specific feature} with [RivetKit](https://rivetkit.org).
 
-    [Learn More →](https://github.com/rivet-gg/rivetkit)
+    [Learn More →](https://github.com/rivet-dev/rivetkit)
 
-    [Discord](https://rivet.gg/discord) — [Documentation](https://rivetkit.org) — [Issues](https://github.com/rivet-gg/rivetkit/issues)
+    [Discord](https://rivet.dev/discord) — [Documentation](https://rivetkit.org) — [Issues](https://github.com/rivet-dev/rivetkit/issues)
 
     ## Getting Started
 
@@ -173,7 +173,7 @@ Always include a README.md. The `README.md` should always follow this structure:
     ### Installation
 
     ```sh
-    git clone https://github.com/rivet-gg/rivetkit
+    git clone https://github.com/rivet-dev/rivetkit
     cd rivetkit/examples/{name}
     npm install
     ```

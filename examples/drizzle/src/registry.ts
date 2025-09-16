@@ -8,9 +8,6 @@
 // 	state: {
 // 		count: 0,
 // 	},
-// 	onAuth: () => {
-// 		// Configure auth here
-// 	},
 // 	actions: {
 // 		increment: (c, x: number) => {
 // 			// createState or state fix fix fix

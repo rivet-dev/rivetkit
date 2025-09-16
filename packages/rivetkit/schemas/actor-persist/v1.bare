@@ -19,8 +19,6 @@ type PersistedConnection struct {
 	parameters: data
 	# Connection state
 	state: data
-	# Authentication data
-	auth: optional<data>
 	# Active subscriptions
 	subscriptions: list<PersistedSubscription>
 	# Last seen timestamp

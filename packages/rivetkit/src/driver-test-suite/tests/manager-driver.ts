@@ -39,7 +39,8 @@ export function runManagerDriverTests(driverTestConfig: DriverTestConfig) {
 					await client.counter.create(uniqueKey);
 					expect.fail("did not error on duplicate create");
 				} catch (err) {
-					expect((err as ActorError).code).toBe("actor_already_exists");
+					expect((err as ActorError).group).toBe("actor");
+					expect((err as ActorError).code).toBe("already_exists");
 				}
 
 				// Verify the original actor still works and has its state
@@ -60,7 +61,8 @@ export function runManagerDriverTests(driverTestConfig: DriverTestConfig) {
 					await client.counter.get([nonexistentId]).resolve();
 					expect.fail("did not error for get");
 				} catch (err) {
-					expect((err as ActorError).code).toBe("actor_not_found");
+					expect((err as ActorError).group).toBe("actor");
+					expect((err as ActorError).code).toBe("not_found");
 				}
 
 				// Create the actor
@@ -319,7 +321,7 @@ export function runManagerDriverTests(driverTestConfig: DriverTestConfig) {
 		});
 
 		describe("Multiple Actor Instances", () => {
-			// TODO: This test is flakey https://github.com/rivet-gg/rivetkit/issues/873
+			// TODO: This test is flakey https://github.com/rivet-dev/rivetkit/issues/873
 			test("creates multiple actor instances of the same type", async (c) => {
 				const { client } = await setupDriverTest(c, driverTestConfig);
 

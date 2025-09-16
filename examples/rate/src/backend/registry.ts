@@ -7,15 +7,14 @@ export type RateLimitResult = {
 };
 
 export const rateLimiter = actor({
-	onAuth: () => {},
-	// Persistent state that survives restarts: https://rivet.gg/docs/actors/state
+	// Persistent state that survives restarts: https://rivet.dev/docs/actors/state
 	state: {
 		count: 0,
 		resetAt: 0,
 	},
 
 	actions: {
-		// Callable functions from clients: https://rivet.gg/docs/actors/actions
+		// Callable functions from clients: https://rivet.dev/docs/actors/actions
 		checkLimit: (c): RateLimitResult => {
 			const now = Date.now();
 
@@ -55,7 +54,7 @@ export const rateLimiter = actor({
 	},
 });
 
-// Register actors for use: https://rivet.gg/docs/setup
+// Register actors for use: https://rivet.dev/docs/setup
 export const registry = setup({
 	use: { rateLimiter },
 });

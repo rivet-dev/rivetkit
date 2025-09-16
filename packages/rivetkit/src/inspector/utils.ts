@@ -64,7 +64,7 @@ export function getInspectorUrl(runConfig: RunConfigInput | undefined) {
 		return "disabled";
 	}
 
-	const url = new URL("https://studio.rivet.gg");
+	const url = new URL("https://inspect.rivet.dev");
 
 	url.searchParams.set("t", accessToken);
 

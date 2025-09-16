@@ -84,6 +84,10 @@ export class FileSystemGlobalState {
 		actorDriver: ActorDriver;
 	};
 
+	get persist(): boolean {
+		return this.#persist;
+	}
+
 	get storagePath() {
 		return this.#storagePath;
 	}
@@ -418,7 +422,6 @@ export class FileSystemGlobalState {
 		actorDriver: ActorDriver,
 	) {
 		if (this.#runnerParams) {
-			logger().warn("already called onRunnerStart");
 			return;
 		}
 

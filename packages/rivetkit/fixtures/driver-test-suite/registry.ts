@@ -13,13 +13,6 @@ import {
 	syncActionActor,
 } from "./action-types";
 import { onStateChangeActor } from "./actor-onstatechange";
-import {
-	asyncAuthActor,
-	authActor,
-	intentAuthActor,
-	noAuthActor,
-	publicActor,
-} from "./auth";
 import { connLivenessActor } from "./conn-liveness";
 import { counterWithParams } from "./conn-params";
 import { connStateActor } from "./conn-state";
@@ -35,22 +28,9 @@ import {
 	rawHttpNoHandlerActor,
 	rawHttpVoidReturnActor,
 } from "./raw-http";
-import {
-	rawHttpAuthActor,
-	rawHttpCustomAuthActor,
-	rawHttpNoAuthActor,
-	rawHttpPublicActor,
-} from "./raw-http-auth";
 import { rawHttpRequestPropertiesActor } from "./raw-http-request-properties";
 import { rawWebSocketActor, rawWebSocketBinaryActor } from "./raw-websocket";
-import {
-	rawWebSocketAuthActor,
-	rawWebSocketCustomAuthActor,
-	rawWebSocketNoAuthActor,
-	rawWebSocketPublicActor,
-} from "./raw-websocket-auth";
 import { requestAccessActor } from "./request-access";
-import { requestAccessAuthActor } from "./request-access-auth";
 import { scheduled } from "./scheduled";
 import {
 	sleep,
@@ -112,35 +92,18 @@ export const registry = setup({
 		dynamicVarActor,
 		uniqueVarActor,
 		driverCtxActor,
-		// From auth.ts
-		authActor,
-		intentAuthActor,
-		publicActor,
-		noAuthActor,
-		asyncAuthActor,
 		// From raw-http.ts
 		rawHttpActor,
 		rawHttpNoHandlerActor,
 		rawHttpVoidReturnActor,
 		rawHttpHonoActor,
-		// From raw-http-auth.ts
-		rawHttpAuthActor,
-		rawHttpNoAuthActor,
-		rawHttpPublicActor,
-		rawHttpCustomAuthActor,
 		// From raw-http-request-properties.ts
 		rawHttpRequestPropertiesActor,
 		// From raw-websocket.ts
 		rawWebSocketActor,
 		rawWebSocketBinaryActor,
-		// From raw-websocket-auth.ts
-		rawWebSocketAuthActor,
-		rawWebSocketNoAuthActor,
-		rawWebSocketPublicActor,
-		rawWebSocketCustomAuthActor,
 		// From request-access.ts
 		requestAccessActor,
-		requestAccessAuthActor,
 		// From actor-onstatechange.ts
 		onStateChangeActor,
 	},

@@ -24,14 +24,16 @@ const defaultEnabled = () => {
 
 const defaultInspectorOrigins = [
 	"http://localhost:43708",
+	"http://localhost:43709",
 	"https://studio.rivet.gg",
+	"https://inspect.rivet.dev",
 ];
 
 const defaultCors: CorsOptions = {
 	origin: (origin) => {
 		if (
 			defaultInspectorOrigins.includes(origin) ||
-			(origin.startsWith("https://") && origin.endsWith("rivet-gg.vercel.app"))
+			(origin.startsWith("https://") && origin.endsWith("rivet-dev.vercel.app"))
 		) {
 			return origin;
 		} else {
@@ -40,10 +42,13 @@ const defaultCors: CorsOptions = {
 	},
 	allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 	allowHeaders: [
-		"Content-Type",
 		"Authorization",
-		HEADER_ACTOR_QUERY,
-		"last-event-id",
+		"Content-Type",
+		"User-Agent",
+		"baggage",
+		"sentry-trace",
+		"x-rivet-actor",
+		"x-rivet-target",
 	],
 	maxAge: 3600,
 	credentials: true,

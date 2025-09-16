@@ -5,15 +5,14 @@ export type StreamState = {
 };
 
 const streamProcessor = actor({
-	onAuth: () => {},
-	// Persistent state that survives restarts: https://rivet.gg/docs/actors/state
+	// Persistent state that survives restarts: https://rivet.dev/docs/actors/state
 	state: {
 		topValues: [] as number[],
 		totalValues: 0,
 	},
 
 	actions: {
-		// Callable functions from clients: https://rivet.gg/docs/actors/actions
+		// Callable functions from clients: https://rivet.dev/docs/actors/actions
 		getTopValues: (c) => c.state.topValues,
 
 		getStats: (c) => ({
@@ -51,7 +50,7 @@ const streamProcessor = actor({
 					c.state.topValues.length > 0 ? c.state.topValues[0] : null,
 			};
 
-			// Send events to all connected clients: https://rivet.gg/docs/actors/events
+			// Send events to all connected clients: https://rivet.dev/docs/actors/events
 			c.broadcast("updated", result);
 
 			return c.state.topValues;
@@ -74,7 +73,7 @@ const streamProcessor = actor({
 	},
 });
 
-// Register actors for use: https://rivet.gg/docs/setup
+// Register actors for use: https://rivet.dev/docs/setup
 export const registry = setup({
 	use: { streamProcessor },
 });

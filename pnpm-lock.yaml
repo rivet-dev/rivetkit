@@ -1170,8 +1170,8 @@ importers:
         specifier: ^0.19.10
         version: 0.19.10(hono@4.8.3)(zod@3.25.76)
       '@rivetkit/engine-runner':
-        specifier: https://pkg.pr.new/rivet-gg/engine/@rivetkit/engine-runner@664a377
-        version: https://pkg.pr.new/rivet-gg/engine/@rivetkit/engine-runner@664a377
+        specifier: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@f841bef
+        version: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@f841bef
       '@rivetkit/fast-json-patch':
         specifier: ^3.1.2
         version: 3.1.2
@@ -1196,9 +1196,6 @@ importers:
       pino:
         specifier: ^9.5.0
         version: 9.9.5
-      pino-logfmt:
-        specifier: ^1.0.1
-        version: 1.0.1
       zod:
         specifier: 3.25.76
         version: 3.25.76
@@ -1212,9 +1209,6 @@ importers:
       '@hono/node-ws':
         specifier: ^1.1.1
         version: 1.1.7(@hono/node-server@1.18.2(hono@4.8.3))(hono@4.8.3)
-      '@rivet-gg/actor-core':
-        specifier: ^25.1.0
-        version: 25.2.0
       '@types/invariant':
         specifier: ^2
         version: 2.2.37
@@ -2547,24 +2541,17 @@ packages:
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
 
-  '@publint/pack@0.1.2':
-    resolution: {integrity: sha512-S+9ANAvUmjutrshV4jZjaiG8XQyuJIZ8a4utWmN/vW1sgQ9IfBnPndwkmQYw53QmouOIytT874u65HEmu6H5jw==}
-    engines: {node: '>=18'}
+  '@rivetkit/engine-runner-protocol@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@f841befe1286003270c8a07f6ee5a703094f12a9':
+    resolution: {tarball: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@f841befe1286003270c8a07f6ee5a703094f12a9}
+    version: 25.6.1
 
-  '@rivet-gg/actor-core@25.2.0':
-    resolution: {integrity: sha512-4K72XcDLVAz44Ae6G6GuyzWyxQZOLN8jM/W+sVKm6fHr70X8FNCSC5+/9hFIxz/OH9E6q6Wi3V/UN/k6immUBQ==}
+  '@rivetkit/engine-runner@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@f841bef':
+    resolution: {tarball: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@f841bef}
+    version: 25.6.1
 
-  '@rivetkit/engine-runner-protocol@https://pkg.pr.new/rivet-gg/engine/@rivetkit/engine-runner-protocol@664a377784e8296d6c3f5617a1ec45ab977dc9f8':
-    resolution: {tarball: https://pkg.pr.new/rivet-gg/engine/@rivetkit/engine-runner-protocol@664a377784e8296d6c3f5617a1ec45ab977dc9f8}
-    version: 1.0.0
-
-  '@rivetkit/engine-runner@https://pkg.pr.new/rivet-gg/engine/@rivetkit/engine-runner@664a377':
-    resolution: {tarball: https://pkg.pr.new/rivet-gg/engine/@rivetkit/engine-runner@664a377}
-    version: 0.0.0
-
-  '@rivetkit/engine-tunnel-protocol@https://pkg.pr.new/rivet-gg/engine/@rivetkit/engine-tunnel-protocol@664a377784e8296d6c3f5617a1ec45ab977dc9f8':
-    resolution: {tarball: https://pkg.pr.new/rivet-gg/engine/@rivetkit/engine-tunnel-protocol@664a377784e8296d6c3f5617a1ec45ab977dc9f8}
-    version: 1.0.0
+  '@rivetkit/engine-tunnel-protocol@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-tunnel-protocol@f841befe1286003270c8a07f6ee5a703094f12a9':
+    resolution: {tarball: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-tunnel-protocol@f841befe1286003270c8a07f6ee5a703094f12a9}
+    version: 25.6.1
 
   '@rivetkit/fast-json-patch@3.1.2':
     resolution: {integrity: sha512-CtA50xgsSSzICQduF/NDShPRzvucnNvsW/lQO0WgMTT1XAj9Lfae4pm7r3llFwilgG+9iq76Hv1LUqNy72v6yw==}
@@ -3153,10 +3140,6 @@ packages:
   caniuse-lite@1.0.30001723:
     resolution: {integrity: sha512-1R/elMjtehrFejxwmexeXAtae5UO9iSyFn6G/I806CYC/BLyyBk1EPhrKBkWhy6wM6Xnm47dSJQec+tLJ39WHw==}
 
-  case-anything@2.1.13:
-    resolution: {integrity: sha512-zlOQ80VrQ2Ue+ymH5OuM/DlDq64mEm+B9UTdHULv5osUMD6HalNTblf2b1u/m6QecjsnOkBpqVZ+XPwIVsy7Ng==}
-    engines: {node: '>=12.13'}
-
   cbor-extract@2.2.0:
     resolution: {integrity: sha512-Ig1zM66BjLfTXpNgKpvBePq271BPOvu8MR0Jl080yG7Jsl+wAZunfrwiwA+9ruzm/WEdIV5QF/bjDZTqyAIVHA==}
     hasBin: true
@@ -3301,7 +3284,6 @@ packages:
     resolution: {integrity: sha512-fnULvOpxnC5/Vg3NCiWelDsLiUc9bRwAPs/+LfTLNvetFCtCTN+yQz15C/fs4AwX1R9K5GLtLfn8QW+dWisaAw==}
     engines: {node: '>=0.11'}
 
-  dateformat@5.0.3:
   de-indent@1.0.2:
     resolution: {integrity: sha512-e/1zu3xH5MQryN2zdVaF0OrdNLUbvWxzMbi+iNA6Bky7l1RoP8a2fIbRocyHclXt/arDrrR6lL3TqFD9pMQTsg==}
 
@@ -4048,10 +4030,6 @@ packages:
   lodash@4.17.21:
     resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
 
-  logfmt@1.4.0:
-    resolution: {integrity: sha512-p1Ow0C2dDJYaQBhRHt+HVMP6ELuBm4jYSYNHPMfz0J5wJ9qA6/7oBOlBZBfT1InqguTYcvJzNea5FItDxTcbyw==}
-    hasBin: true
-
   loose-envify@1.4.0:
     resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
     hasBin: true
@@ -4331,10 +4309,6 @@ packages:
 
   pino-abstract-transport@2.0.0:
     resolution: {integrity: sha512-F63x5tizV6WCh4R6RHyi2Ml+M70DNRXt/+HANowMflpgGFMAym/VKm6G7ZOQRjqN7XbGxK1Lg9t6ZrtzOaivMw==}
-
-  pino-logfmt@1.0.1:
-    resolution: {integrity: sha512-H81lcGM7Abl/PijeZ9jmXMi9Ul1AUDfQDJuC5/fSdB5f3oXFkJSdah2U40alj5gRmrpyXigUdfg/A33kQHbLKQ==}
-    hasBin: true
 
   pino-std-serializers@7.0.0:
     resolution: {integrity: sha512-e906FRY0+tV27iq4juKzSYPbUj2do2X2JX4EzSca1631EB2QJQUqGbDuERal7LCtOpxl6x3+nvo9NPZcmjkiFA==}
@@ -4666,9 +4640,6 @@ packages:
   sisteransi@1.0.5:
     resolution: {integrity: sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg==}
 
-  sonic-boom@3.8.1:
-    resolution: {integrity: sha512-y4Z8LCDBuum+PBP3lSV7RHrXscqksve/bi0as7mhwVnBW+/wUqKT/2Kb7um8yqcFy0duYbbPxzt89Zy2nOCaxg==}
-
   sonic-boom@4.2.0:
     resolution: {integrity: sha512-INb7TM37/mAcsGmc9hyyI6+QR3rR1zVRu36B0NeGXKnOOLiZOfER5SA+N7X7k3yUYRzLWafduTDvJAfDswwEww==}
 
@@ -4694,9 +4665,6 @@ packages:
   split2@4.2.0:
     resolution: {integrity: sha512-UcjcJOWknrNkF6PLX83qcHM6KHgVKNkV62Y8a5uYDVv9ydGQVwAHMKqHdJje1VTWpljG0WYpCDhrCdAOYH4TWg==}
     engines: {node: '>= 10.x'}
-
-  split@0.2.10:
-    resolution: {integrity: sha512-e0pKq+UUH2Xq/sXbYpZBZc3BawsfDZ7dgv+JtRTUPNcvF5CMR4Y9cvJqkMY0MoxWzTHvZuz1beg6pNEKlszPiQ==}
 
   sprintf-js@1.0.3:
     resolution: {integrity: sha512-D9cPgkvLlV3t3IzL0D0YLvGA9Ahk4PcvVwUbN0dSGr1aP0Nrt4AEnTUbuGvquEC0mA64Gqt1fzirlRs5ibXx8g==}
@@ -4861,9 +4829,6 @@ packages:
   throttleit@2.1.0:
     resolution: {integrity: sha512-nt6AMGKW1p/70DF/hGBdJB57B8Tspmbp5gfJ8ilhLnt7kkr2ye7hzD6NVG8GGErk2HWF34igrL2CXmNIkzKqKw==}
     engines: {node: '>=18'}
-
-  through@2.3.8:
-    resolution: {integrity: sha512-w89qg7PI8wAdvX60bMDP+bFoD5Dvhm9oLheFp5O4a2QF0cSBGsBX4qZmadPMvVqlLJBBci+WqGGOAPvcDeNSVg==}
 
   tinybench@2.9.0:
     resolution: {integrity: sha512-0+DUvqWMValLmha6lr4kD8iAMK1HzV0/aKnCtWb9v9641TnP/MFb7Pc2bxoxQjTXAErryXVgUOfv2YqNllqGeg==}
@@ -6339,27 +6304,22 @@ snapshots:
 
   '@polka/url@1.0.0-next.29': {}
 
-  '@publint/pack@0.1.2': {}
-
-  '@rivet-gg/actor-core@25.2.0':
-    dependencies:
-      zod: 3.25.76
-
-  '@rivetkit/engine-runner-protocol@https://pkg.pr.new/rivet-gg/engine/@rivetkit/engine-runner-protocol@664a377784e8296d6c3f5617a1ec45ab977dc9f8':
+  '@rivetkit/engine-runner-protocol@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@f841befe1286003270c8a07f6ee5a703094f12a9':
     dependencies:
       '@bare-ts/lib': 0.4.0
 
-  '@rivetkit/engine-runner@https://pkg.pr.new/rivet-gg/engine/@rivetkit/engine-runner@664a377':
+  '@rivetkit/engine-runner@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@f841bef':
     dependencies:
-      '@rivetkit/engine-runner-protocol': https://pkg.pr.new/rivet-gg/engine/@rivetkit/engine-runner-protocol@664a377784e8296d6c3f5617a1ec45ab977dc9f8
-      '@rivetkit/engine-tunnel-protocol': https://pkg.pr.new/rivet-gg/engine/@rivetkit/engine-tunnel-protocol@664a377784e8296d6c3f5617a1ec45ab977dc9f8
+      '@rivetkit/engine-runner-protocol': https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@f841befe1286003270c8a07f6ee5a703094f12a9
+      '@rivetkit/engine-tunnel-protocol': https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-tunnel-protocol@f841befe1286003270c8a07f6ee5a703094f12a9
+      pino: 9.9.5
       uuid: 12.0.0
       ws: 8.18.3
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  '@rivetkit/engine-tunnel-protocol@https://pkg.pr.new/rivet-gg/engine/@rivetkit/engine-tunnel-protocol@664a377784e8296d6c3f5617a1ec45ab977dc9f8':
+  '@rivetkit/engine-tunnel-protocol@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-tunnel-protocol@f841befe1286003270c8a07f6ee5a703094f12a9':
     dependencies:
       '@bare-ts/lib': 0.4.0
 
@@ -7161,8 +7121,6 @@ snapshots:
 
   caniuse-lite@1.0.30001723: {}
 
-  case-anything@2.1.13: {}
-
   cbor-extract@2.2.0:
     dependencies:
       node-gyp-build-optional-packages: 5.1.1
@@ -7309,8 +7267,6 @@ snapshots:
   date-fns@2.30.0:
     dependencies:
       '@babel/runtime': 7.27.6
-
-  dateformat@5.0.3: {}
 
   de-indent@1.0.2: {}
 
@@ -8068,11 +8024,6 @@ snapshots:
 
   lodash@4.17.21: {}
 
-  logfmt@1.4.0:
-    dependencies:
-      split: 0.2.10
-      through: 2.3.8
-
   loose-envify@1.4.0:
     dependencies:
       js-tokens: 4.0.0
@@ -8335,15 +8286,6 @@ snapshots:
   pino-abstract-transport@2.0.0:
     dependencies:
       split2: 4.2.0
-
-  pino-logfmt@1.0.1:
-    dependencies:
-      case-anything: 2.1.13
-      dateformat: 5.0.3
-      logfmt: 1.4.0
-      pino-abstract-transport: 2.0.0
-      pump: 3.0.3
-      sonic-boom: 3.8.1
 
   pino-std-serializers@7.0.0: {}
 
@@ -8791,10 +8733,6 @@ snapshots:
 
   sisteransi@1.0.5: {}
 
-  sonic-boom@3.8.1:
-    dependencies:
-      atomic-sleep: 1.0.0
-
   sonic-boom@4.2.0:
     dependencies:
       atomic-sleep: 1.0.0
@@ -8815,10 +8753,6 @@ snapshots:
   spawn-command@0.0.2: {}
 
   split2@4.2.0: {}
-
-  split@0.2.10:
-    dependencies:
-      through: 2.3.8
 
   sprintf-js@1.0.3: {}
 
@@ -9011,8 +8945,6 @@ snapshots:
       real-require: 0.2.0
 
   throttleit@2.1.0: {}
-
-  through@2.3.8: {}
 
   tinybench@2.9.0: {}
 

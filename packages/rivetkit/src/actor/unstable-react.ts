@@ -9,7 +9,7 @@
 // *
 // * Supports rendering React elements as action responses.
 // *
-// * @see [Documentation](https://rivet.gg/docs/client/react)
+// * @see [Documentation](https://rivet.dev/docs/client/react)
 // * @experimental
 // */
 //export class RscActor<

@@ -20,6 +20,7 @@ export class ActorError extends ActorClientError {
 	__type = "ActorError";
 
 	constructor(
+		public readonly group: string,
 		public readonly code: string,
 		message: string,
 		public readonly metadata?: unknown,

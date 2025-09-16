@@ -1,6 +1,7 @@
 {
   "name": "@rivetkit/next-js",
-  "version": "2.0.3",
+  "version": "2.0.4",
+  "description": "Next.js integration for RivetKit actors and client",
   "license": "Apache-2.0",
   "keywords": [
     "rivetkit",

@@ -1,10 +1,10 @@
 # RivetKit Framework Base
 
-_Lightweight Libraries for Backends_
+_Library to build and scale stateful workloads_
 
-[Learn More →](https://github.com/rivet-gg/rivetkit)
+[Learn More →](https://github.com/rivet-dev/rivetkit)
 
-[Discord](https://rivet.gg/discord) — [Documentation](https://rivetkit.org) — [Issues](https://github.com/rivet-gg/rivetkit/issues)
+[Discord](https://rivet.dev/discord) — [Documentation](https://rivetkit.org) — [Issues](https://github.com/rivet-dev/rivetkit/issues)
 
 ## License
 

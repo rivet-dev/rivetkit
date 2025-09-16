@@ -6,7 +6,6 @@ import type { Client } from "@/client/client";
 import { getBaseLogger, getIncludeTarget, type Logger } from "@/common/log";
 import { isCborSerializable, stringifyError } from "@/common/utils";
 import type { UniversalWebSocket } from "@/common/websocket-interface";
-import { serializeActorKey } from "@/drivers/engine/keys";
 import { ActorInspector } from "@/inspector/actor";
 import type { Registry } from "@/mod";
 import type * as bareSchema from "@/schemas/actor-persist/mod";
@@ -30,6 +29,7 @@ import { ActorContext } from "./context";
 import type { AnyDatabaseProvider, InferDatabaseClient } from "./database";
 import type { ActorDriver, ConnDriver, ConnectionDriversMap } from "./driver";
 import * as errors from "./errors";
+import { serializeActorKey } from "./keys";
 import { loggerWithoutContext } from "./log";
 import type {
 	PersistedActor,
@@ -66,16 +66,12 @@ export type AnyActorInstance = ActorInstance<
 	// biome-ignore lint/suspicious/noExplicitAny: Needs to be used in `extends`
 	any,
 	// biome-ignore lint/suspicious/noExplicitAny: Needs to be used in `extends`
-	any,
-	// biome-ignore lint/suspicious/noExplicitAny: Needs to be used in `extends`
 	any
 >;
 
 export type ExtractActorState<A extends AnyActorInstance> =
 	A extends ActorInstance<
 		infer State,
-		// biome-ignore lint/suspicious/noExplicitAny: Must be used for `extends`
-		any,
 		// biome-ignore lint/suspicious/noExplicitAny: Must be used for `extends`
 		any,
 		// biome-ignore lint/suspicious/noExplicitAny: Must be used for `extends`
@@ -102,8 +98,6 @@ export type ExtractActorConnParams<A extends AnyActorInstance> =
 		// biome-ignore lint/suspicious/noExplicitAny: Must be used for `extends`
 		any,
 		// biome-ignore lint/suspicious/noExplicitAny: Must be used for `extends`
-		any,
-		// biome-ignore lint/suspicious/noExplicitAny: Must be used for `extends`
 		any
 	>
 		? ConnParams
@@ -121,24 +115,14 @@ export type ExtractActorConnState<A extends AnyActorInstance> =
 		// biome-ignore lint/suspicious/noExplicitAny: Must be used for `extends`
 		any,
 		// biome-ignore lint/suspicious/noExplicitAny: Must be used for `extends`
-		any,
-		// biome-ignore lint/suspicious/noExplicitAny: Must be used for `extends`
 		any
 	>
 		? ConnState
 		: never;
 
-export class ActorInstance<
-	S,
-	CP,
-	CS,
-	V,
-	I,
-	AD,
-	DB extends AnyDatabaseProvider,
-> {
+export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 	// Shared actor context for this instance
-	actorContext: ActorContext<S, CP, CS, V, I, AD, DB>;
+	actorContext: ActorContext<S, CP, CS, V, I, DB>;
 
 	/** Actor log, intended for the user to call */
 	#log!: Logger;
@@ -176,7 +160,7 @@ export class ActorInstance<
 
 	#backgroundPromises: Promise<void>[] = [];
 	#abortController = new AbortController();
-	#config: ActorConfig<S, CP, CS, V, I, AD, DB>;
+	#config: ActorConfig<S, CP, CS, V, I, DB>;
 	#connectionDrivers!: ConnectionDriversMap;
 	#actorDriver!: ActorDriver;
 	#inlineClient!: Client<Registry<any>>;
@@ -186,8 +170,8 @@ export class ActorInstance<
 	#region!: string;
 	#ready = false;
 
-	#connections = new Map<ConnId, Conn<S, CP, CS, V, I, AD, DB>>();
-	#subscriptionIndex = new Map<string, Set<Conn<S, CP, CS, V, I, AD, DB>>>();
+	#connections = new Map<ConnId, Conn<S, CP, CS, V, I, DB>>();
+	#subscriptionIndex = new Map<string, Set<Conn<S, CP, CS, V, I, DB>>>();
 	#checkConnLivenessInterval?: NodeJS.Timeout;
 
 	#sleepTimeout?: NodeJS.Timeout;
@@ -225,7 +209,6 @@ export class ActorInstance<
 					stateEnabled: conn._stateEnabled,
 					params: conn.params as {},
 					state: conn._stateEnabled ? conn.state : undefined,
-					auth: conn.auth as {},
 				}));
 			},
 			setState: async (state: unknown) => {
@@ -265,7 +248,7 @@ export class ActorInstance<
 	 *
 	 * @private
 	 */
-	constructor(config: ActorConfig<S, CP, CS, V, I, AD, DB>) {
+	constructor(config: ActorConfig<S, CP, CS, V, I, DB>) {
 		this.#config = config;
 		this.actorContext = new ActorContext(this);
 	}
@@ -315,7 +298,6 @@ export class ActorInstance<
 			if ("createVars" in this.#config) {
 				const dataOrPromise = this.#config.createVars(
 					this.actorContext as unknown as ActorContext<
-						undefined,
 						undefined,
 						undefined,
 						undefined,
@@ -738,7 +720,7 @@ export class ActorInstance<
 			for (const connPersist of this.#persist.connections) {
 				// Create connections
 				const driver = this.__getConnDriver(connPersist.connDriver);
-				const conn = new Conn<S, CP, CS, V, I, AD, DB>(
+				const conn = new Conn<S, CP, CS, V, I, DB>(
 					this,
 					connPersist,
 					driver,
@@ -765,7 +747,6 @@ export class ActorInstance<
 					// Convert state to undefined since state is not defined yet here
 					stateData = await this.#config.createState(
 						this.actorContext as unknown as ActorContext<
-							undefined,
 							undefined,
 							undefined,
 							undefined,
@@ -805,14 +786,14 @@ export class ActorInstance<
 		}
 	}
 
-	__getConnForId(id: string): Conn<S, CP, CS, V, I, AD, DB> | undefined {
+	__getConnForId(id: string): Conn<S, CP, CS, V, I, DB> | undefined {
 		return this.#connections.get(id);
 	}
 
 	/**
 	 * Removes a connection and cleans up its resources.
 	 */
-	__removeConn(conn: Conn<S, CP, CS, V, I, AD, DB> | undefined) {
+	__removeConn(conn: Conn<S, CP, CS, V, I, DB> | undefined) {
 		if (!conn) {
 			this.#rLog.warn({ msg: "`conn` does not exist" });
 			return;
@@ -894,7 +875,6 @@ export class ActorInstance<
 						undefined,
 						undefined,
 						undefined,
-						undefined,
 						undefined
 					>,
 					onBeforeConnectOpts,
@@ -938,7 +918,7 @@ export class ActorInstance<
 		driverId: ConnectionDriver,
 		driverState: unknown,
 		authData: unknown,
-	): Promise<Conn<S, CP, CS, V, I, AD, DB>> {
+	): Promise<Conn<S, CP, CS, V, I, DB>> {
 		this.#assertReady();
 
 		if (this.#connections.has(connectionId)) {
@@ -958,7 +938,7 @@ export class ActorInstance<
 			lastSeen: Date.now(),
 			subscriptions: [],
 		};
-		const conn = new Conn<S, CP, CS, V, I, AD, DB>(
+		const conn = new Conn<S, CP, CS, V, I, DB>(
 			this,
 			persist,
 			driver,
@@ -1024,7 +1004,7 @@ export class ActorInstance<
 	// MARK: Messages
 	async processMessage(
 		message: protocol.ToServer,
-		conn: Conn<S, CP, CS, V, I, AD, DB>,
+		conn: Conn<S, CP, CS, V, I, DB>,
 	) {
 		await processMessage(message, this, conn, {
 			onExecuteAction: async (ctx, name, args) => {
@@ -1058,7 +1038,7 @@ export class ActorInstance<
 	// MARK: Events
 	#addSubscription(
 		eventName: string,
-		connection: Conn<S, CP, CS, V, I, AD, DB>,
+		connection: Conn<S, CP, CS, V, I, DB>,
 		fromPersist: boolean,
 	) {
 		if (connection.subscriptions.has(eventName)) {
@@ -1091,7 +1071,7 @@ export class ActorInstance<
 
 	#removeSubscription(
 		eventName: string,
-		connection: Conn<S, CP, CS, V, I, AD, DB>,
+		connection: Conn<S, CP, CS, V, I, DB>,
 		fromRemoveConn: boolean,
 	) {
 		if (!connection.subscriptions.has(eventName)) {
@@ -1205,7 +1185,7 @@ export class ActorInstance<
 	 * @internal
 	 */
 	async executeAction(
-		ctx: ActionContext<S, CP, CS, V, I, AD, DB>,
+		ctx: ActionContext<S, CP, CS, V, I, DB>,
 		actionName: string,
 		args: unknown[],
 	): Promise<unknown> {
@@ -1329,7 +1309,7 @@ export class ActorInstance<
 	/**
 	 * Handles raw HTTP requests to the actor.
 	 */
-	async handleFetch(request: Request, opts: { auth: AD }): Promise<Response> {
+	async handleFetch(request: Request, opts: {}): Promise<Response> {
 		this.#assertReady();
 
 		if (!this.#config.onFetch) {
@@ -1366,7 +1346,7 @@ export class ActorInstance<
 	 */
 	async handleWebSocket(
 		websocket: UniversalWebSocket,
-		opts: { request: Request; auth: AD },
+		opts: { request: Request },
 	): Promise<void> {
 		this.#assertReady();
 
@@ -1459,7 +1439,7 @@ export class ActorInstance<
 	/**
 	 * Gets the map of connections.
 	 */
-	get conns(): Map<ConnId, Conn<S, CP, CS, V, I, AD, DB>> {
+	get conns(): Map<ConnId, Conn<S, CP, CS, V, I, DB>> {
 		return this.#connections;
 	}
 
@@ -1809,10 +1789,6 @@ export class ActorInstance<
 				),
 				parameters: bufferToArrayBuffer(cbor.encode(conn.params || {})),
 				state: bufferToArrayBuffer(cbor.encode(conn.state || {})),
-				auth:
-					conn.authData !== undefined
-						? bufferToArrayBuffer(cbor.encode(conn.authData))
-						: null,
 				subscriptions: conn.subscriptions.map((sub) => ({
 					eventName: sub.eventName,
 				})),
@@ -1848,9 +1824,6 @@ export class ActorInstance<
 				connDriverState: cbor.decode(new Uint8Array(conn.driverState)),
 				params: cbor.decode(new Uint8Array(conn.parameters)),
 				state: cbor.decode(new Uint8Array(conn.state)),
-				authData: conn.auth
-					? cbor.decode(new Uint8Array(conn.auth))
-					: undefined,
 				subscriptions: conn.subscriptions.map((sub) => ({
 					eventName: sub.eventName,
 				})),

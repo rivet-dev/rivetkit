@@ -16,7 +16,6 @@ export async function importWebSocket(): Promise<typeof WebSocket> {
 		if (typeof WebSocket !== "undefined") {
 			// Browser environment
 			_WebSocket = WebSocket as unknown as typeof WebSocket;
-			logger().debug("using native websocket");
 		} else {
 			// Node.js environment
 			try {

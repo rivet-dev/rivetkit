@@ -1,11 +1,17 @@
+import invariant from "invariant";
+import { PATH_RAW_WEBSOCKET_PREFIX } from "@/actor/router";
+import { deconstructError } from "@/common/utils";
+import { HEADER_CONN_PARAMS, type ManagerDriver } from "@/driver-helpers/mod";
 import type { ActorQuery } from "@/manager/protocol/query";
-import type { ClientDriver } from "./client";
+import { queryActor } from "./actor-query";
+import { ActorError } from "./errors";
+import { logger } from "./log";
 
 /**
  * Shared implementation for raw HTTP fetch requests
  */
 export async function rawHttpFetch(
-	driver: ClientDriver,
+	driver: ManagerDriver,
 	actorQuery: ActorQuery,
 	params: unknown,
 	input: string | URL | Request,
@@ -55,38 +61,89 @@ export async function rawHttpFetch(
 		throw new TypeError("Invalid input type for fetch");
 	}
 
-	// Use the driver's raw HTTP method - just pass the sub-path
-	return await driver.rawHttpRequest(
-		undefined,
-		actorQuery,
-		// Force JSON so it's readable by the user
-		"json",
-		params,
-		path,
-		mergedInit,
-		undefined,
-	);
+	try {
+		// Get the actor ID
+		const { actorId } = await queryActor(undefined, actorQuery, driver);
+		logger().debug({ msg: "found actor for raw http", actorId });
+		invariant(actorId, "Missing actor ID");
+
+		// Build the URL with normalized path
+		const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
+		const url = new URL(`http://actor/raw/http/${normalizedPath}`);
+
+		// Forward conn params if provided
+		const proxyRequestHeaders = new Headers(mergedInit.headers);
+		if (params) {
+			proxyRequestHeaders.set(HEADER_CONN_PARAMS, JSON.stringify(params));
+		}
+
+		// Forward the request to the actor
+		const proxyRequest = new Request(url, {
+			...init,
+			headers: proxyRequestHeaders,
+		});
+
+		return driver.sendRequest(actorId, proxyRequest);
+	} catch (err) {
+		// Standardize to ClientActorError instead of the native backend error
+		const { group, code, message, metadata } = deconstructError(
+			err,
+			logger(),
+			{},
+			true,
+		);
+		throw new ActorError(group, code, message, metadata);
+	}
 }
 
 /**
  * Shared implementation for raw WebSocket connections
  */
 export async function rawWebSocket(
-	driver: ClientDriver,
+	driver: ManagerDriver,
 	actorQuery: ActorQuery,
 	params: unknown,
 	path?: string,
+	// TODO: Supportp rotocols
 	protocols?: string | string[],
 ): Promise<any> {
-	// Use the driver's raw WebSocket method
-	return await driver.rawWebSocket(
-		undefined,
-		actorQuery,
-		// Force JSON so it's readable by the user
-		"json",
-		params,
-		path || "",
-		protocols,
-		undefined,
-	);
+	// TODO: Do we need encoding in rawWebSocket?
+	const encoding = "bare";
+
+	// Get the actor ID
+	const { actorId } = await queryActor(undefined, actorQuery, driver);
+	logger().debug({ msg: "found actor for action", actorId });
+	invariant(actorId, "Missing actor ID");
+
+	// Parse path and query parameters
+	let pathPortion = "";
+	let queryPortion = "";
+	if (path) {
+		const queryIndex = path.indexOf("?");
+		if (queryIndex !== -1) {
+			pathPortion = path.substring(0, queryIndex);
+			queryPortion = path.substring(queryIndex); // includes the '?'
+		} else {
+			pathPortion = path;
+		}
+		// Remove leading slash if present
+		if (pathPortion.startsWith("/")) {
+			pathPortion = pathPortion.slice(1);
+		}
+	}
+
+	const fullPath = `${PATH_RAW_WEBSOCKET_PREFIX}${pathPortion}${queryPortion}`;
+
+	logger().debug({
+		msg: "opening websocket",
+		actorId,
+		encoding,
+		path: fullPath,
+	});
+
+	// Open WebSocket
+	const ws = await driver.openWebSocket(fullPath, actorId, encoding, params);
+
+	// Node & browser WebSocket types are incompatible
+	return ws as any;
 }

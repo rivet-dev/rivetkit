@@ -5,10 +5,6 @@ export const counter = actor({
 	state: {
 		count: 0,
 	},
-	onAuth: () => {
-		// Skip auth, make onFetch public
-		return {};
-	},
 	createVars: () => {
 		// Setup router
 		return { router: createCounterRouter() };

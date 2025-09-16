@@ -3,7 +3,6 @@ import { actor } from "rivetkit";
 type ConnParams = { trackLifecycle?: boolean } | undefined;
 
 export const counterWithLifecycle = actor({
-	onAuth: () => {},
 	state: {
 		count: 0,
 		events: [] as string[],

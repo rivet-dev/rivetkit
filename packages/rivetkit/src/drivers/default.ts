@@ -9,7 +9,7 @@ import { getEnvUniversal } from "@/utils";
  * Chooses the appropriate driver based on the run configuration.
  */
 export function chooseDefaultDriver(runConfig: RunConfig): DriverConfig {
-	const engineEndpoint = runConfig.engine || getEnvUniversal("RIVET_ENGINE");
+	const engineEndpoint = runConfig.endpoint ?? getEnvUniversal("RIVET_ENGINE");
 
 	if (engineEndpoint && runConfig.driver) {
 		throw new UserError(
