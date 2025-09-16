@@ -21,6 +21,8 @@ import {
 import { crossPlatformServe } from "./serve";
 
 interface ServerOutput<A extends Registry<any>> {
+	config: RunConfig;
+	driver: DriverConfig;
 	client: Client<A>;
 	hono: Hono;
 	handler: (req: Request) => Promise<Response>;
@@ -56,6 +58,11 @@ export class Registry<A extends RegistryActors> {
 
 		// Choose the driver based on configuration
 		const driver = chooseDefaultDriver(config);
+
+		// TODO: Find cleaner way of disabling by default
+		if (driver.name === "engine") {
+			config.inspector.enabled = false;
+		}
 
 		// Configure getUpgradeWebSocket lazily so we can assign it in crossPlatformServe
 		let upgradeWebSocket: any;
@@ -113,6 +120,8 @@ export class Registry<A extends RegistryActors> {
 		);
 
 		return {
+			config,
+			driver,
 			client,
 			hono,
 			handler: async (req: Request) => await hono.fetch(req),
@@ -127,8 +136,13 @@ export class Registry<A extends RegistryActors> {
 	 * Runs the registry as a standalone server.
 	 */
 	public async runServer(inputConfig?: RunConfigInput) {
-		const { serve } = this.createServer(inputConfig);
-		serve();
+		const { driver, serve } = this.createServer(inputConfig);
+
+		// TODO: FInd better way of doing this
+		// Don't run server by default
+		if (driver.name !== "engine") {
+			serve();
+		}
 	}
 }
 
