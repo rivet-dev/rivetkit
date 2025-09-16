@@ -5,6 +5,7 @@ import type { CloseEvent } from "ws";
 import type { AnyActorDefinition } from "@/actor/definition";
 import { inputDataToBuffer } from "@/actor/protocol/old";
 import { type Encoding, jsonStringifyCompat } from "@/actor/protocol/serde";
+import { importEventSource } from "@/common/eventsource";
 import type {
 	UniversalErrorEvent,
 	UniversalEventSource,
@@ -13,6 +14,7 @@ import type {
 import { assertUnreachable, stringifyError } from "@/common/utils";
 import {
 	HEADER_CONN_ID,
+	HEADER_CONN_PARAMS,
 	HEADER_CONN_TOKEN,
 	HEADER_ENCODING,
 	type ManagerDriver,
@@ -29,7 +31,7 @@ import {
 	encodingIsBinary,
 	serializeWithEncoding,
 } from "@/serde";
-import { bufferToArrayBuffer, getEnvUniversal } from "@/utils";
+import { bufferToArrayBuffer, getEnvUniversal, httpUserAgent } from "@/utils";
 import type { ActorDefinitionActions } from "./actor-common";
 import { queryActor } from "./actor-query";
 import { ACTOR_CONNS_SYMBOL, type ClientRaw, TRANSPORT_SYMBOL } from "./client";
@@ -296,65 +298,51 @@ enc
 	}
 
 	async #connectSse() {
-		throw "TODO";
+		const EventSource = await importEventSource();
 
-		// OLD:
-		// const eventSource = await this.#driver.connectSse(
-		// 	undefined,
-		// 	this.#actorQuery,
-		// 	this.#encodingKind,
-		// 	this.#params,
-		// 	signal ? { signal } : undefined,
-		// );
-		// this.#transport = { sse: eventSource };
-		// eventSource.onopen = () => {
-		// 	logger().debug({ msg: "eventsource open" });
-		// 	// #handleOnOpen is called on "i" event
-		// };
-		// eventSource.onmessage = (ev: UniversalMessageEvent) => {
-		// 	this.#handleOnMessage(ev.data);
-		// };
-		// eventSource.onerror = (_ev: UniversalErrorEvent) => {
-		// 	if (eventSource.readyState === eventSource.CLOSED) {
-		// 		// This error indicates a close event
-		// 		this.#handleOnClose(new Event("error"));
-		// 	} else {
-		// 		// Log error since event source is still open
-		// 		this.#handleOnError();
-		// 	}
-		// };
+		// Get the actor ID
+		const { actorId } = await queryActor(
+			undefined,
+			this.#actorQuery,
+			this.#driver,
+		);
+		logger().debug({ msg: "found actor for sse connection", actorId });
+		invariant(actorId, "Missing actor ID");
 
-		// NEW:
-		// const EventSource = await importEventSource();
-		//
-		// // Get the actor ID
-		// const { actorId } = await managerDriver.queryActor(c, actorQuery);
-		// logger().debug({ msg: "found actor for sse connection", actorId });
-		// invariant(actorId, "Missing actor ID");
-		//
-		// logger().debug({
-		// 	msg: "opening sse connection",
-		// 	actorId,
-		// 	encoding: encodingKind,
-		// });
-		//
-		// const eventSource = new EventSource("http://actor/connect/sse", {
-		// 	fetch: (input, init) => {
-		// 		return fetch(input, {
-		// 			...init,
-		// 			headers: {
-		// 				...init?.headers,
-		// 				"User-Agent": httpUserAgent(),
-		// 				[HEADER_ENCODING]: encodingKind,
-		// 				...(params !== undefined
-		// 					? { [HEADER_CONN_PARAMS]: JSON.stringify(params) }
-		// 					: {}),
-		// 			},
-		// 		});
-		// 	},
-		// }) as UniversalEventSource;
-		//
-		// return eventSource;
+		logger().debug({
+			msg: "opening sse connection",
+			actorId,
+			encoding: this.#encoding,
+		});
+
+		const eventSource = new EventSource("http://actor/connect/sse", {
+			fetch: (input, init) => {
+				return this.#driver.sendRequest(
+					actorId,
+					new Request(input, {
+						...init,
+						headers: {
+							...init?.headers,
+							"User-Agent": httpUserAgent(),
+							[HEADER_ENCODING]: this.#encoding,
+							...(this.#params !== undefined
+								? { [HEADER_CONN_PARAMS]: JSON.stringify(this.#params) }
+								: {}),
+						},
+					}),
+				);
+			},
+		}) as UniversalEventSource;
+
+		this.#transport = { sse: eventSource };
+
+		eventSource.addEventListener("message", (ev: UniversalMessageEvent) => {
+			this.#handleOnMessage(ev.data);
+		});
+
+		eventSource.addEventListener("error", (ev: UniversalErrorEvent) => {
+			this.#handleOnError();
+		});
 	}
 
 	/** Called by the onopen event from drivers. */
