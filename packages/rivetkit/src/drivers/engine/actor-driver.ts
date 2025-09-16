@@ -116,6 +116,7 @@ export class EngineActorDriver implements ActorDriver {
 				});
 				hasDisconnected = true;
 			},
+			onShutdown: () => {},
 			fetch: this.#runnerFetch.bind(this),
 			websocket: this.#runnerWebSocket.bind(this),
 			onActorStart: this.#runnerOnActorStart.bind(this),

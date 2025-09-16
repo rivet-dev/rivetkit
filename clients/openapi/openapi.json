@@ -205,37 +205,6 @@
             "description": "Internal error"
           }
         }
-      },
-      "delete": {
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "actor_id",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {}
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "User error"
-          },
-          "500": {
-            "description": "Internal error"
-          }
-        }
       }
     },
     "/actors": {

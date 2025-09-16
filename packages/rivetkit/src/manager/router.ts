@@ -363,33 +363,29 @@ export function createManagerRouter(
 		});
 	}
 
-	// DELETE /actors/{actor_id}
-	{
-		const route = createRoute({
-			middleware: [cors],
-			method: "delete",
-			path: "/actors/{actor_id}",
-			request: {
-				params: z.object({
-					actor_id: RivetIdSchema,
-				}),
-			},
-			responses: buildOpenApiResponses(
-				ActorsDeleteResponseSchema,
-				validateBody,
-			),
-		});
-
-		router.openapi(route, async (c) => {
-			const { actor_id } = c.req.valid("param");
-
-			// NOTE: The ManagerDriver interface doesn't currently have a deleteActor method
-			// This endpoint cannot be implemented until the driver supports actor deletion
-			throw new FeatureNotImplemented(
-				"Actor deletion - ManagerDriver lacks deleteActor method",
-			);
-		});
-	}
+	// TODO:
+	// // DELETE /actors/{actor_id}
+	// {
+	// 	const route = createRoute({
+	// 		middleware: [cors],
+	// 		method: "delete",
+	// 		path: "/actors/{actor_id}",
+	// 		request: {
+	// 			params: z.object({
+	// 				actor_id: RivetIdSchema,
+	// 			}),
+	// 		},
+	// 		responses: buildOpenApiResponses(
+	// 			ActorsDeleteResponseSchema,
+	// 			validateBody,
+	// 		),
+	// 	});
+	//
+	// 	router.openapi(route, async (c) => {
+	// 		const { actor_id } = c.req.valid("param");
+	//
+	// 	});
+	// }
 
 	if (runConfig.inspector?.enabled) {
 		if (!managerDriver.inspector) {
