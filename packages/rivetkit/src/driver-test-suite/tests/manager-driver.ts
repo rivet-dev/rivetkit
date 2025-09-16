@@ -321,7 +321,7 @@ export function runManagerDriverTests(driverTestConfig: DriverTestConfig) {
 		});
 
 		describe("Multiple Actor Instances", () => {
-			// TODO: This test is flakey https://github.com/rivet-gg/rivetkit/issues/873
+			// TODO: This test is flakey https://github.com/rivet-dev/rivetkit/issues/873
 			test("creates multiple actor instances of the same type", async (c) => {
 				const { client } = await setupDriverTest(c, driverTestConfig);
 

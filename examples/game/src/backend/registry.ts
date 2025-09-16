@@ -5,7 +5,7 @@ export type Input = { x: number; y: number };
 export type Player = { id: string; position: Position; input: Input };
 
 const gameRoom = actor({
-	// Persistent state that survives restarts: https://rivet.gg/docs/actors/state
+	// Persistent state that survives restarts: https://rivet.dev/docs/actors/state
 	state: {
 		players: {} as Record<string, Player>,
 		mapSize: 800,
@@ -42,7 +42,7 @@ const gameRoom = actor({
 
 			// Only broadcast if there are players
 			if (hasPlayers) {
-				// Send events to all connected clients: https://rivet.gg/docs/actors/events
+				// Send events to all connected clients: https://rivet.dev/docs/actors/events
 				c.broadcast("worldUpdate", { playerList });
 			}
 		}, 50);
@@ -51,7 +51,7 @@ const gameRoom = actor({
 		// For now, we'll let the interval run since there's no cleanup method
 	},
 
-	// Handle client connections: https://rivet.gg/docs/actors/connection-lifecycle
+	// Handle client connections: https://rivet.dev/docs/actors/connection-lifecycle
 	onConnect: (c, conn) => {
 		const id = conn.id;
 		// State changes are automatically persisted
@@ -74,7 +74,7 @@ const gameRoom = actor({
 	},
 
 	actions: {
-		// Callable functions from clients: https://rivet.gg/docs/actors/actions
+		// Callable functions from clients: https://rivet.dev/docs/actors/actions
 		setInput: (c, input: Input) => {
 			const player = c.state.players[c.conn.id];
 			if (player) {
@@ -88,7 +88,7 @@ const gameRoom = actor({
 	},
 });
 
-// Register actors for use: https://rivet.gg/docs/setup
+// Register actors for use: https://rivet.dev/docs/setup
 export const registry = setup({
 	use: { gameRoom },
 });

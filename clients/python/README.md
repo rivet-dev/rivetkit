@@ -8,7 +8,7 @@ Use this client to connect to RivetKit services from Python applications.
 
 - [Quickstart](https://rivetkit.org/introduction)
 - [Documentation](https://rivetkit.org/clients/python)
-- [Examples](https://github.com/rivet-gg/rivetkit/tree/main/examples)
+- [Examples](https://github.com/rivet-dev/rivetkit/tree/main/examples)
 
 ## Getting Started
 
@@ -54,11 +54,11 @@ if __name__ == "__main__":
 
 ## Community & Support
 
-- Join our [Discord](https://rivet.gg/discord)
+- Join our [Discord](https://rivet.dev/discord)
 - Follow us on [X](https://x.com/rivet_gg)
 - Follow us on [Bluesky](https://bsky.app/profile/rivet.gg)
-- File bug reports in [GitHub Issues](https://github.com/rivet-gg/rivetkit/issues)
-- Post questions & ideas in [GitHub Discussions](https://github.com/rivet-gg/rivetkit/discussions)
+- File bug reports in [GitHub Issues](https://github.com/rivet-dev/rivetkit/issues)
+- Post questions & ideas in [GitHub Discussions](https://github.com/rivet-dev/rivetkit/discussions)
 
 ## License
 

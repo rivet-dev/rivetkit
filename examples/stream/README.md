@@ -2,9 +2,9 @@
 
 Example project demonstrating real-time top-K stream processing with [RivetKit](https://rivetkit.org).
 
-[Learn More →](https://github.com/rivet-gg/rivetkit)
+[Learn More →](https://github.com/rivet-dev/rivetkit)
 
-[Discord](https://rivet.gg/discord) — [Documentation](https://rivetkit.org) — [Issues](https://github.com/rivet-gg/rivetkit/issues)
+[Discord](https://rivet.dev/discord) — [Documentation](https://rivetkit.org) — [Issues](https://github.com/rivet-dev/rivetkit/issues)
 
 ## Getting Started
 
@@ -15,7 +15,7 @@ Example project demonstrating real-time top-K stream processing with [RivetKit](
 ### Installation
 
 ```sh
-git clone https://github.com/rivet-gg/rivetkit
+git clone https://github.com/rivet-dev/rivetkit
 cd rivetkit/examples/stream
 npm install
 ```

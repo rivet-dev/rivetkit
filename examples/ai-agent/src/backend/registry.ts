@@ -11,13 +11,13 @@ export type Message = {
 };
 
 export const aiAgent = actor({
-	// Persistent state that survives restarts: https://rivet.gg/docs/actors/state
+	// Persistent state that survives restarts: https://rivet.dev/docs/actors/state
 	state: {
 		messages: [] as Message[],
 	},
 
 	actions: {
-		// Callable functions from clients: https://rivet.gg/docs/actors/actions
+		// Callable functions from clients: https://rivet.dev/docs/actors/actions
 		getMessages: (c) => c.state.messages,
 
 		sendMessage: async (c, userMessage: string) => {
@@ -55,7 +55,7 @@ export const aiAgent = actor({
 			};
 			c.state.messages.push(assistantMsg);
 
-			// Send events to all connected clients: https://rivet.gg/docs/actors/events
+			// Send events to all connected clients: https://rivet.dev/docs/actors/events
 			c.broadcast("messageReceived", assistantMsg);
 
 			return assistantMsg;
@@ -63,7 +63,7 @@ export const aiAgent = actor({
 	},
 });
 
-// Register actors for use: https://rivet.gg/docs/setup
+// Register actors for use: https://rivet.dev/docs/setup
 export const registry = setup({
 	use: { aiAgent },
 });

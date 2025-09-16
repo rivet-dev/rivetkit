@@ -224,8 +224,8 @@ export function deconstructError(
 			group,
 			code,
 			message,
-			issues: "https://github.com/rivet-gg/rivetkit/issues",
-			support: "https://rivet.gg/discord",
+			issues: "https://github.com/rivet-dev/rivetkit/issues",
+			support: "https://rivet.dev/discord",
 			...extraLog,
 		});
 	} else if (exposeInternalError) {
@@ -242,8 +242,8 @@ export function deconstructError(
 				group,
 				code,
 				message,
-				issues: "https://github.com/rivet-gg/rivetkit/issues",
-				support: "https://rivet.gg/discord",
+				issues: "https://github.com/rivet-dev/rivetkit/issues",
+				support: "https://rivet.dev/discord",
 				...extraLog,
 			});
 		} else {
@@ -258,8 +258,8 @@ export function deconstructError(
 				group,
 				code,
 				message,
-				issues: "https://github.com/rivet-gg/rivetkit/issues",
-				support: "https://rivet.gg/discord",
+				issues: "https://github.com/rivet-dev/rivetkit/issues",
+				support: "https://rivet.dev/discord",
 				...extraLog,
 			});
 		}
@@ -270,15 +270,15 @@ export function deconstructError(
 		code = errors.INTERNAL_ERROR_CODE;
 		message = errors.INTERNAL_ERROR_DESCRIPTION;
 		metadata = {
-			//url: `https://hub.rivet.gg/projects/${actorMetadata.project.slug}/environments/${actorMetadata.environment.slug}/actors?actorId=${actorMetadata.actor.id}`,
+			//url: `https://hub.rivet.dev/projects/${actorMetadata.project.slug}/environments/${actorMetadata.environment.slug}/actors?actorId=${actorMetadata.actor.id}`,
 		} satisfies errors.InternalErrorMetadata;
 
 		logger.warn({
 			msg: "internal error",
 			error: getErrorMessage(error),
 			stack: (error as Error)?.stack,
-			issues: "https://github.com/rivet-gg/rivetkit/issues",
-			support: "https://rivet.gg/discord",
+			issues: "https://github.com/rivet-dev/rivetkit/issues",
+			support: "https://rivet.dev/discord",
 			...extraLog,
 		});
 	}

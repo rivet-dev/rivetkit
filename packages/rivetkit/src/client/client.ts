@@ -132,8 +132,8 @@ export interface CreateOptions extends QueryOptions {
  * @typedef {Object} Region
  * @property {string} id - The region ID.
  * @property {string} name - The region name.
- * @see {@link https://rivet.gg/docs/edge|Edge Networking}
- * @see {@link https://rivet.gg/docs/regions|Available Regions}
+ * @see {@link https://rivet.dev/docs/edge|Edge Networking}
+ * @see {@link https://rivet.dev/docs/regions|Available Regions}
  */
 export interface Region {
 	/**
@@ -155,7 +155,7 @@ export const TRANSPORT_SYMBOL = Symbol("transport");
  * Client for managing & connecting to actors.
  *
  * @template A The actors map type that defines the available actors.
- * @see {@link https://rivet.gg/docs/manage|Create & Manage Actors}
+ * @see {@link https://rivet.dev/docs/manage|Create & Manage Actors}
  */
 export class ClientRaw {
 	#disposed = false;
@@ -169,9 +169,9 @@ export class ClientRaw {
 	/**
 	 * Creates an instance of Client.
 	 *
-	 * @param {string} managerEndpoint - The manager endpoint. See {@link https://rivet.gg/docs/setup|Initial Setup} for instructions on getting the manager endpoint.
+	 * @param {string} managerEndpoint - The manager endpoint. See {@link https://rivet.dev/docs/setup|Initial Setup} for instructions on getting the manager endpoint.
 	 * @param {ClientConfig} [opts] - Options for configuring the client.
-	 * @see {@link https://rivet.gg/docs/setup|Initial Setup}
+	 * @see {@link https://rivet.dev/docs/setup|Initial Setup}
 	 */
 	public constructor(driver: ManagerDriver, opts?: ClientConfig) {
 		this.#driver = driver;
