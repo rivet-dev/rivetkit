@@ -55,6 +55,9 @@
         }
       },
       "put": {
+        "cors": [
+          null
+        ],
         "requestBody": {
           "content": {
             "application/json": {
