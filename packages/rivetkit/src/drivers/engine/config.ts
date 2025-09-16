@@ -8,7 +8,7 @@ export const ConfigSchema = z
 		endpoint: z
 			.string()
 			.default(
-				() => getEnvUniversal("RIVET_ENGINE") ?? "http://localhost:7080",
+				() => getEnvUniversal("RIVET_ENGINE") ?? "http://localhost:6420",
 			),
 		pegboardEndpoint: z.string().optional(),
 		namespace: z
