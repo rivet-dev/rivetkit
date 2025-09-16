@@ -3,7 +3,7 @@ import * as Y from "yjs";
 import { applyUpdate, encodeStateAsUpdate } from "yjs";
 
 export const yjsDocument = actor({
-	// Persistent state that survives restarts: https://rivet.gg/docs/actors/state
+	// Persistent state that survives restarts: https://rivet.dev/docs/actors/state
 	state: {
 		docData: "", // Base64 encoded Yjs document
 		lastModified: 0,
@@ -24,7 +24,7 @@ export const yjsDocument = actor({
 		}
 	},
 
-	// Handle client connections: https://rivet.gg/docs/actors/connection-lifecycle
+	// Handle client connections: https://rivet.dev/docs/actors/connection-lifecycle
 	onConnect: (c, conn) => {
 		const update = encodeStateAsUpdate(c.vars.doc);
 		const base64 = bufferToBase64(update);
@@ -32,7 +32,7 @@ export const yjsDocument = actor({
 	},
 
 	actions: {
-		// Callable functions from clients: https://rivet.gg/docs/actors/actions
+		// Callable functions from clients: https://rivet.dev/docs/actors/actions
 		applyUpdate: (c, updateBase64: string) => {
 			const binary = atob(updateBase64);
 			const update = new Uint8Array(binary.length);
@@ -47,7 +47,7 @@ export const yjsDocument = actor({
 			c.state.docData = bufferToBase64(fullState);
 			c.state.lastModified = Date.now();
 
-			// Send events to all connected clients: https://rivet.gg/docs/actors/events
+			// Send events to all connected clients: https://rivet.dev/docs/actors/events
 			c.broadcast("update", { update: updateBase64 });
 		},
 
@@ -66,7 +66,7 @@ function bufferToBase64(buffer: Uint8Array): string {
 	return btoa(binary);
 }
 
-// Register actors for use: https://rivet.gg/docs/setup
+// Register actors for use: https://rivet.dev/docs/setup
 export const registry = setup({
 	use: { yjsDocument },
 });

@@ -25,14 +25,14 @@ const defaultEnabled = () => {
 const defaultInspectorOrigins = [
 	"http://localhost:43708",
 	"http://localhost:43709",
-	"https://studio.rivet.gg",
+	"https://studio.rivet.dev",
 ];
 
 const defaultCors: CorsOptions = {
 	origin: (origin) => {
 		if (
 			defaultInspectorOrigins.includes(origin) ||
-			(origin.startsWith("https://") && origin.endsWith("rivet-gg.vercel.app"))
+			(origin.startsWith("https://") && origin.endsWith("rivet-dev.vercel.app"))
 		) {
 			return origin;
 		} else {

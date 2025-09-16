@@ -623,7 +623,7 @@ enc
 	 * @param {string} eventName - The name of the event to subscribe to.
 	 * @param {(...args: Args) => void} callback - The callback function to execute when the event is triggered.
 	 * @returns {EventUnsubscribe} - A function to unsubscribe from the event.
-	 * @see {@link https://rivet.gg/docs/events|Events Documentation}
+	 * @see {@link https://rivet.dev/docs/events|Events Documentation}
 	 */
 	on<Args extends Array<unknown> = unknown[]>(
 		eventName: string,
@@ -639,7 +639,7 @@ enc
 	 * @param {string} eventName - The name of the event to subscribe to.
 	 * @param {(...args: Args) => void} callback - The callback function to execute when the event is triggered.
 	 * @returns {EventUnsubscribe} - A function to unsubscribe from the event.
-	 * @see {@link https://rivet.gg/docs/events|Events Documentation}
+	 * @see {@link https://rivet.dev/docs/events|Events Documentation}
 	 */
 	once<Args extends Array<unknown> = unknown[]>(
 		eventName: string,

@@ -2,7 +2,7 @@
 name = "rivetkit-client"
 version = "0.9.0-rc.1"
 authors = [
-  { name="Rivet Gaming, LLC", email="developer@rivet.gg" },
+  { name="Rivet Gaming, LLC", email="developer@rivet.dev" },
 ]
 description = "Python client for RivetKit - the Stateful Serverless Framework for building AI agents, realtime apps, and game servers"
 readme = "README.md"
@@ -16,8 +16,8 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/rivet-gg/rivetkit"
-Issues = "https://github.com/rivet-gg/rivetkit/issues"
+Homepage = "https://github.com/rivet-dev/rivetkit"
+Issues = "https://github.com/rivet-dev/rivetkit/issues"
 
 [project.optional-dependencies]
 tests = [

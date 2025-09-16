@@ -2,22 +2,22 @@
 
 Example project demonstrating Rivet cloud platform deployment with [RivetKit](https://rivetkit.org).
 
-[Learn More →](https://github.com/rivet-gg/rivetkit)
+[Learn More →](https://github.com/rivet-dev/rivetkit)
 
-[Discord](https://rivet.gg/discord) — [Documentation](https://rivetkit.org) — [Issues](https://github.com/rivet-gg/rivetkit/issues)
+[Discord](https://rivet.dev/discord) — [Documentation](https://rivetkit.org) — [Issues](https://github.com/rivet-dev/rivetkit/issues)
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js
-- Rivet CLI (`npm install -g @rivet-gg/cli`)
+- Rivet CLI (`npm install -g @rivet-dev/cli`)
 - Rivet Cloud account
 
 ### Installation
 
 ```sh
-git clone https://github.com/rivet-gg/rivetkit
+git clone https://github.com/rivet-dev/rivetkit
 cd rivetkit/examples/rivet
 npm install
 ```
@@ -27,7 +27,7 @@ npm install
 Set up your environment variables:
 
 ```sh
-export RIVET_ENDPOINT=https://api.rivet.gg
+export RIVET_ENDPOINT=https://api.rivet.dev
 export RIVET_SERVICE_TOKEN=your_service_token
 export RIVET_PROJECT=your_project_id
 export RIVET_ENVIRONMENT=your_environment

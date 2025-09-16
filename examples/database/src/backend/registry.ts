@@ -4,13 +4,13 @@ import { authenticate } from "./my-utils";
 export type Note = { id: string; content: string; updatedAt: number };
 
 export const notes = actor({
-	// Persistent state that survives restarts: https://rivet.gg/docs/actors/state
+	// Persistent state that survives restarts: https://rivet.dev/docs/actors/state
 	state: {
 		notes: [] as Note[],
 	},
 
 	actions: {
-		// Callable functions from clients: https://rivet.gg/docs/actors/actions
+		// Callable functions from clients: https://rivet.dev/docs/actors/actions
 		getNotes: (c) => c.state.notes,
 
 		updateNote: (c, { id, content }: { id?: string; content: string }) => {
@@ -22,7 +22,7 @@ export const notes = actor({
 				note = c.state.notes[noteIndex];
 				note.content = content;
 				note.updatedAt = Date.now();
-				// Send events to all connected clients: https://rivet.gg/docs/actors/events
+				// Send events to all connected clients: https://rivet.dev/docs/actors/events
 				c.broadcast("noteUpdated", note);
 			} else {
 				// Create new note
@@ -51,7 +51,7 @@ export const notes = actor({
 	},
 });
 
-// Register actors for use: https://rivet.gg/docs/setup
+// Register actors for use: https://rivet.dev/docs/setup
 export const registry = setup({
 	use: { notes },
 });

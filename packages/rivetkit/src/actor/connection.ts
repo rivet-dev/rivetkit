@@ -41,7 +41,7 @@ export const CONNECTION_CHECK_LIVENESS_SYMBOL = Symbol("checkLiveness");
  *
  * Manages connection-specific data and controls the connection lifecycle.
  *
- * @see {@link https://rivet.gg/docs/connections|Connection Documentation}
+ * @see {@link https://rivet.dev/docs/connections|Connection Documentation}
  */
 export class Conn<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 	subscriptions: Set<string> = new Set<string>();
@@ -174,7 +174,7 @@ export class Conn<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 	 *
 	 * @param eventName - The name of the event.
 	 * @param args - The arguments for the event.
-	 * @see {@link https://rivet.gg/docs/events|Events Documentation}
+	 * @see {@link https://rivet.dev/docs/events|Events Documentation}
 	 */
 	public send(eventName: string, ...args: unknown[]) {
 		this.#actor.inspector.emitter.emit("eventFired", {

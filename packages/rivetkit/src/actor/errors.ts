@@ -84,7 +84,7 @@ export class StateNotEnabled extends ActorError {
 		super(
 			"actor",
 			"state_not_enabled",
-			"State not enabled. Must implement `createState` or `state` to use state. (https://www.rivet.gg/docs/actors/state/#initializing-state)",
+			"State not enabled. Must implement `createState` or `state` to use state. (https://www.rivet.dev/docs/actors/state/#initializing-state)",
 		);
 	}
 }
@@ -94,7 +94,7 @@ export class ConnStateNotEnabled extends ActorError {
 		super(
 			"actor",
 			"conn_state_not_enabled",
-			"Connection state not enabled. Must implement `createConnectionState` or `connectionState` to use connection state. (https://www.rivet.gg/docs/actors/connections/#connection-state)",
+			"Connection state not enabled. Must implement `createConnectionState` or `connectionState` to use connection state. (https://www.rivet.dev/docs/actors/connections/#connection-state)",
 		);
 	}
 }
@@ -104,7 +104,7 @@ export class VarsNotEnabled extends ActorError {
 		super(
 			"actor",
 			"vars_not_enabled",
-			"Variables not enabled. Must implement `createVars` or `vars` to use state. (https://www.rivet.gg/docs/actors/ephemeral-variables/#initializing-variables)",
+			"Variables not enabled. Must implement `createVars` or `vars` to use state. (https://www.rivet.dev/docs/actors/ephemeral-variables/#initializing-variables)",
 		);
 	}
 }
@@ -136,7 +136,7 @@ export class InvalidEncoding extends ActorError {
 		super(
 			"encoding",
 			"invalid",
-			`Invalid encoding \`${format}\`. (https://www.rivet.gg/docs/actors/clients/#actor-client)`,
+			`Invalid encoding \`${format}\`. (https://www.rivet.dev/docs/actors/clients/#actor-client)`,
 			{
 				public: true,
 			},
@@ -193,7 +193,7 @@ export class InvalidStateType extends ActorError {
 			msg += "Attempted to set invalid state.";
 		}
 		msg +=
-			" Valid types include: null, undefined, boolean, string, number, BigInt, Date, RegExp, Error, typed arrays (Uint8Array, Int8Array, Float32Array, etc.), Map, Set, Array, and plain objects. (https://www.rivet.gg/docs/actors/state/#limitations)";
+			" Valid types include: null, undefined, boolean, string, number, BigInt, Date, RegExp, Error, typed arrays (Uint8Array, Int8Array, Float32Array, etc.), Map, Set, Array, and plain objects. (https://www.rivet.dev/docs/actors/state/#limitations)";
 		super("state", "invalid_type", msg);
 	}
 }
@@ -259,8 +259,8 @@ export class ActorNotFound extends ActorError {
 			"actor",
 			"not_found",
 			identifier
-				? `Actor not found: ${identifier} (https://www.rivet.gg/docs/actors/clients/#actor-client)`
-				: "Actor not found (https://www.rivet.gg/docs/actors/clients/#actor-client)",
+				? `Actor not found: ${identifier} (https://www.rivet.dev/docs/actors/clients/#actor-client)`
+				: "Actor not found (https://www.rivet.dev/docs/actors/clients/#actor-client)",
 			{ public: true },
 		);
 	}
@@ -271,7 +271,7 @@ export class ActorAlreadyExists extends ActorError {
 		super(
 			"actor",
 			"already_exists",
-			`Actor already exists with name '${name}' and key '${JSON.stringify(key)}' (https://www.rivet.gg/docs/actors/clients/#actor-client)`,
+			`Actor already exists with name '${name}' and key '${JSON.stringify(key)}' (https://www.rivet.dev/docs/actors/clients/#actor-client)`,
 			{ public: true },
 		);
 	}
@@ -309,7 +309,7 @@ export class Unauthorized extends ActorError {
 			"auth",
 			"unauthorized",
 			message ??
-				"Unauthorized. Access denied. (https://www.rivet.gg/docs/actors/authentication/)",
+				"Unauthorized. Access denied. (https://www.rivet.dev/docs/actors/authentication/)",
 			{
 				public: true,
 			},
@@ -324,7 +324,7 @@ export class Forbidden extends ActorError {
 			"auth",
 			"forbidden",
 			message ??
-				"Forbidden. Access denied. (https://www.rivet.gg/docs/actors/authentication/)",
+				"Forbidden. Access denied. (https://www.rivet.dev/docs/actors/authentication/)",
 			{
 				public: true,
 				metadata: opts?.metadata,
@@ -349,7 +349,7 @@ export class FetchHandlerNotDefined extends ActorError {
 		super(
 			"handler",
 			"fetch_not_defined",
-			"Raw HTTP handler not defined. Actor must implement `onFetch` to handle raw HTTP requests. (https://www.rivet.gg/docs/actors/fetch-and-websocket-handler/)",
+			"Raw HTTP handler not defined. Actor must implement `onFetch` to handle raw HTTP requests. (https://www.rivet.dev/docs/actors/fetch-and-websocket-handler/)",
 			{ public: true },
 		);
 		this.statusCode = 404;
@@ -361,7 +361,7 @@ export class WebSocketHandlerNotDefined extends ActorError {
 		super(
 			"handler",
 			"websocket_not_defined",
-			"Raw WebSocket handler not defined. Actor must implement `onWebSocket` to handle raw WebSocket connections. (https://www.rivet.gg/docs/actors/fetch-and-websocket-handler/)",
+			"Raw WebSocket handler not defined. Actor must implement `onWebSocket` to handle raw WebSocket connections. (https://www.rivet.dev/docs/actors/fetch-and-websocket-handler/)",
 			{ public: true },
 		);
 		this.statusCode = 404;
@@ -373,7 +373,7 @@ export class InvalidFetchResponse extends ActorError {
 		super(
 			"handler",
 			"invalid_fetch_response",
-			"Actor's onFetch handler must return a Response object. Returning void/undefined is not allowed. (https://www.rivet.gg/docs/actors/fetch-and-websocket-handler/)",
+			"Actor's onFetch handler must return a Response object. Returning void/undefined is not allowed. (https://www.rivet.dev/docs/actors/fetch-and-websocket-handler/)",
 			{ public: true },
 		);
 		this.statusCode = 500;
