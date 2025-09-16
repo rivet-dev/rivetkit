@@ -63,7 +63,9 @@ export function configureBaseLogger(logger: Logger): void {
 /**
  * Configure the default logger with optional log level.
  */
-export function configureDefaultLogger(logLevel?: LogLevel): void {
+export async function configureDefaultLogger(
+	logLevel?: LogLevel,
+): Promise<void> {
 	// Store the configured log level
 	if (logLevel) {
 		configuredLogLevel = logLevel;
@@ -84,9 +86,16 @@ export function configureDefaultLogger(logLevel?: LogLevel): void {
 			},
 		},
 		timestamp: enableTs ? stdTimeFunctions.isoTime : false,
-		transport: {
-			target: "pino-logfmt",
+
+		// NOTE: TODO
+		browser: {
+			asObject: true,
 		},
+
+		// TODO: opt-in for node runtimes
+		// transport: {
+		// 	target: "pino-logfmt",
+		// },
 	});
 
 	loggerCache.clear();
