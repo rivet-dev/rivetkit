@@ -20,6 +20,7 @@ import type {
 import { createInlineClientDriver } from "@/inline-client-driver/mod";
 import { ManagerInspector } from "@/inspector/manager";
 import { type Actor, ActorFeature, type ActorId } from "@/inspector/mod";
+import type { ManagerDisplayInformation } from "@/manager/driver";
 import {
 	type DriverConfig,
 	type Encoding,
@@ -294,6 +295,16 @@ export class FileSystemManagerDriver implements ManagerDriver {
 			actorId,
 			name,
 			key,
+		};
+	}
+
+	displayInformation(): ManagerDisplayInformation {
+		return {
+			name: this.#state.persist ? "File System" : "Memory",
+			properties: {
+				...(this.#state.persist ? { Data: this.#state.storagePath } : {}),
+				Instances: this.#state.actorCountOnStartup.toString(),
+			},
 		};
 	}
 

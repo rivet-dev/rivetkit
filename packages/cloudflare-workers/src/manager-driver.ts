@@ -10,6 +10,7 @@ import {
 	HEADER_CONN_PARAMS,
 	HEADER_ENCODING,
 	HEADER_EXPOSE_INTERNAL_ERROR,
+	type ManagerDisplayInformation,
 	type ManagerDriver,
 } from "rivetkit/driver-helpers";
 import { ActorAlreadyExists, InternalError } from "rivetkit/errors";
@@ -343,6 +344,13 @@ export class CloudflareActorsManagerDriver implements ManagerDriver {
 			actorId,
 			name: actorData.name,
 			key: actorData.key,
+		};
+	}
+
+	displayInformation(): ManagerDisplayInformation {
+		return {
+			name: "Cloudflare Workers",
+			properties: {},
 		};
 	}
 }

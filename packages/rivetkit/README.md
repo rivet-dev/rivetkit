@@ -1,4 +1,4 @@
-# RivetKit Framework Base
+# RivetKit
 
 _Library to build and scale stateful workloads_
 

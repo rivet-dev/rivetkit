@@ -1,6 +1,6 @@
-# RivetKit Framework Base
+# RivetKit Database
 
-_Library to build and scale stateful workloads_
+_Lightweight Libraries for Backends_
 
 [Learn More →](https://github.com/rivet-gg/rivetkit)
 

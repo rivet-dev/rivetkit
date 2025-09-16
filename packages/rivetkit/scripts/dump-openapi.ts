@@ -38,6 +38,7 @@ function main() {
 		openWebSocket: unimplemented,
 		proxyRequest: unimplemented,
 		proxyWebSocket: unimplemented,
+		displayInformation: unimplemented,
 	};
 
 	const { openapi } = createManagerRouter(

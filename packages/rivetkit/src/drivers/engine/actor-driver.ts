@@ -8,6 +8,7 @@ import { WSContext } from "hono/ws";
 import invariant from "invariant";
 import { EncodingSchema } from "@/actor/protocol/serde";
 import type { Client } from "@/client/client";
+import { getLogger } from "@/common/log";
 import {
 	type ActorDriver,
 	type AnyActorInstance,
@@ -119,6 +120,7 @@ export class EngineActorDriver implements ActorDriver {
 			websocket: this.#runnerWebSocket.bind(this),
 			onActorStart: this.#runnerOnActorStart.bind(this),
 			onActorStop: this.#runnerOnActorStop.bind(this),
+			logger: getLogger("engine-runner"),
 		};
 
 		// Create and start runner

@@ -16,6 +16,7 @@ export type {
 	GetForIdInput,
 	GetOrCreateWithKeyInput,
 	GetWithKeyInput,
+	ManagerDisplayInformation,
 	ManagerDriver,
 } from "@/manager/driver";
 export { DriverConfigSchema, RunConfigSchema } from "@/registry/run-config";

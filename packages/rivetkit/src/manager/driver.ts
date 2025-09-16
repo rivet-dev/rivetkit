@@ -36,6 +36,8 @@ export interface ManagerDriver {
 		authData: unknown,
 	): Promise<Response>;
 
+	displayInformation(): ManagerDisplayInformation;
+
 	extraStartupLog?: () => Record<string, unknown>;
 
 	modifyManagerRouter?: (registryConfig: RegistryConfig, router: Hono) => void;
@@ -45,6 +47,12 @@ export interface ManagerDriver {
 	 */
 	readonly inspector?: ManagerInspector;
 }
+
+export interface ManagerDisplayInformation {
+	name: string;
+	properties: Record<string, string>;
+}
+
 export interface GetForIdInput<E extends Env = any> {
 	c?: HonoContext | undefined;
 	name: string;

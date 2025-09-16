@@ -1,2 +1,2 @@
-export { ManagerDriver } from "./driver";
+export { ManagerDisplayInformation, ManagerDriver } from "./driver";
 export { createManagerRouter } from "./router";

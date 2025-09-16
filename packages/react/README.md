@@ -1,6 +1,6 @@
 # RivetKit React
 
-_Lightweight Libraries for Backends_
+_Library to build and scale stateful workloads_
 
 [Learn More →](https://github.com/rivet-gg/rivetkit)
 
