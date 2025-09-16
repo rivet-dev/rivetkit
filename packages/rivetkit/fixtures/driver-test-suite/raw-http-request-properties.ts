@@ -1,15 +1,8 @@
 import { type ActorContext, actor } from "rivetkit";
 
 export const rawHttpRequestPropertiesActor = actor({
-	onAuth() {
-		// Allow public access - empty onAuth
-		return {};
-	},
 	actions: {},
-	onFetch(
-		ctx: ActorContext<any, any, any, any, any, any, any>,
-		request: Request,
-	) {
+	onFetch(ctx: ActorContext<any, any, any, any, any, any>, request: Request) {
 		// Extract all relevant Request properties
 		const url = new URL(request.url);
 		const method = request.method;

@@ -1,5 +1,5 @@
 import type { Env, Hono, Context as HonoContext } from "hono";
-import type { ActorKey, Encoding } from "@/actor/mod";
+import type { ActorKey, Encoding, UniversalWebSocket } from "@/actor/mod";
 import type { ManagerInspector } from "@/inspector/manager";
 import type { RunConfig } from "@/mod";
 import type { RegistryConfig } from "@/registry/config";
@@ -21,7 +21,7 @@ export interface ManagerDriver {
 		actorId: string,
 		encoding: Encoding,
 		params: unknown,
-	): Promise<WebSocket>;
+	): Promise<UniversalWebSocket>;
 	proxyRequest(
 		c: HonoContext,
 		actorRequest: Request,

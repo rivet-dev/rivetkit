@@ -1,7 +1,6 @@
 import { actor } from "rivetkit";
 
 export const onStateChangeActor = actor({
-	onAuth: () => {},
 	state: {
 		value: 0,
 		changeCount: 0,

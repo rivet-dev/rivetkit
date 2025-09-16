@@ -1,7 +1,6 @@
 import { actor } from "rivetkit";
 
 export const scheduled = actor({
-	onAuth: () => {},
 	state: {
 		lastRun: 0,
 		scheduledCount: 0,

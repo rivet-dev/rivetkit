@@ -41,8 +41,8 @@ export interface HttpRequestOpts<RequestBody, ResponseBody> {
 	skipParseResponse?: boolean;
 	signal?: AbortSignal;
 	customFetch?: (req: Request) => Promise<Response>;
-	requestVersionedDataHandler: VersionedDataHandler<RequestBody>;
-	responseVersionedDataHandler: VersionedDataHandler<ResponseBody>;
+	requestVersionedDataHandler: VersionedDataHandler<RequestBody> | undefined;
+	responseVersionedDataHandler: VersionedDataHandler<ResponseBody> | undefined;
 }
 
 export async function sendHttpRequest<
@@ -122,6 +122,7 @@ export async function sendHttpRequest<
 
 		// Throw structured error
 		throw new ActorError(
+			responseData.group,
 			responseData.code,
 			responseData.message,
 			responseData.metadata

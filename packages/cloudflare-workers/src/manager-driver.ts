@@ -1,5 +1,5 @@
 import type { Context as HonoContext } from "hono";
-import type { Encoding } from "rivetkit";
+import type { Encoding, UniversalWebSocket } from "rivetkit";
 import {
 	type ActorOutput,
 	type CreateInput,
@@ -9,7 +9,6 @@ import {
 	HEADER_AUTH_DATA,
 	HEADER_CONN_PARAMS,
 	HEADER_ENCODING,
-	HEADER_EXPOSE_INTERNAL_ERROR,
 	type ManagerDisplayInformation,
 	type ManagerDriver,
 } from "rivetkit/driver-helpers";
@@ -69,7 +68,7 @@ export class CloudflareActorsManagerDriver implements ManagerDriver {
 		actorId: string,
 		encoding: Encoding,
 		params: unknown,
-	): Promise<WebSocket> {
+	): Promise<UniversalWebSocket> {
 		const env = getCloudflareAmbientEnv();
 
 		logger().debug({
@@ -85,7 +84,6 @@ export class CloudflareActorsManagerDriver implements ManagerDriver {
 		const headers: Record<string, string> = {
 			Upgrade: "websocket",
 			Connection: "Upgrade",
-			[HEADER_EXPOSE_INTERNAL_ERROR]: "true",
 			[HEADER_ENCODING]: encoding,
 		};
 		if (params) {
@@ -190,7 +188,6 @@ export class CloudflareActorsManagerDriver implements ManagerDriver {
 		}
 
 		// Add RivetKit headers
-		actorRequest.headers.set(HEADER_EXPOSE_INTERNAL_ERROR, "true");
 		actorRequest.headers.set(HEADER_ENCODING, encoding);
 		if (params) {
 			actorRequest.headers.set(HEADER_CONN_PARAMS, JSON.stringify(params));

@@ -5,22 +5,19 @@ export const rawHttpAuthActor = actor({
 	state: {
 		requestCount: 0,
 	},
-	onAuth: (opts, params: { apiKey?: string }) => {
-		const apiKey = params.apiKey;
-		if (!apiKey) {
-			throw new UserError("API key required", { code: "missing_auth" });
-		}
-
-		if (apiKey !== "valid-api-key") {
-			throw new UserError("Invalid API key", { code: "invalid_auth" });
-		}
-
-		return { userId: "user123", token: apiKey };
-	},
-	onFetch(
-		ctx: ActorContext<any, any, any, any, any, any, any>,
-		request: Request,
-	) {
+	// onAuth: (opts, params: { apiKey?: string }) => {
+	// 	const apiKey = params.apiKey;
+	// 	if (!apiKey) {
+	// 		throw new UserError("API key required", { code: "missing_auth" });
+	// 	}
+	//
+	// 	if (apiKey !== "valid-api-key") {
+	// 		throw new UserError("Invalid API key", { code: "invalid_auth" });
+	// 	}
+	//
+	// 	return { userId: "user123", token: apiKey };
+	// },
+	onFetch(ctx: ActorContext<any, any, any, any, any, any>, request: Request) {
 		const url = new URL(request.url);
 		ctx.state.requestCount++;
 
@@ -67,10 +64,7 @@ export const rawHttpNoAuthActor = actor({
 	state: {
 		value: 42,
 	},
-	onFetch(
-		ctx: ActorContext<any, any, any, any, any, any, any>,
-		request: Request,
-	) {
+	onFetch(ctx: ActorContext<any, any, any, any, any, any>, request: Request) {
 		return new Response(
 			JSON.stringify({
 				value: ctx.state.value,
@@ -92,13 +86,7 @@ export const rawHttpPublicActor = actor({
 	state: {
 		visitors: 0,
 	},
-	onAuth: () => {
-		return null; // Allow public access
-	},
-	onFetch(
-		ctx: ActorContext<any, any, any, any, any, any, any>,
-		request: Request,
-	) {
+	onFetch(ctx: ActorContext<any, any, any, any, any, any>, request: Request) {
 		ctx.state.visitors++;
 		return new Response(
 			JSON.stringify({
@@ -123,14 +111,7 @@ export const rawHttpCustomAuthActor = actor({
 		authorized: 0,
 		unauthorized: 0,
 	},
-	onAuth: () => {
-		// Allow all connections - auth will be handled in onFetch
-		return {};
-	},
-	onFetch(
-		ctx: ActorContext<any, any, any, any, any, any, any>,
-		request: Request,
-	) {
+	onFetch(ctx: ActorContext<any, any, any, any, any, any>, request: Request) {
 		// Custom auth check in onFetch
 		const authHeader = request.headers.get("Authorization");
 

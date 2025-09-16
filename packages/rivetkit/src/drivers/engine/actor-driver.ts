@@ -6,6 +6,7 @@ import { Runner } from "@rivetkit/engine-runner";
 import * as cbor from "cbor-x";
 import { WSContext } from "hono/ws";
 import invariant from "invariant";
+import { deserializeActorKey } from "@/actor/keys";
 import { EncodingSchema } from "@/actor/protocol/serde";
 import type { Client } from "@/client/client";
 import { getLogger } from "@/common/log";
@@ -36,7 +37,6 @@ import {
 	PATH_RAW_WEBSOCKET_PREFIX,
 } from "@/mod";
 import type { Config } from "./config";
-import { deserializeActorKey } from "./keys";
 import { KEYS } from "./kv";
 import { logger } from "./log";
 

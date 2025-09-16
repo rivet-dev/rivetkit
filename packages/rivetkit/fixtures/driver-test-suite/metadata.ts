@@ -3,7 +3,6 @@ import { actor } from "rivetkit";
 // Note: For testing only - metadata API will need to be mocked
 // in tests since this is implementation-specific
 export const metadataActor = actor({
-	onAuth: () => {},
 	state: {
 		lastMetadata: null as any,
 		actorName: "",

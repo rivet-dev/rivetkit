@@ -1,7 +1,6 @@
 import { actor, CONNECTION_DRIVER_WEBSOCKET } from "rivetkit";
 
 export const connLivenessActor = actor({
-	onAuth: () => {},
 	state: {
 		counter: 0,
 		acceptingConnections: true,

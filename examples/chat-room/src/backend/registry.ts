@@ -3,7 +3,6 @@ import { actor, setup } from "rivetkit";
 export type Message = { sender: string; text: string; timestamp: number };
 
 export const chatRoom = actor({
-	onAuth: () => {},
 	// Persistent state that survives restarts: https://rivet.gg/docs/actors/state
 	state: {
 		messages: [] as Message[],

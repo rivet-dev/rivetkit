@@ -5,7 +5,6 @@ export type StreamState = {
 };
 
 const streamProcessor = actor({
-	onAuth: () => {},
 	// Persistent state that survives restarts: https://rivet.gg/docs/actors/state
 	state: {
 		topValues: [] as number[],

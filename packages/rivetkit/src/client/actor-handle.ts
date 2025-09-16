@@ -1,18 +1,30 @@
+import * as cbor from "cbor-x";
 import invariant from "invariant";
 import type { AnyActorDefinition } from "@/actor/definition";
 import type { Encoding } from "@/actor/protocol/serde";
 import { assertUnreachable } from "@/actor/utils";
+import { deconstructError } from "@/common/utils";
 import { importWebSocket } from "@/common/websocket";
+import {
+	HEADER_CONN_PARAMS,
+	HEADER_ENCODING,
+	type ManagerDriver,
+} from "@/driver-helpers/mod";
 import type { ActorQuery } from "@/manager/protocol/query";
+import type * as protocol from "@/schemas/client-protocol/mod";
+import {
+	HTTP_ACTION_REQUEST_VERSIONED,
+	HTTP_ACTION_RESPONSE_VERSIONED,
+} from "@/schemas/client-protocol/versioned";
+import { bufferToArrayBuffer } from "@/utils";
 import type { ActorDefinitionActions } from "./actor-common";
 import { type ActorConn, ActorConnRaw } from "./actor-conn";
-import {
-	type ClientDriver,
-	type ClientRaw,
-	CREATE_ACTOR_CONN_PROXY,
-} from "./client";
+import { queryActor } from "./actor-query";
+import { type ClientRaw, CREATE_ACTOR_CONN_PROXY } from "./client";
+import { ActorError } from "./errors";
 import { logger } from "./log";
 import { rawHttpFetch, rawWebSocket } from "./raw-utils";
+import { sendHttpRequest } from "./utils";
 
 /**
  * Provides underlying functions for stateless {@link ActorHandle} for action calls.
@@ -22,8 +34,8 @@ import { rawHttpFetch, rawWebSocket } from "./raw-utils";
  */
 export class ActorHandleRaw {
 	#client: ClientRaw;
-	#driver: ClientDriver;
-	#encodingKind: Encoding;
+	#driver: ManagerDriver;
+	#encoding: Encoding;
 	#actorQuery: ActorQuery;
 	#params: unknown;
 
@@ -36,14 +48,14 @@ export class ActorHandleRaw {
 	 */
 	public constructor(
 		client: any,
-		driver: ClientDriver,
+		driver: ManagerDriver,
 		params: unknown,
-		encodingKind: Encoding,
+		encoding: Encoding,
 		actorQuery: ActorQuery,
 	) {
 		this.#client = client;
 		this.#driver = driver;
-		this.#encodingKind = encodingKind;
+		this.#encoding = encoding;
 		this.#actorQuery = actorQuery;
 		this.#params = params;
 	}
@@ -63,15 +75,64 @@ export class ActorHandleRaw {
 		args: Args;
 		signal?: AbortSignal;
 	}): Promise<Response> {
-		return await this.#driver.action<Args, Response>(
-			undefined,
-			this.#actorQuery,
-			this.#encodingKind,
-			this.#params,
-			opts.name,
-			opts.args,
-			{ signal: opts.signal },
-		);
+		// return await this.#driver.action<Args, Response>(
+		// 	undefined,
+		// 	this.#actorQuery,
+		// 	this.#encodingKind,
+		// 	this.#params,
+		// 	opts.name,
+		// 	opts.args,
+		// 	{ signal: opts.signal },
+		// );
+		try {
+			// Get the actor ID
+			const { actorId } = await queryActor(
+				undefined,
+				this.#actorQuery,
+				this.#driver,
+			);
+			logger().debug({ msg: "found actor for action", actorId });
+			invariant(actorId, "Missing actor ID");
+
+			// Invoke the action
+			logger().debug({
+				msg: "handling action",
+				name: opts.name,
+				encoding: this.#encoding,
+			});
+			const responseData = await sendHttpRequest<
+				protocol.HttpActionRequest,
+				protocol.HttpActionResponse
+			>({
+				url: `http://actor/action/${encodeURIComponent(opts.name)}`,
+				method: "POST",
+				headers: {
+					[HEADER_ENCODING]: this.#encoding,
+					...(this.#params !== undefined
+						? { [HEADER_CONN_PARAMS]: JSON.stringify(this.#params) }
+						: {}),
+				},
+				body: {
+					args: bufferToArrayBuffer(cbor.encode(opts.args)),
+				} satisfies protocol.HttpActionRequest,
+				encoding: this.#encoding,
+				customFetch: this.#driver.sendRequest.bind(this.#driver, actorId),
+				signal: opts?.signal,
+				requestVersionedDataHandler: HTTP_ACTION_REQUEST_VERSIONED,
+				responseVersionedDataHandler: HTTP_ACTION_RESPONSE_VERSIONED,
+			});
+
+			return cbor.decode(new Uint8Array(responseData.output));
+		} catch (err) {
+			// Standardize to ClientActorError instead of the native backend error
+			const { group, code, message, metadata } = deconstructError(
+				err,
+				logger(),
+				{},
+				true,
+			);
+			throw new ActorError(group, code, message, metadata);
+		}
 	}
 
 	/**
@@ -90,7 +151,7 @@ export class ActorHandleRaw {
 			this.#client,
 			this.#driver,
 			this.#params,
-			this.#encodingKind,
+			this.#encoding,
 			this.#actorQuery,
 		);
 
@@ -159,12 +220,10 @@ export class ActorHandleRaw {
 				assertUnreachable(this.#actorQuery);
 			}
 
-			const actorId = await this.#driver.resolveActorId(
+			const { actorId } = await queryActor(
 				undefined,
 				this.#actorQuery,
-				this.#encodingKind,
-				this.#params,
-				signal ? { signal } : undefined,
+				this.#driver,
 			);
 
 			this.#actorQuery = { getForId: { actorId, name } };

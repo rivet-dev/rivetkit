@@ -5,14 +5,7 @@ export const rawHttpActor = actor({
 	state: {
 		requestCount: 0,
 	},
-	onAuth() {
-		// Allow public access - empty onAuth
-		return {};
-	},
-	onFetch(
-		ctx: ActorContext<any, any, any, any, any, any, any>,
-		request: Request,
-	) {
+	onFetch(ctx: ActorContext<any, any, any, any, any, any>, request: Request) {
 		const url = new URL(request.url);
 		const method = request.method;
 
@@ -57,19 +50,10 @@ export const rawHttpActor = actor({
 });
 
 export const rawHttpNoHandlerActor = actor({
-	// No onFetch handler - all requests should return 404
-	onAuth() {
-		// Allow public access - empty onAuth
-		return {};
-	},
 	actions: {},
 });
 
 export const rawHttpVoidReturnActor = actor({
-	onAuth() {
-		// Allow public access - empty onAuth
-		return {};
-	},
 	onFetch(ctx, request) {
 		// Intentionally return void to test error handling
 		return undefined as any;
@@ -78,10 +62,6 @@ export const rawHttpVoidReturnActor = actor({
 });
 
 export const rawHttpHonoActor = actor({
-	onAuth() {
-		// Allow public access
-		return {};
-	},
 	createVars() {
 		const router = new Hono();
 
@@ -119,10 +99,7 @@ export const rawHttpHonoActor = actor({
 		// Return the router as a var
 		return { router };
 	},
-	onFetch(
-		ctx: ActorContext<any, any, any, any, any, any, any>,
-		request: Request,
-	) {
+	onFetch(ctx: ActorContext<any, any, any, any, any, any>, request: Request) {
 		// Use the Hono router from vars
 		return ctx.vars.router.fetch(request);
 	},

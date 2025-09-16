@@ -16,7 +16,6 @@ export class ActorContext<
 	TConnState,
 	TVars,
 	TInput,
-	TAuthData,
 	TDatabase extends AnyDatabaseProvider,
 > {
 	#actor: ActorInstance<
@@ -25,7 +24,6 @@ export class ActorContext<
 		TConnState,
 		TVars,
 		TInput,
-		TAuthData,
 		TDatabase
 	>;
 
@@ -36,7 +34,6 @@ export class ActorContext<
 			TConnState,
 			TVars,
 			TInput,
-			TAuthData,
 			TDatabase
 		>,
 	) {
@@ -114,7 +111,7 @@ export class ActorContext<
 	 */
 	get conns(): Map<
 		ConnId,
-		Conn<TState, TConnParams, TConnState, TVars, TInput, TAuthData, TDatabase>
+		Conn<TState, TConnParams, TConnState, TVars, TInput, TDatabase>
 	> {
 		return this.#actor.conns;
 	}

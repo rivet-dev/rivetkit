@@ -5,103 +5,43 @@
     "title": "RivetKit API"
   },
   "components": {
-    "schemas": {
-      "ResolveResponse": {
-        "type": "object",
-        "properties": {
-          "i": {
-            "type": "string",
-            "example": "actor-123"
-          }
-        },
-        "required": [
-          "i"
-        ]
-      },
-      "ResolveQuery": {
-        "type": "object",
-        "properties": {
-          "query": {
-            "nullable": true,
-            "example": {
-              "getForId": {
-                "actorId": "actor-123"
-              }
-            }
-          }
-        }
-      },
-      "ActionResponse": {
-        "nullable": true
-      },
-      "ActionRequest": {
-        "type": "object",
-        "properties": {
-          "query": {
-            "nullable": true,
-            "example": {
-              "getForId": {
-                "actorId": "actor-123"
-              }
-            }
-          },
-          "body": {
-            "nullable": true,
-            "example": {
-              "param1": "value1",
-              "param2": 123
-            }
-          }
-        }
-      },
-      "ConnectionMessageResponse": {
-        "nullable": true
-      },
-      "ConnectionMessageRequest": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "nullable": true,
-            "example": {
-              "type": "message",
-              "content": "Hello, actor!"
-            }
-          }
-        }
-      }
-    },
+    "schemas": {},
     "parameters": {}
   },
   "paths": {
-    "/actors/resolve": {
-      "post": {
+    "/actors/by-id": {
+      "get": {
         "parameters": [
           {
             "schema": {
-              "type": "string",
-              "description": "Actor query information"
+              "type": "string"
             },
             "required": true,
-            "name": "X-RivetKit-Query",
-            "in": "header"
+            "name": "name",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "key",
+            "in": "query"
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ResolveQuery"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Success",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResolveResponse"
+                  "type": "object",
+                  "properties": {
+                    "actor_id": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  }
                 }
               }
             }
@@ -111,349 +51,155 @@
           },
           "500": {
             "description": "Internal error"
-          }
-        }
-      }
-    },
-    "/actors/connect/websocket": {
-      "get": {
-        "responses": {
-          "101": {
-            "description": "WebSocket upgrade"
-          }
-        }
-      }
-    },
-    "/actors/connect/sse": {
-      "get": {
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "description": "The encoding format to use for the response (json, cbor)",
-              "example": "json"
-            },
-            "required": true,
-            "name": "X-RivetKit-Encoding",
-            "in": "header"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "description": "Actor query information"
-            },
-            "required": true,
-            "name": "X-RivetKit-Query",
-            "in": "header"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "description": "Connection parameters"
-            },
-            "required": false,
-            "name": "X-RivetKit-Conn-Params",
-            "in": "header"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "SSE stream",
-            "content": {
-              "text/event-stream": {
-                "schema": {
-                  "nullable": true
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/actors/actions/{action}": {
-      "post": {
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "example": "myAction"
-            },
-            "required": true,
-            "name": "action",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "description": "The encoding format to use for the response (json, cbor)",
-              "example": "json"
-            },
-            "required": true,
-            "name": "X-RivetKit-Encoding",
-            "in": "header"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "description": "Connection parameters"
-            },
-            "required": false,
-            "name": "X-RivetKit-Conn-Params",
-            "in": "header"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ActionRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ActionResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "User error"
-          },
-          "500": {
-            "description": "Internal error"
-          }
-        }
-      }
-    },
-    "/actors/message": {
-      "post": {
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "description": "Actor ID (used in some endpoints)",
-              "example": "actor-123456"
-            },
-            "required": true,
-            "name": "X-RivetKit-Actor",
-            "in": "header"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "description": "Connection ID",
-              "example": "conn-123456"
-            },
-            "required": true,
-            "name": "X-RivetKit-Conn",
-            "in": "header"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "description": "The encoding format to use for the response (json, cbor)",
-              "example": "json"
-            },
-            "required": true,
-            "name": "X-RivetKit-Encoding",
-            "in": "header"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "description": "Connection token"
-            },
-            "required": true,
-            "name": "X-RivetKit-Conn-Token",
-            "in": "header"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ConnectionMessageRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ConnectionMessageResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "User error"
-          },
-          "500": {
-            "description": "Internal error"
-          }
-        }
-      }
-    },
-    "/actors/raw/http/*": {
-      "get": {
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "description": "Actor query information"
-            },
-            "required": false,
-            "name": "X-RivetKit-Query",
-            "in": "header"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "description": "Connection parameters"
-            },
-            "required": false,
-            "name": "X-RivetKit-Conn-Params",
-            "in": "header"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "*/*": {
-              "schema": {
-                "nullable": true,
-                "description": "Raw request body (can be any content type)"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success - response from actor's onFetch handler",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "nullable": true,
-                  "description": "Raw response from actor's onFetch handler"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Actor does not have an onFetch handler"
-          },
-          "500": {
-            "description": "Internal server error or invalid response from actor"
-          }
-        }
-      },
-      "post": {
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "description": "Actor query information"
-            },
-            "required": false,
-            "name": "X-RivetKit-Query",
-            "in": "header"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "description": "Connection parameters"
-            },
-            "required": false,
-            "name": "X-RivetKit-Conn-Params",
-            "in": "header"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "*/*": {
-              "schema": {
-                "nullable": true,
-                "description": "Raw request body (can be any content type)"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success - response from actor's onFetch handler",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "nullable": true,
-                  "description": "Raw response from actor's onFetch handler"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Actor does not have an onFetch handler"
-          },
-          "500": {
-            "description": "Internal server error or invalid response from actor"
           }
         }
       },
       "put": {
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "description": "Actor query information"
-            },
-            "required": false,
-            "name": "X-RivetKit-Query",
-            "in": "header"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "description": "Connection parameters"
-            },
-            "required": false,
-            "name": "X-RivetKit-Conn-Params",
-            "in": "header"
-          }
-        ],
         "requestBody": {
           "content": {
-            "*/*": {
+            "application/json": {
               "schema": {
-                "nullable": true,
-                "description": "Raw request body (can be any content type)"
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "key": {
+                    "type": "string"
+                  },
+                  "runner_name_selector": {
+                    "type": "string"
+                  },
+                  "crash_policy": {
+                    "type": "string"
+                  },
+                  "input": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "name",
+                  "key",
+                  "runner_name_selector",
+                  "crash_policy"
+                ]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Success - response from actor's onFetch handler",
+            "description": "Success",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
-                  "nullable": true,
-                  "description": "Raw response from actor's onFetch handler"
+                  "type": "object",
+                  "properties": {
+                    "actor_id": {
+                      "type": "string"
+                    },
+                    "created": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "actor_id",
+                    "created"
+                  ]
                 }
               }
             }
           },
-          "404": {
-            "description": "Actor does not have an onFetch handler"
+          "400": {
+            "description": "User error"
           },
           "500": {
-            "description": "Internal server error or invalid response from actor"
+            "description": "Internal error"
+          }
+        }
+      }
+    },
+    "/actors/{actor_id}": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "actor_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "actor": {
+                      "type": "object",
+                      "properties": {
+                        "actor_id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "key": {
+                          "type": "string"
+                        },
+                        "namespace_id": {
+                          "type": "string"
+                        },
+                        "runner_name_selector": {
+                          "type": "string"
+                        },
+                        "create_ts": {
+                          "type": "number"
+                        },
+                        "connectable_ts": {
+                          "type": "number",
+                          "nullable": true
+                        },
+                        "destroy_ts": {
+                          "type": "number",
+                          "nullable": true
+                        },
+                        "sleep_ts": {
+                          "type": "number",
+                          "nullable": true
+                        },
+                        "start_ts": {
+                          "type": "number",
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "actor_id",
+                        "name",
+                        "key",
+                        "namespace_id",
+                        "runner_name_selector",
+                        "create_ts"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "actor"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "User error"
+          },
+          "500": {
+            "description": "Internal error"
           }
         }
       },
@@ -461,218 +207,137 @@
         "parameters": [
           {
             "schema": {
-              "type": "string",
-              "description": "Actor query information"
+              "type": "string"
             },
-            "required": false,
-            "name": "X-RivetKit-Query",
-            "in": "header"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "description": "Connection parameters"
-            },
-            "required": false,
-            "name": "X-RivetKit-Conn-Params",
-            "in": "header"
+            "required": true,
+            "name": "actor_id",
+            "in": "path"
           }
         ],
-        "requestBody": {
-          "content": {
-            "*/*": {
-              "schema": {
-                "nullable": true,
-                "description": "Raw request body (can be any content type)"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
-            "description": "Success - response from actor's onFetch handler",
+            "description": "Success",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
-                  "nullable": true,
-                  "description": "Raw response from actor's onFetch handler"
+                  "type": "object",
+                  "properties": {}
                 }
               }
             }
           },
-          "404": {
-            "description": "Actor does not have an onFetch handler"
+          "400": {
+            "description": "User error"
           },
           "500": {
-            "description": "Internal server error or invalid response from actor"
-          }
-        }
-      },
-      "patch": {
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "description": "Actor query information"
-            },
-            "required": false,
-            "name": "X-RivetKit-Query",
-            "in": "header"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "description": "Connection parameters"
-            },
-            "required": false,
-            "name": "X-RivetKit-Conn-Params",
-            "in": "header"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "*/*": {
-              "schema": {
-                "nullable": true,
-                "description": "Raw request body (can be any content type)"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success - response from actor's onFetch handler",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "nullable": true,
-                  "description": "Raw response from actor's onFetch handler"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Actor does not have an onFetch handler"
-          },
-          "500": {
-            "description": "Internal server error or invalid response from actor"
-          }
-        }
-      },
-      "head": {
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "description": "Actor query information"
-            },
-            "required": false,
-            "name": "X-RivetKit-Query",
-            "in": "header"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "description": "Connection parameters"
-            },
-            "required": false,
-            "name": "X-RivetKit-Conn-Params",
-            "in": "header"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "*/*": {
-              "schema": {
-                "nullable": true,
-                "description": "Raw request body (can be any content type)"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success - response from actor's onFetch handler",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "nullable": true,
-                  "description": "Raw response from actor's onFetch handler"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Actor does not have an onFetch handler"
-          },
-          "500": {
-            "description": "Internal server error or invalid response from actor"
-          }
-        }
-      },
-      "options": {
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "description": "Actor query information"
-            },
-            "required": false,
-            "name": "X-RivetKit-Query",
-            "in": "header"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "description": "Connection parameters"
-            },
-            "required": false,
-            "name": "X-RivetKit-Conn-Params",
-            "in": "header"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "*/*": {
-              "schema": {
-                "nullable": true,
-                "description": "Raw request body (can be any content type)"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success - response from actor's onFetch handler",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "nullable": true,
-                  "description": "Raw response from actor's onFetch handler"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Actor does not have an onFetch handler"
-          },
-          "500": {
-            "description": "Internal server error or invalid response from actor"
+            "description": "Internal error"
           }
         }
       }
     },
-    "/actors/raw/websocket/*": {
-      "get": {
+    "/actors": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "runner_name_selector": {
+                    "type": "string"
+                  },
+                  "crash_policy": {
+                    "type": "string"
+                  },
+                  "key": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "input": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "name",
+                  "runner_name_selector",
+                  "crash_policy"
+                ]
+              }
+            }
+          }
+        },
         "responses": {
-          "101": {
-            "description": "WebSocket upgrade successful"
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "actor": {
+                      "type": "object",
+                      "properties": {
+                        "actor_id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "key": {
+                          "type": "string"
+                        },
+                        "namespace_id": {
+                          "type": "string"
+                        },
+                        "runner_name_selector": {
+                          "type": "string"
+                        },
+                        "create_ts": {
+                          "type": "number"
+                        },
+                        "connectable_ts": {
+                          "type": "number",
+                          "nullable": true
+                        },
+                        "destroy_ts": {
+                          "type": "number",
+                          "nullable": true
+                        },
+                        "sleep_ts": {
+                          "type": "number",
+                          "nullable": true
+                        },
+                        "start_ts": {
+                          "type": "number",
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "actor_id",
+                        "name",
+                        "key",
+                        "namespace_id",
+                        "runner_name_selector",
+                        "create_ts"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "actor"
+                  ]
+                }
+              }
+            }
           },
           "400": {
-            "description": "WebSockets not enabled or invalid request"
+            "description": "User error"
           },
-          "404": {
-            "description": "Actor does not have an onWebSocket handler"
+          "500": {
+            "description": "Internal error"
           }
         }
       }
