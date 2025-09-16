@@ -73,7 +73,7 @@ function customWrite(level: string, o: any) {
 	// Add timestamp if enabled
 	if (getEnvUniversal("LOG_TIMESTAMP") === "1" && o.time) {
 		const date = typeof o.time === "number" ? new Date(o.time) : new Date();
-		entries.timestamp = formatTimestamp(date);
+		entries.ts = formatTimestamp(date);
 	}
 
 	// Add level
