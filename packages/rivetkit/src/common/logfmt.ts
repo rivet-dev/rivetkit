@@ -1,8 +1,5 @@
 import { type LogLevel, LogLevels } from "./log-levels";
 
-export type LogEntry = [string, LogValue];
-export type LogValue = string | number | bigint | boolean | null | undefined;
-
 const LOG_LEVEL_COLORS: Record<number, string> = {
 	[LogLevels.CRITICAL]: "\x1b[31m", // Red
 	[LogLevels.ERROR]: "\x1b[31m", // Red
@@ -15,9 +12,7 @@ const LOG_LEVEL_COLORS: Record<number, string> = {
 const RESET_COLOR = "\x1b[0m";
 
 /**
- * Serializes logfmt line using orderer parameters.
- *
- * We use varargs because it's ordered & it has less overhead than an object.
+ * Serializes logfmt line from an object.
  *
  * ## Styling Methodology
  *
@@ -31,11 +26,12 @@ const RESET_COLOR = "\x1b[0m";
  * name quickly then look closer to read the data associated with the
  * property.
  */
-export function stringify(...data: LogEntry[]) {
+export function stringify(data: any) {
 	let line = "";
+	const entries = Object.entries(data);
 
-	for (let i = 0; i < data.length; i++) {
-		const [key, valueRaw] = data[i];
+	for (let i = 0; i < entries.length; i++) {
+		const [key, valueRaw] = entries[i];
 
 		let isNull = false;
 		let valueString: string;
@@ -84,7 +80,7 @@ export function stringify(...data: LogEntry[]) {
 			line += `${key}=${valueString}`;
 		}
 
-		if (i !== data.length - 1) {
+		if (i !== entries.length - 1) {
 			line += " ";
 		}
 	}
@@ -104,7 +100,7 @@ export function formatTimestamp(date: Date): string {
 	return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}Z`;
 }
 
-export function castToLogValue(v: unknown): LogValue {
+export function castToLogValue(v: unknown): any {
 	if (
 		typeof v === "string" ||
 		typeof v === "number" ||
@@ -143,10 +139,7 @@ export const LOGGER_CONFIG: GlobalLoggerConfig = {
 /**
  * Converts an object in to an easier to read KV of entries.
  */
-export function spreadObjectToLogEntries(
-	base: string,
-	data: unknown,
-): LogEntry[] {
+export function spreadObjectToLogEntries(base: string, data: unknown): any {
 	if (
 		LOGGER_CONFIG.enableSpreadObject &&
 		typeof data === "object" &&
@@ -155,12 +148,11 @@ export function spreadObjectToLogEntries(
 		Object.keys(data).length !== 0 &&
 		Object.keys(data).length < 16
 	) {
-		const logData: LogEntry[] = [];
+		const logData: any = {};
 		for (const key in data) {
-			// logData.push([`${base}.${key}`, JSON.stringify((data as any)[key])]);
-
-			logData.push(
-				...spreadObjectToLogEntries(
+			Object.assign(
+				logData,
+				spreadObjectToLogEntries(
 					`${base}.${key}`,
 					// biome-ignore lint/suspicious/noExplicitAny: FIXME
 					(data as any)[key],
@@ -170,21 +162,20 @@ export function spreadObjectToLogEntries(
 		return logData;
 	}
 
-	return [[base, JSON.stringify(data)]];
+	return { [base]: JSON.stringify(data) };
 }
 
-export function errorToLogEntries(base: string, error: unknown): LogEntry[] {
+export function errorToLogEntries(base: string, error: unknown): any {
 	if (error instanceof Error) {
-		return [
-			//[`${base}.name`, error.name],
-			[`${base}.message`, error.message],
+		return {
+			[`${base}.message`]: error.message,
 			...(LOGGER_CONFIG.enableErrorStack && error.stack
-				? [[`${base}.stack`, formatStackTrace(error.stack)] as LogEntry]
-				: []),
-			...(error.cause ? errorToLogEntries(`${base}.cause`, error.cause) : []),
-		];
+				? { [`${base}.stack`]: formatStackTrace(error.stack) }
+				: {}),
+			...(error.cause ? errorToLogEntries(`${base}.cause`, error.cause) : {}),
+		};
 	}
-	return [[base, `${error}`]];
+	return { [base]: `${error}` };
 }
 
 // export function errorToLogEntries(base: string, error: unknown): LogEntry[] {

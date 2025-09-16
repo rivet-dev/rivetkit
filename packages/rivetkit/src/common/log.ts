@@ -6,6 +6,12 @@ import {
 } from "pino";
 import { z } from "zod";
 import { getEnvUniversal } from "@/utils";
+import {
+	castToLogValue,
+	formatTimestamp,
+	LOGGER_CONFIG,
+	stringify,
+} from "./logfmt";
 
 export type { Logger } from "pino";
 
@@ -60,6 +66,47 @@ export function configureBaseLogger(logger: Logger): void {
 	loggerCache.clear();
 }
 
+// TODO: This can be simplified in logfmt.ts
+function customWrite(level: string, o: any) {
+	const entries: any = {};
+
+	// Add timestamp if enabled
+	if (getEnvUniversal("LOG_TIMESTAMP") === "1" && o.time) {
+		const date = typeof o.time === "number" ? new Date(o.time) : new Date();
+		entries.timestamp = formatTimestamp(date);
+	}
+
+	// Add level
+	entries.level = level.toUpperCase();
+
+	// Add target if present
+	if (o.target) {
+		entries.target = o.target;
+	}
+
+	// Add message
+	if (o.msg) {
+		entries.msg = o.msg;
+	}
+
+	// Add other properties
+	for (const [key, value] of Object.entries(o)) {
+		if (
+			key !== "time" &&
+			key !== "level" &&
+			key !== "target" &&
+			key !== "msg" &&
+			key !== "pid" &&
+			key !== "hostname"
+		) {
+			entries[key] = castToLogValue(value);
+		}
+	}
+
+	const output = stringify(entries);
+	console.log(output);
+}
+
 /**
  * Configure the default logger with optional log level.
  */
@@ -71,9 +118,6 @@ export async function configureDefaultLogger(
 		configuredLogLevel = logLevel;
 	}
 
-	// Timestamp config
-	const enableTs = getEnvUniversal("LOG_TIMESTAMP") === "1";
-
 	baseLogger = pino({
 		level: getPinoLevel(logLevel),
 		messageKey: "msg",
@@ -81,21 +125,57 @@ export async function configureDefaultLogger(
 		base: {},
 		// Keep a string level in the output
 		formatters: {
-			level(label) {
-				return { level: label.toUpperCase() } as Record<string, unknown>;
+			level(_label: string, number: number) {
+				return { level: number };
 			},
 		},
-		timestamp: enableTs ? stdTimeFunctions.isoTime : false,
-
-		// NOTE: TODO
+		timestamp:
+			getEnvUniversal("LOG_TIMESTAMP") === "1"
+				? stdTimeFunctions.epochTime
+				: false,
 		browser: {
-			asObject: true,
+			write: {
+				fatal: customWrite.bind(null, "fatal"),
+				error: customWrite.bind(null, "error"),
+				warn: customWrite.bind(null, "warn"),
+				info: customWrite.bind(null, "info"),
+				debug: customWrite.bind(null, "debug"),
+				trace: customWrite.bind(null, "trace"),
+			},
 		},
+		hooks: {
+			logMethod(inputArgs, _method, level) {
+				// TODO: This is a hack to not implement our own transport target. We can get better perf if we have our own transport target.
 
-		// TODO: opt-in for node runtimes
-		// transport: {
-		// 	target: "pino-logfmt",
-		// },
+				const levelMap: Record<number, string> = {
+					10: "trace",
+					20: "debug",
+					30: "info",
+					40: "warn",
+					50: "error",
+					60: "fatal",
+				};
+				const levelName = levelMap[level] || "info";
+				const time =
+					getEnvUniversal("LOG_TIMESTAMP") === "1" ? Date.now() : undefined;
+				// TODO: This can be simplified in logfmt.ts
+				if (inputArgs.length >= 2) {
+					const [objOrMsg, msg] = inputArgs;
+					if (typeof objOrMsg === "object" && objOrMsg !== null) {
+						customWrite(levelName, { ...objOrMsg, msg, time });
+					} else {
+						customWrite(levelName, { msg: String(objOrMsg), time });
+					}
+				} else if (inputArgs.length === 1) {
+					const [objOrMsg] = inputArgs;
+					if (typeof objOrMsg === "object" && objOrMsg !== null) {
+						customWrite(levelName, { ...objOrMsg, time });
+					} else {
+						customWrite(levelName, { msg: String(objOrMsg), time });
+					}
+				}
+			},
+		},
 	});
 
 	loggerCache.clear();
