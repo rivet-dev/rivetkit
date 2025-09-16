@@ -28,20 +28,8 @@ import {
 	rawHttpNoHandlerActor,
 	rawHttpVoidReturnActor,
 } from "./raw-http";
-import {
-	rawHttpAuthActor,
-	rawHttpCustomAuthActor,
-	rawHttpNoAuthActor,
-	rawHttpPublicActor,
-} from "./raw-http-auth";
 import { rawHttpRequestPropertiesActor } from "./raw-http-request-properties";
 import { rawWebSocketActor, rawWebSocketBinaryActor } from "./raw-websocket";
-import {
-	rawWebSocketAuthActor,
-	rawWebSocketCustomAuthActor,
-	rawWebSocketNoAuthActor,
-	rawWebSocketPublicActor,
-} from "./raw-websocket-auth";
 import { requestAccessActor } from "./request-access";
 import { scheduled } from "./scheduled";
 import {
@@ -109,21 +97,11 @@ export const registry = setup({
 		rawHttpNoHandlerActor,
 		rawHttpVoidReturnActor,
 		rawHttpHonoActor,
-		// From raw-http-auth.ts
-		rawHttpAuthActor,
-		rawHttpNoAuthActor,
-		rawHttpPublicActor,
-		rawHttpCustomAuthActor,
 		// From raw-http-request-properties.ts
 		rawHttpRequestPropertiesActor,
 		// From raw-websocket.ts
 		rawWebSocketActor,
 		rawWebSocketBinaryActor,
-		// From raw-websocket-auth.ts
-		rawWebSocketAuthActor,
-		rawWebSocketNoAuthActor,
-		rawWebSocketPublicActor,
-		rawWebSocketCustomAuthActor,
 		// From request-access.ts
 		requestAccessActor,
 		// From actor-onstatechange.ts
