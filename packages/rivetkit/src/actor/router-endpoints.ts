@@ -550,8 +550,9 @@ export async function handleRawWebSocketHandler(
 			// Extract the path after prefix and preserve query parameters
 			// Use URL API for cleaner parsing
 			const url = new URL(path, "http://actor");
-			const pathname = url.pathname.replace(/^\/raw\/websocket/, "") || "/";
-			const normalizedPath = pathname + url.search;
+			const pathname = url.pathname.replace(/^\/raw\/websocket\/?/, "") || "/";
+			const normalizedPath =
+				(pathname.startsWith("/") ? pathname : "/" + pathname) + url.search;
 
 			let newRequest: Request;
 			if (req) {
@@ -566,6 +567,9 @@ export async function handleRawWebSocketHandler(
 				msg: "rewriting websocket url",
 				from: path,
 				to: newRequest.url,
+				pathname: url.pathname,
+				search: url.search,
+				normalizedPath,
 			});
 
 			// Call the actor's onWebSocket handler with the adapted WebSocket

@@ -25,10 +25,8 @@ import { runActorOnStateChangeTests } from "./tests/actor-onstatechange";
 import { runActorVarsTests } from "./tests/actor-vars";
 import { runManagerDriverTests } from "./tests/manager-driver";
 import { runRawHttpTests } from "./tests/raw-http";
-import { runRawHttpDirectRegistryTests } from "./tests/raw-http-direct-registry";
 import { runRawHttpRequestPropertiesTests } from "./tests/raw-http-request-properties";
 import { runRawWebSocketTests } from "./tests/raw-websocket";
-import { runRawWebSocketDirectRegistryTests } from "./tests/raw-websocket-direct-registry";
 import { runRequestAccessTests } from "./tests/request-access";
 
 export interface SkipTests {
@@ -123,9 +121,11 @@ export function runDriverTests(
 
 			runRawWebSocketTests(driverTestConfig);
 
-			runRawHttpDirectRegistryTests(driverTestConfig);
+			// TODO: re-expose this once we can have actor queries on the gateway
+			// runRawHttpDirectRegistryTests(driverTestConfig);
 
-			runRawWebSocketDirectRegistryTests(driverTestConfig);
+			// TODO: re-expose this once we can have actor queries on the gateway
+			// runRawWebSocketDirectRegistryTests(driverTestConfig);
 
 			runActorInspectorTests(driverTestConfig);
 		});

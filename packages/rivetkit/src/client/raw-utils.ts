@@ -115,26 +115,34 @@ export async function rawWebSocket(
 	logger().debug({ msg: "found actor for action", actorId });
 	invariant(actorId, "Missing actor ID");
 
-	// Normalize path to match raw HTTP behavior
-	const normalizedPath = path
-		? path.startsWith("/")
-			? path.slice(1)
-			: path
-		: "";
+	// Parse path and query parameters
+	let pathPortion = "";
+	let queryPortion = "";
+	if (path) {
+		const queryIndex = path.indexOf("?");
+		if (queryIndex !== -1) {
+			pathPortion = path.substring(0, queryIndex);
+			queryPortion = path.substring(queryIndex); // includes the '?'
+		} else {
+			pathPortion = path;
+		}
+		// Remove leading slash if present
+		if (pathPortion.startsWith("/")) {
+			pathPortion = pathPortion.slice(1);
+		}
+	}
+
+	const fullPath = `${PATH_RAW_WEBSOCKET_PREFIX}${pathPortion}${queryPortion}`;
+
 	logger().debug({
 		msg: "opening websocket",
 		actorId,
 		encoding,
-		path: normalizedPath,
+		path: fullPath,
 	});
 
 	// Open WebSocket
-	const ws = await driver.openWebSocket(
-		`${PATH_RAW_WEBSOCKET_PREFIX}${normalizedPath}`,
-		actorId,
-		encoding,
-		params,
-	);
+	const ws = await driver.openWebSocket(fullPath, actorId, encoding, params);
 
 	// Node & browser WebSocket types are incompatible
 	return ws as any;
