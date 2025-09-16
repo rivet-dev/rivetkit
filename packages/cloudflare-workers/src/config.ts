@@ -5,7 +5,10 @@ import { z } from "zod";
 export const ConfigSchema = RunConfigSchema.removeDefault()
 	.omit({ driver: true, getUpgradeWebSocket: true })
 	.extend({
-		app: z.custom<Hono>().optional(),
+		/** Path that the Rivet manager API will be mounted. */
+		managerPath: z.string().optional().default("/rivet"),
+
+		fetch: z.custom<ExportedHandlerFetchHandler<unknown, unknown>>().optional(),
 	})
 	.default({});
 export type InputConfig = z.input<typeof ConfigSchema>;

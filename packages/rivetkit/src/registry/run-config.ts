@@ -29,16 +29,31 @@ export const RunConfigSchema = ClientConfigSchema.extend({
 
 	inspector: InspectorConfigSchema,
 
+	/** @experimental */
+	disableServer: z.boolean().optional().default(false),
+
+	/** @experimental */
+	disableActorDriver: z.boolean().optional().default(false),
+
 	/**
+	 * @experimental
+	 *
 	 * Base path for the router. This is used to prefix all routes.
 	 * For example, if the base path is `/api`, then the route `/actors` will be
 	 * available at `/api/actors`.
 	 */
 	basePath: z.string().optional().default("/"),
 
-	/** Disable welcome message. */
+	/**
+	 * @experimental
+	 *
+	 * Disable welcome message.
+	 * */
 	noWelcome: z.boolean().optional().default(false),
 
+	/**
+	 * @experimental
+	 * */
 	logging: z
 		.object({
 			baseLogger: z.custom<Logger>().optional(),

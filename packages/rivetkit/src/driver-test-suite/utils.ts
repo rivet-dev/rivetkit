@@ -21,7 +21,7 @@ export async function setupDriverTest(
 	}
 
 	// Build drivers
-	const projectPath = resolve(__dirname, "../../fixtures/driver-test-suite");
+	const projectPath = resolve(__dirname, "../../../fixtures/driver-test-suite");
 	const { endpoint, namespace, runnerName, cleanup } =
 		await driverTestConfig.start(projectPath);
 	c.onTestFinished(cleanup);
