@@ -6,6 +6,7 @@ import {
 import type { ClientConfig } from "@/client/config";
 import { importWebSocket } from "@/common/websocket";
 import type { Encoding, UniversalWebSocket } from "@/mod";
+import { combineUrlPath } from "@/utils";
 import { getEndpoint } from "./api-utils";
 import { logger } from "./log";
 
@@ -20,7 +21,7 @@ export async function openWebSocketToActor(
 
 	// WebSocket connections go through guard
 	const endpoint = getEndpoint(runConfig);
-	const guardUrl = `${endpoint}${path}`;
+	const guardUrl = combineUrlPath(endpoint, path);
 
 	logger().debug({
 		msg: "opening websocket to actor via guard",

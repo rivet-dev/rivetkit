@@ -170,3 +170,56 @@ export function bufferToArrayBuffer(buf: Buffer | Uint8Array): ArrayBuffer {
 		buf.byteOffset + buf.byteLength,
 	) as ArrayBuffer;
 }
+
+/**
+ * Properly combines a base URL endpoint with a path, preserving any base path in the endpoint.
+ *
+ * @example
+ * combineUrlPath("http://localhost:8787/rivet", "/actors/action")
+ * // Returns: "http://localhost:8787/rivet/actors/action"
+ *
+ * @example
+ * combineUrlPath("http://localhost:8787/rivet", "/actors?type=foo", { namespace: "test" })
+ * // Returns: "http://localhost:8787/rivet/actors?type=foo&namespace=test"
+ *
+ * @param endpoint The base URL endpoint that may contain a path component
+ * @param path The path to append to the endpoint (may include query parameters)
+ * @param queryParams Optional additional query parameters to append
+ * @returns The properly combined URL string
+ */
+export function combineUrlPath(
+	endpoint: string,
+	path: string,
+	queryParams?: Record<string, string | undefined>,
+): string {
+	const baseUrl = new URL(endpoint);
+
+	// Extract path and query from the provided path
+	const pathParts = path.split("?");
+	const pathOnly = pathParts[0];
+	const existingQuery = pathParts[1] || "";
+
+	// Remove trailing slash from base path and ensure path starts with /
+	const basePath = baseUrl.pathname.replace(/\/$/, "");
+	const cleanPath = pathOnly.startsWith("/") ? pathOnly : `/${pathOnly}`;
+	// Combine paths and remove any double slashes
+	const fullPath = (basePath + cleanPath).replace(/\/\//g, "/");
+
+	// Build query string
+	const queryParts: string[] = [];
+	if (existingQuery) {
+		queryParts.push(existingQuery);
+	}
+	if (queryParams) {
+		for (const [key, value] of Object.entries(queryParams)) {
+			if (value !== undefined) {
+				queryParts.push(
+					`${encodeURIComponent(key)}=${encodeURIComponent(value)}`,
+				);
+			}
+		}
+	}
+
+	const fullQuery = queryParts.length > 0 ? `?${queryParts.join("&")}` : "";
+	return `${baseUrl.protocol}//${baseUrl.host}${fullPath}${fullQuery}`;
+}

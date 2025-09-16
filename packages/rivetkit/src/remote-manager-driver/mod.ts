@@ -17,6 +17,7 @@ import type {
 import type { ManagerInspector } from "@/inspector/manager";
 import type { Encoding, RegistryConfig, UniversalWebSocket } from "@/mod";
 import type { RunConfig } from "@/registry/run-config";
+import { combineUrlPath } from "@/utils";
 import { sendHttpRequestToActor } from "./actor-http-client";
 import {
 	buildGuardHeadersForWebSocket,
@@ -246,7 +247,7 @@ export class RemoteManagerDriver implements ManagerDriver {
 		invariant(upgradeWebSocket, "missing getUpgradeWebSocket");
 
 		const endpoint = getEndpoint(this.#config);
-		const guardUrl = `${endpoint}${path}`;
+		const guardUrl = combineUrlPath(endpoint, path);
 		const wsGuardUrl = guardUrl.replace("http://", "ws://");
 
 		logger().debug({
