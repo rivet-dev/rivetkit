@@ -74,8 +74,17 @@ export async function parseMessage(
 		throw new errors.MessageTooLong();
 	}
 
-	// Parse & validate message
-	const buffer = await inputDataToBuffer(value);
+	// Convert value
+	let buffer = await inputDataToBuffer(value);
+
+	// HACK: For some reason, the output buffer needs to be cloned when using BARE encoding
+	//
+	// THis is likely because the input data is of type `Buffer` and there is an inconsistency in implementation that I am not aware of
+	if (buffer instanceof Buffer) {
+		buffer = new Uint8Array(buffer);
+	}
+
+	// Deserialize message
 	return deserializeWithEncoding(opts.encoding, buffer, TO_SERVER_VERSIONED);
 }
 
