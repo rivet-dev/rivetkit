@@ -339,7 +339,9 @@ export function createManagerRouter(
 				c,
 				name: body.name,
 				key: [body.key || crypto.randomUUID()], // Generate key if not provided, convert to ActorKey array
-				input: body.input ? JSON.parse(body.input) : undefined,
+				input: body.input
+					? cbor.decode(Buffer.from(body.input, "base64"))
+					: undefined,
 				region: undefined, // Not provided in the request schema
 			});
 
