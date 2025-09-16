@@ -97,7 +97,7 @@ async function runBuild() {
 	console.log(chalk.blue("Running build..."));
 	try {
 		// --force to skip cache in case of Turborepo bugs
-		await $`pnpm build --force`;
+		await $`pnpm build --force -F rivetkit -F @rivetkit/*`;
 		console.log(chalk.green("✅ Build finished"));
 	} catch (err) {
 		console.error(chalk.red("❌ Build failed"));
