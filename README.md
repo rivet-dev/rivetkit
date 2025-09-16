@@ -45,7 +45,7 @@ Public-facing projects:
 
 - **RivetKit** (you are here): Lightweight TypeScript library for building Rivet Actors
 - **[Rivet Engine](https://github.com/rivet-dev/rivet)** : Engine that powers Rivet Actors at scale — completely optional
-- **[Rivet Studio](https://github.com/rivet-dev/rivet/tree/main/frontend/apps/studio)**: Like Postman, but for Rivet Actors
+- **[Rivet Studio](https://github.com/rivet-dev/rivet/tree/main/frontend/apps/studio)**: Like Chrome DevTools, but for Rivet Actors
 - **[Rivet Documentation](https://github.com/rivet-dev/rivet/tree/main/site/src/content/docs)**
 
 ## Get Started
@@ -218,16 +218,16 @@ Seamlessly integrate RivetKit with your favorite frameworks, languages, and tool
 - <img src=".github/media/integrations/tinybase.svg" height="16" alt="TinyBase" />&nbsp;&nbsp;[TinyBase](https://github.com/rivet-dev/rivetkit/issues/910) *(Help Wanted)*
 - <img src=".github/media/integrations/yjs.svg" height="16" alt="Yjs" />&nbsp;&nbsp;[Yjs](https://github.com/rivet-dev/rivetkit/issues/911) *(Help Wanted)*
 
-## Local Development with the Studio
+## Local Development with the Rivet Inspector
 
-Rivet Studio is like like Postman, but for all of your stateful serverless needs. [Visit the Studio →](https://studio.rivet.dev)
+Rivet Inspector is like like Chrome DevTools, but for all of your stateful serverless needs. [Visit the Inspector →](https://inspect.rivet.dev)
 
 - **Live State Inspection**: View and edit your actor state in real-time as messages are sent and processed
 - **REPL**: Debug your actor in real-time - call actions, subscribe to events, and interact directly with your code
 - **Connection Inspection**: Monitor active connections with state and parameters for each client
 - **Hot Reload Code Changes**: See code changes instantly without restarting - modify and test on the fly
 
-![Rivet Studio](.github/media/screenshots/studio/simple.png)
+![Rivet Inspector](.github/media/screenshots/studio/simple.png)
 
 ## Community & Support
 
