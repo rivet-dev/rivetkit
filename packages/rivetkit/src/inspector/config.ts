@@ -25,7 +25,8 @@ const defaultEnabled = () => {
 const defaultInspectorOrigins = [
 	"http://localhost:43708",
 	"http://localhost:43709",
-	"https://studio.rivet.dev",
+	"https://studio.rivet.gg",
+	"https://inspect.rivet.dev",
 ];
 
 const defaultCors: CorsOptions = {
