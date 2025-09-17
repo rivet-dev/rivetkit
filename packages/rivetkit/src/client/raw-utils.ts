@@ -79,7 +79,7 @@ export async function rawHttpFetch(
 
 		// Forward the request to the actor
 		const proxyRequest = new Request(url, {
-			...init,
+			...mergedInit,
 			headers: proxyRequestHeaders,
 		});
 
