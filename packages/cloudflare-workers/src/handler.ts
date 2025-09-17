@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { Hono } from "hono";
+import type { Hono } from "hono";
 import type { Registry, RunConfig } from "rivetkit";
 import type { Client } from "rivetkit/client";
 import {
@@ -36,7 +36,7 @@ interface SetupOutput<A extends Registry<any>> {
 	createHandler: (hono?: Hono) => Handler;
 }
 
-export function createServerHandler<R extends Registry<any>>(
+export function createHandler<R extends Registry<any>>(
 	registry: R,
 	inputConfig?: InputConfig,
 ): Handler {
@@ -66,23 +66,34 @@ export function createServer<R extends Registry<any>>(
 	const ActorHandler = createActorDurableObject(registry, runConfig);
 
 	// Create server
-	const serverOutput = registry.createServer(runConfig);
+	const serverOutput = registry.start(runConfig);
 
 	return {
 		client: serverOutput.client as Client<R>,
-		createHandler: (hono) => {
-			// Build base router
-			const app = hono ?? new Hono();
-
-			// Mount registry router at /registry
-			if (!hono) {
-				app.route("/registry", serverOutput.hono);
-			}
-
+		createHandler: () => {
 			// Create Cloudflare handler
 			const handler = {
 				fetch: (request, env, ctx) => {
-					return app.fetch(request, env, ctx);
+					const url = new URL(request.url);
+
+					// Mount Rivet manager API
+					if (url.pathname.startsWith(config.managerPath)) {
+						const strippedPath = url.pathname.substring(
+							config.managerPath.length,
+						);
+						url.pathname = strippedPath;
+						const modifiedRequest = new Request(url.toString(), request);
+						return serverOutput.fetch(modifiedRequest, env, ctx);
+					}
+
+					if (config.fetch) {
+						return config.fetch(request, env, ctx);
+					} else {
+						return new Response(
+							"This is a RivetKit server.\n\nLearn more at https://rivetkit.org\n",
+							{ status: 200 },
+						);
+					}
 				},
 			} satisfies ExportedHandler<Bindings>;
 

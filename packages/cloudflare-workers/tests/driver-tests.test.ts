@@ -141,15 +141,12 @@ async function setupProject(projectPath: string) {
 	await fs.mkdir(rivetKitDir, { recursive: true });
 
 	// Copy core package
-	const corePackagePath = path.join(workspaceRoot, "packages/core");
-	const targetCorePath = path.join(rivetKitDir, "core");
+	const corePackagePath = path.join(workspaceRoot, "packages/rivetkit");
+	const targetCorePath = path.join(rivetKitDir, "rivetkit");
 	await fs.cp(corePackagePath, targetCorePath, { recursive: true });
 
 	// Copy cloudflare-workers package
-	const cfPackagePath = path.join(
-		workspaceRoot,
-		"packages/drivers/cloudflare-workers",
-	);
+	const cfPackagePath = path.join(workspaceRoot, "packages/cloudflare-workers");
 	const targetCfPath = path.join(rivetKitDir, "cloudflare-workers");
 	await fs.cp(cfPackagePath, targetCfPath, { recursive: true });
 
