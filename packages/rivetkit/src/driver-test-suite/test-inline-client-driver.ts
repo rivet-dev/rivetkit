@@ -109,13 +109,6 @@ export function createTestInlineClientDriver(
 					method: actorRequest.method,
 					headers,
 					body: actorRequest.body,
-					credentials: actorRequest.credentials,
-					integrity: actorRequest.integrity,
-					keepalive: actorRequest.keepalive,
-					mode: actorRequest.mode,
-					redirect: actorRequest.redirect,
-					referrer: actorRequest.referrer,
-					referrerPolicy: actorRequest.referrerPolicy,
 					signal: actorRequest.signal,
 				}),
 			);

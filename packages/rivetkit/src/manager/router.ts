@@ -148,9 +148,10 @@ export function createManagerRouter(
 			const proxyUrl = new URL(`http://actor${url.pathname}${url.search}`);
 
 			const proxyRequest = new Request(proxyUrl, {
-				method: c.req.method,
+				method: c.req.raw.method,
 				headers: proxyHeaders,
 				body: c.req.raw.body,
+				signal: c.req.raw.signal,
 			});
 
 			return await managerDriver.proxyRequest(c, proxyRequest, actorId);
