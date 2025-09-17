@@ -142,10 +142,10 @@ export class FileSystemManagerDriver implements ManagerDriver {
 		encoding: Encoding,
 		params: unknown,
 	): Promise<UniversalWebSocket> {
-		// TODO:
-
 		// Handle raw WebSocket paths
-		if (path === PATH_CONNECT_WEBSOCKET) {
+		const pathOnly = path.split("?")[0];
+		const normalizedPath = pathOnly.startsWith("/") ? pathOnly : `/${pathOnly}`;
+		if (normalizedPath === PATH_CONNECT_WEBSOCKET) {
 			// Handle standard connect
 			const wsHandler = await handleWebSocketConnect(
 				undefined,
@@ -158,16 +158,14 @@ export class FileSystemManagerDriver implements ManagerDriver {
 			);
 			return new InlineWebSocketAdapter2(wsHandler);
 		} else if (
-			path.startsWith(PATH_RAW_WEBSOCKET_PREFIX) ||
-			path === "/raw/websocket"
+			normalizedPath.startsWith(PATH_RAW_WEBSOCKET_PREFIX) ||
+			normalizedPath === "/raw/websocket"
 		) {
 			// Handle websocket proxy
-			// Normalize path to include trailing slash if missing
-			const normalizedPath =
-				path === "/raw/websocket" ? "/raw/websocket/" : path;
+			// Use the full path with query parameters
 			const wsHandler = await handleRawWebSocketHandler(
 				undefined,
-				normalizedPath,
+				path,
 				this.#actorDriver,
 				actorId,
 				undefined,
@@ -194,13 +192,14 @@ export class FileSystemManagerDriver implements ManagerDriver {
 		actorId: string,
 		encoding: Encoding,
 		connParams: unknown,
-		authData: unknown,
 	): Promise<Response> {
 		const upgradeWebSocket = this.#runConfig.getUpgradeWebSocket?.();
 		invariant(upgradeWebSocket, "missing getUpgradeWebSocket");
 
 		// Handle raw WebSocket paths
-		if (path === PATH_CONNECT_WEBSOCKET) {
+		const pathOnly = path.split("?")[0];
+		const normalizedPath = pathOnly.startsWith("/") ? pathOnly : `/${pathOnly}`;
+		if (normalizedPath === PATH_CONNECT_WEBSOCKET) {
 			// Handle standard connect
 			const wsHandler = await handleWebSocketConnect(
 				c.req.raw,
@@ -209,26 +208,22 @@ export class FileSystemManagerDriver implements ManagerDriver {
 				actorId,
 				encoding,
 				connParams,
-				authData,
+				undefined,
 			);
-
 			return upgradeWebSocket(() => wsHandler)(c, noopNext());
 		} else if (
-			path.startsWith(PATH_RAW_WEBSOCKET_PREFIX) ||
-			path === "/raw/websocket"
+			normalizedPath.startsWith(PATH_RAW_WEBSOCKET_PREFIX) ||
+			normalizedPath === "/raw/websocket"
 		) {
 			// Handle websocket proxy
-			// Normalize path to include trailing slash if missing
-			const normalizedPath =
-				path === "/raw/websocket" ? "/raw/websocket/" : path;
+			// Use the full path with query parameters
 			const wsHandler = await handleRawWebSocketHandler(
 				c.req.raw,
-				normalizedPath,
+				path,
 				this.#actorDriver,
 				actorId,
-				authData,
+				undefined,
 			);
-
 			return upgradeWebSocket(() => wsHandler)(c, noopNext());
 		} else {
 			throw new Error(`Unreachable path: ${path}`);

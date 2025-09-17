@@ -3,6 +3,8 @@ import * as cbor from "cbor-x";
 import { Hono } from "hono";
 import { cors as corsMiddleware } from "hono/cors";
 import { createMiddleware } from "hono/factory";
+import type { WSContext } from "hono/ws";
+import invariant from "invariant";
 import { z } from "zod";
 import {
 	ActorNotFound,
@@ -11,11 +13,18 @@ import {
 	Unsupported,
 	WebSocketsNotEnabled,
 } from "@/actor/errors";
+import type { Encoding } from "@/client/mod";
 import {
 	handleRouteError,
 	handleRouteNotFound,
 	loggerMiddleware,
 } from "@/common/router";
+import { deconstructError, noopNext } from "@/common/utils";
+import { HEADER_ACTOR_ID } from "@/driver-helpers/mod";
+import type {
+	TestInlineDriverCallRequest,
+	TestInlineDriverCallResponse,
+} from "@/driver-test-suite/test-inline-client-driver";
 import { createManagerInspectorRouter } from "@/inspector/manager";
 import { secureInspector } from "@/inspector/utils";
 import {
@@ -32,8 +41,10 @@ import {
 	ActorsGetOrCreateByIdResponseSchema,
 } from "@/manager-api/routes/actors-get-or-create-by-id";
 import { RivetIdSchema } from "@/manager-api/routes/common";
+import type { UniversalWebSocket, UpgradeWebSocketArgs } from "@/mod";
 import type { RegistryConfig } from "@/registry/config";
 import type { RunConfig } from "@/registry/run-config";
+import { stringifyError } from "@/utils";
 import type { ManagerDriver } from "./driver";
 import { logger } from "./log";
 
@@ -288,8 +299,8 @@ export function createManagerRouter(
 				actor_id: actorOutput.actorId,
 				name: actorOutput.name,
 				key: actorOutput.key,
-				namespace_id: "", // Not available from driver
-				runner_name_selector: "", // Not available from driver
+				namespace_id: "default", // Assert default namespace
+				runner_name_selector: "rivetkit", // Assert rivetkit runner
 				create_ts: Date.now(), // Not available from driver
 				connectable_ts: null,
 				destroy_ts: null,
@@ -350,8 +361,8 @@ export function createManagerRouter(
 				actor_id: actorOutput.actorId,
 				name: actorOutput.name,
 				key: actorOutput.key,
-				namespace_id: "", // Not available from driver
-				runner_name_selector: body.runner_name_selector,
+				namespace_id: "default", // Assert default namespace
+				runner_name_selector: "rivetkit", // Assert rivetkit runner
 				create_ts: Date.now(),
 				connectable_ts: null,
 				destroy_ts: null,
@@ -387,6 +398,145 @@ export function createManagerRouter(
 	// 	});
 	// }
 
+	if (registryConfig.test.enabled) {
+		// Add HTTP endpoint to test the inline client
+		//
+		// We have to do this in a router since this needs to run in the same server as the RivetKit registry. Some test contexts to not run in the same server.
+		router.post(".test/inline-driver/call", async (c) => {
+			// TODO: use openapi instead
+			const buffer = await c.req.arrayBuffer();
+			const { encoding, transport, method, args }: TestInlineDriverCallRequest =
+				cbor.decode(new Uint8Array(buffer));
+
+			logger().debug({
+				msg: "received inline request",
+				encoding,
+				transport,
+				method,
+				args,
+			});
+
+			// Forward inline driver request
+			let response: TestInlineDriverCallResponse<unknown>;
+			try {
+				const output = await ((managerDriver as any)[method] as any)(...args);
+				response = { ok: output };
+			} catch (rawErr) {
+				const err = deconstructError(rawErr, logger(), {}, true);
+				response = { err };
+			}
+
+			return c.body(cbor.encode(response));
+		});
+
+		router.get(".test/inline-driver/connect-websocket/*", async (c) => {
+			const upgradeWebSocket = runConfig.getUpgradeWebSocket?.();
+			invariant(upgradeWebSocket, "websockets not supported on this platform");
+
+			return upgradeWebSocket(async (c: any) => {
+				const {
+					actorId,
+					params: paramsRaw,
+					encodingKind,
+				} = c.req.query() as {
+					actorId: string;
+					params?: string;
+					encodingKind: Encoding;
+				};
+				const params =
+					paramsRaw !== undefined ? JSON.parse(paramsRaw) : undefined;
+
+				// Extract the path after /connect-websocket/
+				const pathOnly =
+					c.req.path.split("/.test/inline-driver/connect-websocket/")[1] || "";
+
+				// Include query string
+				const url = new URL(c.req.url);
+				const pathWithQuery = pathOnly + url.search;
+
+				logger().debug({
+					msg: "received test inline driver websocket",
+					actorId,
+					params,
+					encodingKind,
+					path: pathWithQuery,
+				});
+
+				// Connect to the actor using the inline client driver - this returns a Promise<WebSocket>
+				const clientWsPromise = managerDriver.openWebSocket(
+					pathWithQuery,
+					actorId,
+					encodingKind,
+					params,
+				);
+
+				return await createTestWebSocketProxy(clientWsPromise, "standard");
+			})(c, noopNext());
+		});
+
+		router.all(".test/inline-driver/send-request/*", async (c) => {
+			// Extract parameters from headers
+			const actorId = c.req.header(HEADER_ACTOR_ID);
+
+			if (!actorId) {
+				return c.text("Missing required headers", 400);
+			}
+
+			// Extract the path after /send-request/
+			const pathOnly =
+				c.req.path.split("/.test/inline-driver/send-request/")[1] || "";
+
+			// Include query string
+			const url = new URL(c.req.url);
+			const pathWithQuery = pathOnly + url.search;
+
+			logger().debug({
+				msg: "received test inline driver raw http",
+				actorId,
+				path: pathWithQuery,
+				method: c.req.method,
+			});
+
+			try {
+				// Forward the request using the inline client driver
+				const response = await managerDriver.sendRequest(
+					actorId,
+					new Request(`http://actor/${pathWithQuery}`, {
+						method: c.req.method,
+						headers: c.req.raw.headers,
+						body: c.req.raw.body,
+					}),
+				);
+
+				// Return the response directly
+				return response;
+			} catch (error) {
+				logger().error({
+					msg: "error in test inline raw http",
+					error: stringifyError(error),
+				});
+
+				// Return error response
+				const err = deconstructError(error, logger(), {}, true);
+				return c.json(
+					{
+						error: {
+							code: err.code,
+							message: err.message,
+							metadata: err.metadata,
+						},
+					},
+					err.statusCode,
+				);
+			}
+		});
+	}
+
+	managerDriver.modifyManagerRouter?.(
+		registryConfig,
+		router as unknown as Hono,
+	);
+
 	if (runConfig.inspector?.enabled) {
 		if (!managerDriver.inspector) {
 			throw new Unsupported("inspector");
@@ -409,4 +559,227 @@ export function createManagerRouter(
 	router.onError(handleRouteError);
 
 	return { router: router as Hono, openapi: router };
+}
+/**
+ * Creates a WebSocket proxy for test endpoints that forwards messages between server and client WebSockets
+ */
+async function createTestWebSocketProxy(
+	clientWsPromise: Promise<UniversalWebSocket>,
+	connectionType: string,
+): Promise<UpgradeWebSocketArgs> {
+	// Store a reference to the resolved WebSocket
+	let clientWs: UniversalWebSocket | null = null;
+	try {
+		// Resolve the client WebSocket promise
+		logger().debug({ msg: "awaiting client websocket promise" });
+		const ws = await clientWsPromise;
+		clientWs = ws;
+		logger().debug({
+			msg: "client websocket promise resolved",
+			constructor: ws?.constructor.name,
+		});
+
+		// Wait for ws to open
+		await new Promise<void>((resolve, reject) => {
+			const onOpen = () => {
+				logger().debug({ msg: "test websocket connection opened" });
+				resolve();
+			};
+			const onError = (error: any) => {
+				logger().error({ msg: "test websocket connection failed", error });
+				reject(
+					new Error(`Failed to open WebSocket: ${error.message || error}`),
+				);
+			};
+			ws.addEventListener("open", onOpen);
+			ws.addEventListener("error", onError);
+		});
+	} catch (error) {
+		logger().error({
+			msg: `failed to establish client ${connectionType} websocket connection`,
+			error,
+		});
+		return {
+			onOpen: (_evt, serverWs) => {
+				serverWs.close(1011, "Failed to establish connection");
+			},
+			onMessage: () => {},
+			onError: () => {},
+			onClose: () => {},
+		};
+	}
+
+	// Create WebSocket proxy handlers to relay messages between client and server
+	return {
+		onOpen: (_evt: any, serverWs: WSContext) => {
+			logger().debug({
+				msg: `test ${connectionType} websocket connection opened`,
+			});
+
+			// Check WebSocket type
+			logger().debug({
+				msg: "clientWs info",
+				constructor: clientWs.constructor.name,
+				hasAddEventListener: typeof clientWs.addEventListener === "function",
+				readyState: clientWs.readyState,
+			});
+
+			// Add message handler to forward messages from client to server
+			clientWs.addEventListener("message", (clientEvt: MessageEvent) => {
+				logger().debug({
+					msg: `test ${connectionType} websocket connection message from client`,
+					dataType: typeof clientEvt.data,
+					isBlob: clientEvt.data instanceof Blob,
+					isArrayBuffer: clientEvt.data instanceof ArrayBuffer,
+					dataConstructor: clientEvt.data?.constructor?.name,
+					dataStr:
+						typeof clientEvt.data === "string"
+							? clientEvt.data.substring(0, 100)
+							: undefined,
+				});
+
+				if (serverWs.readyState === 1) {
+					// OPEN
+					// Handle Blob data
+					if (clientEvt.data instanceof Blob) {
+						clientEvt.data
+							.arrayBuffer()
+							.then((buffer) => {
+								logger().debug({
+									msg: "converted client blob to arraybuffer, sending to server",
+									bufferSize: buffer.byteLength,
+								});
+								serverWs.send(buffer as any);
+							})
+							.catch((error) => {
+								logger().error({
+									msg: "failed to convert blob to arraybuffer",
+									error,
+								});
+							});
+					} else {
+						logger().debug({
+							msg: "sending client data directly to server",
+							dataType: typeof clientEvt.data,
+							dataLength:
+								typeof clientEvt.data === "string"
+									? clientEvt.data.length
+									: undefined,
+						});
+						serverWs.send(clientEvt.data as any);
+					}
+				}
+			});
+
+			// Add close handler to close server when client closes
+			clientWs.addEventListener("close", (clientEvt: any) => {
+				logger().debug({
+					msg: `test ${connectionType} websocket connection closed`,
+				});
+
+				if (serverWs.readyState !== 3) {
+					// Not CLOSED
+					serverWs.close(clientEvt.code, clientEvt.reason);
+				}
+			});
+
+			// Add error handler
+			clientWs.addEventListener("error", () => {
+				logger().debug({
+					msg: `test ${connectionType} websocket connection error`,
+				});
+
+				if (serverWs.readyState !== 3) {
+					// Not CLOSED
+					serverWs.close(1011, "Error in client websocket");
+				}
+			});
+		},
+		onMessage: (evt: { data: any }) => {
+			logger().debug({
+				msg: "received message from server",
+				dataType: typeof evt.data,
+				isBlob: evt.data instanceof Blob,
+				isArrayBuffer: evt.data instanceof ArrayBuffer,
+				dataConstructor: evt.data?.constructor?.name,
+				dataStr:
+					typeof evt.data === "string" ? evt.data.substring(0, 100) : undefined,
+			});
+
+			// Forward messages from server websocket to client websocket
+			if (clientWs.readyState === 1) {
+				// OPEN
+				// Handle Blob data
+				if (evt.data instanceof Blob) {
+					evt.data
+						.arrayBuffer()
+						.then((buffer) => {
+							logger().debug({
+								msg: "converted blob to arraybuffer, sending",
+								bufferSize: buffer.byteLength,
+							});
+							clientWs.send(buffer);
+						})
+						.catch((error) => {
+							logger().error({
+								msg: "failed to convert blob to arraybuffer",
+								error,
+							});
+						});
+				} else {
+					logger().debug({
+						msg: "sending data directly",
+						dataType: typeof evt.data,
+						dataLength:
+							typeof evt.data === "string" ? evt.data.length : undefined,
+					});
+					clientWs.send(evt.data);
+				}
+			}
+		},
+		onClose: (
+			event: {
+				wasClean: boolean;
+				code: number;
+				reason: string;
+			},
+			serverWs: WSContext,
+		) => {
+			logger().debug({
+				msg: `server ${connectionType} websocket closed`,
+				wasClean: event.wasClean,
+				code: event.code,
+				reason: event.reason,
+			});
+
+			// HACK: Close socket in order to fix bug with Cloudflare leaving WS in closing state
+			// https://github.com/cloudflare/workerd/issues/2569
+			serverWs.close(1000, "hack_force_close");
+
+			// Close the client websocket when the server websocket closes
+			if (
+				clientWs &&
+				clientWs.readyState !== clientWs.CLOSED &&
+				clientWs.readyState !== clientWs.CLOSING
+			) {
+				// Don't pass code/message since this may affect how close events are triggered
+				clientWs.close(1000, event.reason);
+			}
+		},
+		onError: (error: unknown) => {
+			logger().error({
+				msg: `error in server ${connectionType} websocket`,
+				error,
+			});
+
+			// Close the client websocket on error
+			if (
+				clientWs &&
+				clientWs.readyState !== clientWs.CLOSED &&
+				clientWs.readyState !== clientWs.CLOSING
+			) {
+				clientWs.close(1011, "Error in server websocket");
+			}
+		},
+	};
 }

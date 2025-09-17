@@ -451,7 +451,9 @@ export class FileSystemGlobalState {
 		// Get the actor metadata
 		const entry = await this.loadActor(actorId);
 		if (!entry.state) {
-			throw new Error(`Actor does exist and cannot be started: ${actorId}`);
+			throw new Error(
+				`Actor does not exist and cannot be started: "${actorId}"`,
+			);
 		}
 
 		// Actor already starting

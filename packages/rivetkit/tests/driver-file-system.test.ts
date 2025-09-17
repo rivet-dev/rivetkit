@@ -5,9 +5,9 @@ import { createFileSystemOrMemoryDriver } from "@/drivers/file-system/mod";
 runDriverTests({
 	// TODO: Remove this once timer issues are fixed in actor-sleep.ts
 	useRealTimers: true,
-	async start(projectPath: string) {
+	async start() {
 		return await createTestRuntime(
-			join(projectPath, "registry.ts"),
+			join(__dirname, "../fixtures/driver-test-suite/registry.ts"),
 			async () => {
 				return {
 					driver: createFileSystemOrMemoryDriver(

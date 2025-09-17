@@ -36,7 +36,7 @@ export interface SkipTests {
 
 export interface DriverTestConfig {
 	/** Deploys an registry and returns the connection endpoint. */
-	start(projectDir: string): Promise<DriverDeployOutput>;
+	start(): Promise<DriverDeployOutput>;
 
 	/**
 	 * If we're testing with an external system, we should use real timers
