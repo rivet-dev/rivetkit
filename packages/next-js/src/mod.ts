@@ -1,16 +1,19 @@
-import type { Registry } from "rivetkit";
+import type { Registry, RunConfigInput } from "rivetkit";
 
-export const toNextHandler = (_server: ReturnType<Registry<any>["start"]>) => {
-	// TODO:
-	// const { hono: registryHono } = server;
-	//
-	// const handler = handle(registryHono);
+export const toNextHandler = (
+	registry: Registry<any>,
+	inputConfig: RunConfigInput = {},
+) => {
+	// Don't run server locally since we're using the fetch handler directly
+	inputConfig.disableServer = true;
+
+	const { fetch } = registry.start(inputConfig);
 
 	return {
-		// GET: handler,
-		// POST: handler,
-		// PATCH: handler,
-		// HEAD: handler,
-		// OPTIONS: handler,
+		GET: fetch,
+		POST: fetch,
+		PATCH: fetch,
+		HEAD: fetch,
+		OPTIONS: fetch,
 	};
 };

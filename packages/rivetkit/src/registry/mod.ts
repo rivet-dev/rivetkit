@@ -1,4 +1,3 @@
-import type { Hono } from "hono";
 import { type Client, createClientWithDriver } from "@/client/client";
 import { configureBaseLogger, configureDefaultLogger } from "@/common/log";
 import { chooseDefaultDriver } from "@/drivers/default";
@@ -149,5 +148,11 @@ export function setup<A extends RegistryActors>(
 	return new Registry(config);
 }
 
-export type { RegistryConfig, RegistryActors, RunConfig, DriverConfig };
+export type {
+	RegistryConfig,
+	RegistryActors,
+	RunConfig,
+	RunConfigInput,
+	DriverConfig,
+};
 export { RegistryConfigSchema };
