@@ -1,7 +1,5 @@
 import { env } from "cloudflare:workers";
-import type { Hono } from "hono";
 import type { Registry, RunConfig } from "rivetkit";
-import type { Client } from "rivetkit/client";
 import {
 	type ActorHandlerInterface,
 	createActorDurableObject,
@@ -31,23 +29,10 @@ interface Handler {
 	ActorHandler: DurableObjectConstructor;
 }
 
-interface SetupOutput<A extends Registry<any>> {
-	client: Client<A>;
-	createHandler: (hono?: Hono) => Handler;
-}
-
 export function createHandler<R extends Registry<any>>(
 	registry: R,
 	inputConfig?: InputConfig,
 ): Handler {
-	const { createHandler } = createServer(registry, inputConfig);
-	return createHandler();
-}
-
-export function createServer<R extends Registry<any>>(
-	registry: R,
-	inputConfig?: InputConfig,
-): SetupOutput<R> {
 	const config = ConfigSchema.parse(inputConfig);
 
 	// Create config
@@ -68,36 +53,32 @@ export function createServer<R extends Registry<any>>(
 	// Create server
 	const serverOutput = registry.start(runConfig);
 
-	return {
-		client: serverOutput.client as Client<R>,
-		createHandler: () => {
-			// Create Cloudflare handler
-			const handler = {
-				fetch: (request, env, ctx) => {
-					const url = new URL(request.url);
+	// Create Cloudflare handler
+	const handler = {
+		fetch: (request, cfEnv, ctx) => {
+			const url = new URL(request.url);
 
-					// Mount Rivet manager API
-					if (url.pathname.startsWith(config.managerPath)) {
-						const strippedPath = url.pathname.substring(
-							config.managerPath.length,
-						);
-						url.pathname = strippedPath;
-						const modifiedRequest = new Request(url.toString(), request);
-						return serverOutput.fetch(modifiedRequest, env, ctx);
-					}
+			// Inject Rivet env
+			const env = Object.assign({ RIVET: serverOutput.client }, cfEnv);
 
-					if (config.fetch) {
-						return config.fetch(request, env, ctx);
-					} else {
-						return new Response(
-							"This is a RivetKit server.\n\nLearn more at https://rivetkit.org\n",
-							{ status: 200 },
-						);
-					}
-				},
-			} satisfies ExportedHandler<Bindings>;
+			// Mount Rivet manager API
+			if (url.pathname.startsWith(config.managerPath)) {
+				const strippedPath = url.pathname.substring(config.managerPath.length);
+				url.pathname = strippedPath;
+				const modifiedRequest = new Request(url.toString(), request);
+				return serverOutput.fetch(modifiedRequest, env, ctx);
+			}
 
-			return { handler, ActorHandler };
+			if (config.fetch) {
+				return config.fetch(request, env, ctx);
+			} else {
+				return new Response(
+					"This is a RivetKit server.\n\nLearn more at https://rivetkit.org\n",
+					{ status: 200 },
+				);
+			}
 		},
-	};
+	} satisfies ExportedHandler<Bindings>;
+
+	return { handler, ActorHandler };
 }
