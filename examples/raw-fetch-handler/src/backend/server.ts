@@ -1,9 +1,10 @@
+import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { registry } from "./registry";
 
 // Start RivetKit
-const { client, serve } = registry.createServer();
+const { client } = registry.start();
 
 // Setup router
 const app = new Hono();
@@ -34,6 +35,7 @@ app.all("/forward/:name/*", async (c) => {
 	return response;
 });
 
-serve(app);
+serve({ fetch: app.fetch, port: 8080 });
+console.log("Listening on port 8080");
 
 export { client };

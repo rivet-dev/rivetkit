@@ -1,12 +1,10 @@
 import { Elysia } from "elysia";
 import { registry } from "./registry";
 
-const { client, handler } = registry.createServer();
+const { client } = registry.start();
 
 // Setup router
 new Elysia()
-	// Expose RivetKit to the frontend (optional)
-	.mount("/registry", handler)
 	// Example HTTP endpoint
 	.post("/increment/:name", async ({ params }) => {
 		const name = params.name;

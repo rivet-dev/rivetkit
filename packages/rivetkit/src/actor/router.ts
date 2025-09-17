@@ -175,7 +175,8 @@ export function createActorRouter(
 			method: c.req.method,
 			headers: c.req.raw.headers,
 			body: c.req.raw.body,
-		});
+			duplex: "half",
+		} as RequestInit);
 
 		loggerWithoutContext().debug({
 			msg: "rewriting http url",

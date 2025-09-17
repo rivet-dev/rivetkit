@@ -1,6 +1,6 @@
 import { registry } from "./registry";
 
-registry.runServer({
+registry.start({
 	cors: {
 		origin: "http://localhost:5173",
 	},

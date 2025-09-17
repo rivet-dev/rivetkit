@@ -1,3 +1,4 @@
+import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { ALLOWED_PUBLIC_HEADERS } from "rivetkit";
@@ -5,7 +6,7 @@ import { auth } from "./auth";
 import { registry } from "./registry";
 
 // Start RivetKit
-const { serve } = registry.createServer();
+registry.start();
 
 // Setup router
 const app = new Hono();
@@ -26,4 +27,5 @@ app.use(
 // Mount Better Auth routes
 app.on(["GET", "POST"], "/api/auth/**", (c) => auth.handler(c.req.raw));
 
-serve(app);
+serve({ fetch: app.fetch, port: 8080 });
+console.log("Listening on port 8080");

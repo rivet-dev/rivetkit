@@ -1,7 +1,8 @@
+import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { registry } from "./registry";
 
-const { client, serve } = registry.createServer({
+const { client } = registry.start({
 	cors: {
 		origin: "http://localhost:5173",
 	},
@@ -20,4 +21,5 @@ app.post("/increment/:name", async (c) => {
 	return c.text(`New Count: ${newCount}`);
 });
 
-serve(app);
+serve({ fetch: app.fetch, port: 8080 });
+console.log("Listening on port 8080");

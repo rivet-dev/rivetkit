@@ -1,15 +1,7 @@
 import { toNextHandler } from "@rivetkit/next-js";
 import { registry } from "@/rivet/registry";
 
-const server = registry.createServer({
-	// This is important for Next.js to route the API calls correctly
-	// It should match the path in your Next.js API route
-	// For example, if your API route is at /api/registry/[...all], this should be "/api/registry"
-	basePath: "/api/registry",
-	inspector: {
-		// Tell RivetKit Inspector where to find RivetKit Registry
-		defaultEndpoint: "http://localhost:3000/api/registry",
-	},
-});
+// TODO: This doesn't need to be hotsed via the Next API, but this should probably go elsewhere
+const server = registry.start();
 
 export const { GET, POST, HEAD, PATCH, OPTIONS } = toNextHandler(server);

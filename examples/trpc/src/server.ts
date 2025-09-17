@@ -4,7 +4,7 @@ import { z } from "zod";
 import { registry } from "./registry.js";
 
 // Start RivetKit
-const { client } = registry.createServer();
+const { client } = registry.start();
 
 // Initialize tRPC
 const t = initTRPC.create();
