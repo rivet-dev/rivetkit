@@ -45,6 +45,13 @@ export interface ManagerDriver {
 	 * @internal
 	 */
 	readonly inspector?: ManagerInspector;
+
+	/**
+	 * Get or create the inspector access token.
+	 * @internal
+	 * @returns creates or returns existing inspector access token
+	 */
+	getOrCreateInspectorAccessToken: () => string;
 }
 
 export interface ManagerDisplayInformation {

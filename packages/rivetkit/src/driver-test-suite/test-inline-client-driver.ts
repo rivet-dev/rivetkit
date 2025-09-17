@@ -227,6 +227,10 @@ export function createTestInlineClientDriver(
 		displayInformation(): ManagerDisplayInformation {
 			return { name: "Test Inline", properties: {} };
 		},
+		getOrCreateInspectorAccessToken() {
+			// TODO:
+			return "";
+		},
 
 		// action: async <Args extends Array<unknown> = unknown[], Response = unknown>(
 		// 	_c: HonoContext | undefined,

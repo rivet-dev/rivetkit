@@ -5,7 +5,10 @@ import { type TestContext, vi } from "vitest";
 import { type Client, createClient } from "@/client/mod";
 import { chooseDefaultDriver } from "@/drivers/default";
 import { createFileSystemOrMemoryDriver } from "@/drivers/file-system/mod";
-import { getInspectorUrl } from "@/inspector/utils";
+import {
+	configureInspectorAccessToken,
+	getInspectorUrl,
+} from "@/inspector/utils";
 import { createManagerRouter } from "@/manager/router";
 import type { Registry } from "@/registry/mod";
 import { RunConfigSchema } from "@/registry/run-config";
@@ -27,6 +30,7 @@ function serve(registry: Registry<any>, inputConfig?: InputConfig): ServerType {
 	const runConfig = RunConfigSchema.parse(inputConfig);
 	const driver = inputConfig.driver ?? createFileSystemOrMemoryDriver(false);
 	const managerDriver = driver.manager(registry.config, config);
+	configureInspectorAccessToken(config, managerDriver);
 	const { router } = createManagerRouter(
 		registry.config,
 		runConfig,

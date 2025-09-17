@@ -4,8 +4,11 @@ import invariant from "invariant";
 import type { ActorKey, ActorRouter, Registry, RunConfig } from "rivetkit";
 import { createActorRouter, createClientWithDriver } from "rivetkit";
 import type { ActorDriver } from "rivetkit/driver-helpers";
-import { serializeEmptyPersistData } from "rivetkit/driver-helpers";
 import { promiseWithResolvers } from "rivetkit/utils";
+import {
+	type ManagerDriver,
+	serializeEmptyPersistData,
+} from "rivetkit/driver-helpers";
 import {
 	CloudflareDurableObjectGlobalState,
 	createCloudflareActorsActorDriverBuilder,
@@ -121,6 +124,8 @@ export function createActorDurableObject(
 				runConfig,
 			);
 
+			configureInspectorAccessToken(registry.config, managerDriver);
+
 			// Create inline client
 			const inlineClient = createClientWithDriver(managerDriver);
 
@@ -186,4 +191,10 @@ export function createActorDurableObject(
 			await actor._onAlarm();
 		}
 	};
+}
+function configureInspectorAccessToken(
+	config: any,
+	managerDriver: ManagerDriver,
+) {
+	throw new Error("Function not implemented.");
 }
