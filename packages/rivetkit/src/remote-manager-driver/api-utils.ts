@@ -1,5 +1,6 @@
 import type { ClientConfig } from "@/client/config";
 import { sendHttpRequest } from "@/client/utils";
+import { combineUrlPath } from "@/utils";
 import { logger } from "./log";
 
 // Error class for Engine API errors
@@ -26,7 +27,9 @@ export async function apiCall<TInput = unknown, TOutput = unknown>(
 	body?: TInput,
 ): Promise<TOutput> {
 	const endpoint = getEndpoint(config);
-	const url = `${endpoint}${path}${path.includes("?") ? "&" : "?"}namespace=${encodeURIComponent(config.namespace)}`;
+	const url = combineUrlPath(endpoint, path, {
+		namespace: config.namespace,
+	});
 
 	logger().debug({ msg: "making api call", method, url });
 

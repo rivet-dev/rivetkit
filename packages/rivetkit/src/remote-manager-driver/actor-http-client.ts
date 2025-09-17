@@ -1,4 +1,5 @@
 import type { ClientConfig } from "@/client/config";
+import { combineUrlPath } from "@/utils";
 import { getEndpoint } from "./api-utils";
 
 export async function sendHttpRequestToActor(
@@ -9,7 +10,7 @@ export async function sendHttpRequestToActor(
 	// Route through guard port
 	const url = new URL(actorRequest.url);
 	const endpoint = getEndpoint(runConfig);
-	const guardUrl = `${endpoint}${url.pathname}${url.search}`;
+	const guardUrl = combineUrlPath(endpoint, url.pathname + url.search);
 
 	// Handle body properly based on method and presence
 	let bodyToSend: ArrayBuffer | null = null;
