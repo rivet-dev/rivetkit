@@ -33,11 +33,16 @@ export const rawHttpRequestPropertiesActor = actor({
 			}
 		};
 
-		// Special handling for HEAD requests - return empty body
+		// Special handling for HEAD and OPTIONS requests
 		if (method === "HEAD") {
 			return new Response(null, {
 				status: 200,
-				headers: { "Content-Type": "application/json" },
+			});
+		}
+
+		if (method === "OPTIONS") {
+			return new Response(null, {
+				status: 204,
 			});
 		}
 
