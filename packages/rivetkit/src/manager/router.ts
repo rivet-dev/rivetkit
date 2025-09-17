@@ -436,10 +436,12 @@ export function createManagerRouter(
 
 			return upgradeWebSocket(async (c: any) => {
 				const {
+					path,
 					actorId,
 					params: paramsRaw,
 					encodingKind,
 				} = c.req.query() as {
+					path: string;
 					actorId: string;
 					params?: string;
 					encodingKind: Encoding;
@@ -447,25 +449,17 @@ export function createManagerRouter(
 				const params =
 					paramsRaw !== undefined ? JSON.parse(paramsRaw) : undefined;
 
-				// Extract the path after /connect-websocket/
-				const pathOnly =
-					c.req.path.split("/.test/inline-driver/connect-websocket/")[1] || "";
-
-				// Include query string
-				const url = new URL(c.req.url);
-				const pathWithQuery = pathOnly + url.search;
-
 				logger().debug({
 					msg: "received test inline driver websocket",
 					actorId,
 					params,
 					encodingKind,
-					path: pathWithQuery,
+					path: path,
 				});
 
 				// Connect to the actor using the inline client driver - this returns a Promise<WebSocket>
 				const clientWsPromise = managerDriver.openWebSocket(
-					pathWithQuery,
+					path,
 					actorId,
 					encodingKind,
 					params,
