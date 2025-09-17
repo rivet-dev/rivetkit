@@ -13,6 +13,7 @@ export type InputData = string | Buffer | Blob | ArrayBufferLike | Uint8Array;
 export type OutputData = string | Uint8Array;
 
 export const EncodingSchema = z.enum(["json", "cbor", "bare"]);
+export const SubscriptionsListSchema = z.array(z.string());
 
 /**
  * Encoding used to communicate between the client & actor.

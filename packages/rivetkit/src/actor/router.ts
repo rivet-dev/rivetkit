@@ -1,7 +1,10 @@
 import { Hono, type Context as HonoContext } from "hono";
 import { cors } from "hono/cors";
 import invariant from "invariant";
-import { EncodingSchema } from "@/actor/protocol/serde";
+import {
+	EncodingSchema,
+	SubscriptionsListSchema,
+} from "@/actor/protocol/serde";
 import {
 	type ActionOpts,
 	type ActionOutput,
@@ -13,6 +16,7 @@ import {
 	HEADER_AUTH_DATA,
 	HEADER_CONN_ID,
 	HEADER_CONN_PARAMS,
+	HEADER_CONN_SUBS,
 	HEADER_CONN_TOKEN,
 	HEADER_ENCODING,
 	handleAction,
@@ -84,12 +88,16 @@ export function createActorRouter(
 				const encodingRaw = c.req.header(HEADER_ENCODING);
 				const connParamsRaw = c.req.header(HEADER_CONN_PARAMS);
 				const authDataRaw = c.req.header(HEADER_AUTH_DATA);
+				const subsRaw = c.req.header(HEADER_CONN_SUBS);
 
 				const encoding = EncodingSchema.parse(encodingRaw);
 				const connParams = connParamsRaw
 					? JSON.parse(connParamsRaw)
 					: undefined;
 				const authData = authDataRaw ? JSON.parse(authDataRaw) : undefined;
+				const subs = subsRaw
+					? SubscriptionsListSchema.parse(JSON.parse(subsRaw))
+					: [];
 
 				return await handleWebSocketConnect(
 					c.req.raw,
@@ -98,6 +106,7 @@ export function createActorRouter(
 					c.env.actorId,
 					encoding,
 					connParams,
+					subs,
 					authData,
 				);
 			})(c, noopNext());
@@ -115,8 +124,20 @@ export function createActorRouter(
 		if (authDataRaw) {
 			authData = JSON.parse(authDataRaw);
 		}
+		const subsRaw = c.req.header(HEADER_CONN_SUBS);
 
-		return handleSseConnect(c, runConfig, actorDriver, c.env.actorId, authData);
+		const subscriptions = subsRaw
+			? SubscriptionsListSchema.parse(JSON.parse(subsRaw))
+			: [];
+
+		return handleSseConnect(
+			c,
+			runConfig,
+			actorDriver,
+			c.env.actorId,
+			subscriptions,
+			authData,
+		);
 	});
 
 	router.post("/action/:action", async (c) => {

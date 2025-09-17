@@ -2,6 +2,10 @@ import { actor } from "rivetkit";
 
 export const counter = actor({
 	state: { count: 0 },
+	onConnect: (c, conn) => {
+		c.broadcast("onconnect:broadcast", "Hello!");
+		conn.send("onconnect:msg", "Welcome to the counter actor!");
+	},
 	actions: {
 		increment: (c, x: number) => {
 			c.state.count += x;

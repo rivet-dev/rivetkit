@@ -7,7 +7,10 @@ import * as cbor from "cbor-x";
 import { WSContext } from "hono/ws";
 import invariant from "invariant";
 import { deserializeActorKey } from "@/actor/keys";
-import { EncodingSchema } from "@/actor/protocol/serde";
+import {
+	EncodingSchema,
+	SubscriptionsListSchema,
+} from "@/actor/protocol/serde";
 import type { Client } from "@/client/client";
 import { getLogger } from "@/common/log";
 import {
@@ -15,6 +18,7 @@ import {
 	type AnyActorInstance,
 	HEADER_AUTH_DATA,
 	HEADER_CONN_PARAMS,
+	HEADER_CONN_TOKEN,
 	HEADER_ENCODING,
 	type ManagerDriver,
 	serializeEmptyPersistData,
@@ -296,10 +300,14 @@ export class EngineActorDriver implements ActorDriver {
 		const encodingRaw = request.headers.get(HEADER_ENCODING);
 		const connParamsRaw = request.headers.get(HEADER_CONN_PARAMS);
 		const authDataRaw = request.headers.get(HEADER_AUTH_DATA);
+		const subsDataRaw = request.headers.get(HEADER_CONN_TOKEN);
 
 		const encoding = EncodingSchema.parse(encodingRaw);
 		const connParams = connParamsRaw ? JSON.parse(connParamsRaw) : undefined;
 		const authData = authDataRaw ? JSON.parse(authDataRaw) : undefined;
+		const subsData = subsDataRaw
+			? SubscriptionsListSchema.parse(JSON.parse(subsDataRaw))
+			: [];
 
 		// Fetch WS handler
 		//
@@ -314,6 +322,7 @@ export class EngineActorDriver implements ActorDriver {
 				encoding,
 				connParams,
 				authData,
+				subsData,
 			);
 		} else if (url.pathname.startsWith(PATH_RAW_WEBSOCKET_PREFIX)) {
 			wsHandlerPromise = handleRawWebSocketHandler(

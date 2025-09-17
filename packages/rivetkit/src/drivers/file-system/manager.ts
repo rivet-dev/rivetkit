@@ -141,6 +141,7 @@ export class FileSystemManagerDriver implements ManagerDriver {
 		actorId: string,
 		encoding: Encoding,
 		params: unknown,
+		subs: string[],
 	): Promise<UniversalWebSocket> {
 		// TODO:
 
@@ -155,6 +156,7 @@ export class FileSystemManagerDriver implements ManagerDriver {
 				encoding,
 				params,
 				undefined,
+				subs,
 			);
 			return new InlineWebSocketAdapter2(wsHandler);
 		} else if (
@@ -195,6 +197,7 @@ export class FileSystemManagerDriver implements ManagerDriver {
 		encoding: Encoding,
 		connParams: unknown,
 		authData: unknown,
+		subscriptions: string[],
 	): Promise<Response> {
 		const upgradeWebSocket = this.#runConfig.getUpgradeWebSocket?.();
 		invariant(upgradeWebSocket, "missing getUpgradeWebSocket");
@@ -210,6 +213,7 @@ export class FileSystemManagerDriver implements ManagerDriver {
 				encoding,
 				connParams,
 				authData,
+				subscriptions,
 			);
 
 			return upgradeWebSocket(() => wsHandler)(c, noopNext());
