@@ -2,13 +2,10 @@ import express from "express";
 import { registry } from "./registry";
 
 // Start RivetKit
-const { client, handler } = registry.createServer();
+const { client } = registry.start();
 
 // Setup router
 const app = express();
-
-// Expose RivetKit to the frontend (optional)
-app.use("/registry", handler);
 
 // Example HTTP endpoint
 app.post("/increment/:name", async (req, res) => {

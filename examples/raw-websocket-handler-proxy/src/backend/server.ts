@@ -3,7 +3,7 @@ import { createNodeWebSocket } from "@hono/node-ws";
 import { Hono } from "hono";
 import { registry } from "./registry.js";
 
-const { client } = registry.createServer();
+const { client } = registry.start();
 
 const app = new Hono();
 const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });
@@ -45,5 +45,6 @@ app.get(
 	}),
 );
 
-const server = serve({ port: 8080, fetch: app.fetch });
+const server = serve({ fetch: app.fetch, port: 8080 });
 injectWebSocket(server);
+console.log("Listening on port 8080");

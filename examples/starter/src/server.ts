@@ -1,3 +1,3 @@
 import { registry } from "./registry";
 
-registry.runServer();
+registry.start();
