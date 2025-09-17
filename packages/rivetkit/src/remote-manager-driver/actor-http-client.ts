@@ -44,6 +44,7 @@ export async function sendHttpRequestToActor(
 		method: actorRequest.method,
 		headers: guardHeaders,
 		body: bodyToSend,
+		signal: actorRequest.signal,
 	});
 
 	return mutableResponse(await fetch(guardRequest));
