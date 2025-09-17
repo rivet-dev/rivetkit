@@ -2,7 +2,11 @@ import type { Hono } from "hono";
 import { type Client, createClientWithDriver } from "@/client/client";
 import { configureBaseLogger, configureDefaultLogger } from "@/common/log";
 import { chooseDefaultDriver } from "@/drivers/default";
-import { getInspectorUrl } from "@/inspector/utils";
+import {
+	configureInspectorAccessToken,
+	getInspectorUrl,
+	isInspectorEnabled,
+} from "@/inspector/utils";
 import { createManagerRouter } from "@/manager/router";
 import pkg from "../../package.json" with { type: "json" };
 import {
@@ -59,11 +63,11 @@ export class Registry<A extends RegistryActors> {
 
 		// TODO: Find cleaner way of disabling by default
 		if (driver.name === "engine") {
-			config.inspector.enabled = false;
+			config.inspector.enabled = { manager: false, actor: true };
 			config.disableServer = true;
 		}
 		if (driver.name === "cloudflare-workers") {
-			config.inspector.enabled = false;
+			config.inspector.enabled = { manager: false, actor: true };
 			config.disableServer = true;
 			config.disableActorDriver = true;
 			config.noWelcome = true;
@@ -77,6 +81,7 @@ export class Registry<A extends RegistryActors> {
 
 		// Create router
 		const managerDriver = driver.manager(this.#config, config);
+		configureInspectorAccessToken(config, managerDriver);
 		const { router: hono } = createManagerRouter(
 			this.#config,
 			config,
@@ -94,7 +99,7 @@ export class Registry<A extends RegistryActors> {
 			definitions: Object.keys(this.#config.use).length,
 			...driverLog,
 		});
-		if (config.inspector?.enabled && managerDriver.inspector) {
+		if (isInspectorEnabled(config, "manager") && managerDriver.inspector) {
 			logger().info({ msg: "inspector ready", url: getInspectorUrl(config) });
 		}
 
@@ -108,8 +113,8 @@ export class Registry<A extends RegistryActors> {
 				const padding = " ".repeat(Math.max(0, 13 - k.length));
 				console.log(`  - ${k}:${padding}${v}`);
 			}
-			if (config.inspector?.enabled && managerDriver.inspector) {
-				console.log(`  - Inspector:    ${getInspectorUrl(config)}`);
+			if (isInspectorEnabled(config, "manager") && managerDriver.inspector) {
+				console.log(`  - Inspector:     ${getInspectorUrl(config)}`);
 			}
 			console.log();
 		}

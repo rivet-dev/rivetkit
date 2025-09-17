@@ -17,7 +17,7 @@ import {
 	loggerMiddleware,
 } from "@/common/router";
 import { createManagerInspectorRouter } from "@/inspector/manager";
-import { secureInspector } from "@/inspector/utils";
+import { isInspectorEnabled, secureInspector } from "@/inspector/utils";
 import {
 	type ActorsCreateRequest,
 	ActorsCreateRequestSchema,
@@ -387,7 +387,7 @@ export function createManagerRouter(
 	// 	});
 	// }
 
-	if (runConfig.inspector?.enabled) {
+	if (isInspectorEnabled(runConfig, "manager")) {
 		if (!managerDriver.inspector) {
 			throw new Unsupported("inspector");
 		}
