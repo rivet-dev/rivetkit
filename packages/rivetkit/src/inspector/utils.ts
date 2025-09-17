@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { createMiddleware } from "hono/factory";
+import type { ManagerDriver } from "@/driver-helpers/mod";
 import type { RunConfig } from "@/mod";
 import type { RunConfigInput } from "@/registry/run-config";
 import { inspectorLogger } from "./log";
@@ -28,10 +29,6 @@ export function compareSecrets(providedSecret: string, validSecret: string) {
 
 export const secureInspector = (runConfig: RunConfig) =>
 	createMiddleware(async (c, next) => {
-		if (!runConfig.inspector.enabled) {
-			return c.text("Inspector is not enabled", 503);
-		}
-
 		const userToken = c.req.header("Authorization")?.replace("Bearer ", "");
 		if (!userToken) {
 			return c.text("Unauthorized", 401);
@@ -74,3 +71,25 @@ export function getInspectorUrl(runConfig: RunConfigInput | undefined) {
 
 	return url.href;
 }
+
+export const isInspectorEnabled = (
+	runConfig: RunConfig,
+	context: "actor" | "manager",
+) => {
+	if (typeof runConfig.inspector?.enabled === "boolean") {
+		return runConfig.inspector.enabled;
+	} else if (typeof runConfig.inspector?.enabled === "object") {
+		return runConfig.inspector.enabled[context];
+	}
+	return false;
+};
+
+export const configureInspectorAccessToken = (
+	runConfig: RunConfig,
+	managerDriver: ManagerDriver,
+) => {
+	if (!runConfig.inspector?.token()) {
+		const token = managerDriver.getOrCreateInspectorAccessToken();
+		runConfig.inspector.token = () => token;
+	}
+};

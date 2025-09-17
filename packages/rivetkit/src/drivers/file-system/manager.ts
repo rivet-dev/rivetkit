@@ -57,10 +57,6 @@ export class FileSystemManagerDriver implements ManagerDriver {
 		this.#driverConfig = driverConfig;
 
 		if (runConfig.inspector.enabled) {
-			if (!this.#runConfig.inspector.token()) {
-				this.#runConfig.inspector.token = () =>
-					this.#state.getOrCreateInspectorAccessToken();
-			}
 			const startedAt = new Date().toISOString();
 			function transformActor(actorState: schema.ActorState): Actor {
 				return {
@@ -316,5 +312,9 @@ export class FileSystemManagerDriver implements ManagerDriver {
 			instances: this.#state.actorCountOnStartup,
 			data: this.#state.storagePath,
 		};
+	}
+
+	getOrCreateInspectorAccessToken() {
+		return this.#state.getOrCreateInspectorAccessToken();
 	}
 }

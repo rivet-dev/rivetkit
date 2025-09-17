@@ -4,6 +4,7 @@ import { bundleRequire } from "bundle-require";
 import invariant from "invariant";
 import { describe } from "vitest";
 import type { Transport } from "@/client/mod";
+import { configureInspectorAccessToken } from "@/inspector/utils";
 import { createManagerRouter } from "@/manager/router";
 import type { DriverConfig, Registry, RunConfig } from "@/mod";
 import { RunConfigSchema } from "@/registry/run-config";
@@ -193,6 +194,7 @@ export async function createTestRuntime(
 
 		// Create router
 		const managerDriver = driver.manager(registry.config, config);
+		configureInspectorAccessToken(config, managerDriver);
 		const { router } = createManagerRouter(
 			registry.config,
 			config,
