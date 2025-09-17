@@ -12,9 +12,9 @@ runDriverTests({
 		// Skip tests that aren't applicable for engine-runner
 		schedule: true, // Scheduling handled by engine
 	},
-	async start(projectPath: string) {
+	async start() {
 		return await createTestRuntime(
-			join(projectPath, "registry.ts"),
+			join(__dirname, "../fixtures/driver-test-suite/registry.ts"),
 			async (registry) => {
 				// Get configuration from environment or use defaults
 				const endpoint = process.env.RIVET_ENDPOINT || "http://localhost:6420";

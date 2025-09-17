@@ -13,8 +13,12 @@ const execPromise = promisify(exec);
 runDriverTests({
 	useRealTimers: true,
 	HACK_skipCleanupNet: true,
-	async start(projectPath: string) {
+	async start() {
 		// Setup project
+		const projectPath = path.resolve(
+			__dirname,
+			"../../rivetkit/fixtures/driver-test-suite",
+		);
 		if (!setupProjectOnce) {
 			setupProjectOnce = setupProject(projectPath);
 		}

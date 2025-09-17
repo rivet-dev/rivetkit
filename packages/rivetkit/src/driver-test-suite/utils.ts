@@ -2,8 +2,10 @@ import { resolve } from "node:path";
 import { type TestContext, vi } from "vitest";
 import { assertUnreachable } from "@/actor/utils";
 import { type Client, createClient } from "@/client/mod";
+import { createClientWithDriver } from "@/mod";
 import type { registry } from "../../fixtures/driver-test-suite/registry";
 import type { DriverTestConfig } from "./mod";
+import { createTestInlineClientDriver } from "./test-inline-client-driver";
 
 export const FAKE_TIME = new Date("2024-01-01T00:00:00.000Z");
 
@@ -21,9 +23,8 @@ export async function setupDriverTest(
 	}
 
 	// Build drivers
-	const projectPath = resolve(__dirname, "../../../fixtures/driver-test-suite");
 	const { endpoint, namespace, runnerName, cleanup } =
-		await driverTestConfig.start(projectPath);
+		await driverTestConfig.start();
 	c.onTestFinished(cleanup);
 
 	let client: Client<typeof registry>;
@@ -36,13 +37,13 @@ export async function setupDriverTest(
 			transport: driverTestConfig.transport,
 		});
 	} else if (driverTestConfig.clientType === "inline") {
-		throw "TODO";
-		// // Use inline client from driver
-		// const clientDriver = createTestInlineClientDriver(
-		// 	endpoint,
-		// 	driverTestConfig.transport ?? "websocket",
-		// );
-		// client = createClientWithDriver(clientDriver);
+		// Use inline client from driver
+		const managerDriver = createTestInlineClientDriver(
+			endpoint,
+			"bare",
+			driverTestConfig.transport ?? "websocket",
+		);
+		client = createClientWithDriver(managerDriver);
 	} else {
 		assertUnreachable(driverTestConfig.clientType);
 	}

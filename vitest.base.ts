@@ -7,7 +7,7 @@ export default {
 		// Enable parallelism
 		sequence: {
 			// TODO: This breaks fake timers, unsure how to make tests run in parallel within the same file
-			// concurrent: true,
+			concurrent: true,
 		},
 		env: {
 			// Enable logging
