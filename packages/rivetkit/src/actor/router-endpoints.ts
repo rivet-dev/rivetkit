@@ -373,8 +373,13 @@ export async function handleSseConnect(
 			// Wait for close
 			const abortResolver = Promise.withResolvers();
 
+			// HACK: This is required so the abort handler below works
+			//
+			// See https://github.com/honojs/hono/issues/1770#issuecomment-2461966225
+			stream.onAbort(() => {});
+
 			// Handle stream abort (when client closes the connection)
-			stream.onAbort(async () => {
+			c.req.raw.signal.addEventListener("abort", async () => {
 				const rLog = actor?.rLog ?? loggerWithoutContext();
 				try {
 					rLog.debug("sse stream aborted");
