@@ -3,14 +3,14 @@ import type { Context as HonoContext } from "hono";
 import invariant from "invariant";
 import type { WebSocket } from "ws";
 import type { Encoding } from "@/actor/protocol/serde";
+import { assertUnreachable } from "@/actor/utils";
+import { ActorError as ClientActorError } from "@/client/errors";
+import type { Transport } from "@/client/mod";
 import {
 	HEADER_ACTOR_QUERY,
 	HEADER_CONN_PARAMS,
 	HEADER_ENCODING,
-} from "@/actor/router-endpoints";
-import { assertUnreachable } from "@/actor/utils";
-import { ActorError as ClientActorError } from "@/client/errors";
-import type { Transport } from "@/client/mod";
+} from "@/common/actor-router-consts";
 import type { UniversalEventSource } from "@/common/eventsource-interface";
 import type { DeconstructedError } from "@/common/utils";
 import { importWebSocket } from "@/common/websocket";

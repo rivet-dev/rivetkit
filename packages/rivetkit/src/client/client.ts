@@ -3,7 +3,7 @@ import type { Transport } from "@/actor/protocol/old";
 import type { Encoding } from "@/actor/protocol/serde";
 import type { ManagerDriver } from "@/driver-helpers/mod";
 import type { ActorQuery } from "@/manager/protocol/query";
-import type { Registry } from "@/mod";
+import type { Registry } from "@/registry/mod";
 import type { ActorActionFunction } from "./actor-common";
 import {
 	type ActorConn,

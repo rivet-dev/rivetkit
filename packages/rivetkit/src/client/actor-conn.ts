@@ -5,6 +5,13 @@ import type { CloseEvent } from "ws";
 import type { AnyActorDefinition } from "@/actor/definition";
 import { inputDataToBuffer } from "@/actor/protocol/old";
 import { type Encoding, jsonStringifyCompat } from "@/actor/protocol/serde";
+import {
+	HEADER_CONN_ID,
+	HEADER_CONN_PARAMS,
+	HEADER_CONN_TOKEN,
+	HEADER_ENCODING,
+	PATH_CONNECT_WEBSOCKET,
+} from "@/common/actor-router-consts";
 import { importEventSource } from "@/common/eventsource";
 import type {
 	UniversalErrorEvent,
@@ -12,15 +19,9 @@ import type {
 	UniversalMessageEvent,
 } from "@/common/eventsource-interface";
 import { assertUnreachable, stringifyError } from "@/common/utils";
-import {
-	HEADER_CONN_ID,
-	HEADER_CONN_PARAMS,
-	HEADER_CONN_TOKEN,
-	HEADER_ENCODING,
-	type ManagerDriver,
-} from "@/driver-helpers/mod";
+import type { UniversalWebSocket } from "@/common/websocket-interface";
+import type { ManagerDriver } from "@/driver-helpers/mod";
 import type { ActorQuery } from "@/manager/protocol/query";
-import { PATH_CONNECT_WEBSOCKET, type UniversalWebSocket } from "@/mod";
 import type * as protocol from "@/schemas/client-protocol/mod";
 import {
 	TO_CLIENT_VERSIONED,

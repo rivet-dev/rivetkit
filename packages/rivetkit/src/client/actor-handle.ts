@@ -4,7 +4,6 @@ import type { AnyActorDefinition } from "@/actor/definition";
 import type { Encoding } from "@/actor/protocol/serde";
 import { assertUnreachable } from "@/actor/utils";
 import { deconstructError } from "@/common/utils";
-import { importWebSocket } from "@/common/websocket";
 import {
 	HEADER_CONN_PARAMS,
 	HEADER_ENCODING,

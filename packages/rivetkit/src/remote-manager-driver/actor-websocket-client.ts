@@ -1,9 +1,9 @@
+import type { ClientConfig } from "@/client/config";
 import {
 	HEADER_AUTH_DATA,
 	HEADER_CONN_PARAMS,
 	HEADER_ENCODING,
-} from "@/actor/router-endpoints";
-import type { ClientConfig } from "@/client/config";
+} from "@/common/actor-router-consts";
 import { importWebSocket } from "@/common/websocket";
 import type { Encoding, UniversalWebSocket } from "@/mod";
 import { combineUrlPath } from "@/utils";

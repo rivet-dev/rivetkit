@@ -10,17 +10,21 @@ import {
 	type ConnectWebSocketOpts,
 	type ConnectWebSocketOutput,
 	type ConnsMessageOpts,
-	HEADER_AUTH_DATA,
-	HEADER_CONN_ID,
-	HEADER_CONN_PARAMS,
-	HEADER_CONN_TOKEN,
-	HEADER_ENCODING,
 	handleAction,
 	handleConnectionMessage,
 	handleRawWebSocketHandler,
 	handleSseConnect,
 	handleWebSocketConnect,
 } from "@/actor/router-endpoints";
+import {
+	HEADER_AUTH_DATA,
+	HEADER_CONN_ID,
+	HEADER_CONN_PARAMS,
+	HEADER_CONN_TOKEN,
+	HEADER_ENCODING,
+	PATH_CONNECT_WEBSOCKET,
+	PATH_RAW_WEBSOCKET_PREFIX,
+} from "@/common/actor-router-consts";
 import {
 	handleRouteError,
 	handleRouteNotFound,
@@ -36,9 +40,6 @@ import type { RunConfig } from "@/registry/run-config";
 import type { ActorDriver } from "./driver";
 import { InternalError } from "./errors";
 import { loggerWithoutContext } from "./log";
-
-export const PATH_CONNECT_WEBSOCKET = "/connect/websocket";
-export const PATH_RAW_WEBSOCKET_PREFIX = "/raw/websocket/";
 
 export type {
 	ConnectWebSocketOpts,

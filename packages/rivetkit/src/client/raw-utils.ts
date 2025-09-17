@@ -1,5 +1,5 @@
 import invariant from "invariant";
-import { PATH_RAW_WEBSOCKET_PREFIX } from "@/actor/router";
+import { PATH_RAW_WEBSOCKET_PREFIX } from "@/common/actor-router-consts";
 import { deconstructError } from "@/common/utils";
 import { HEADER_CONN_PARAMS, type ManagerDriver } from "@/driver-helpers/mod";
 import type { ActorQuery } from "@/manager/protocol/query";
