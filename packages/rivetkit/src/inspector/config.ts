@@ -56,7 +56,16 @@ const defaultCors: CorsOptions = {
 
 export const InspectorConfigSchema = z
 	.object({
-		enabled: z.boolean().optional().default(defaultEnabled),
+		enabled: z
+			.boolean()
+			.or(
+				z.object({
+					actor: z.boolean().optional().default(true),
+					manager: z.boolean().optional().default(true),
+				}),
+			)
+			.optional()
+			.default(defaultEnabled),
 		/** CORS configuration for the router. Uses Hono's CORS middleware options. */
 		cors: z
 			.custom<CorsOptions>()

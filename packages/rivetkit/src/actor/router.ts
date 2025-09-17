@@ -31,7 +31,7 @@ import {
 	type ActorInspectorRouterEnv,
 	createActorInspectorRouter,
 } from "@/inspector/actor";
-import { secureInspector } from "@/inspector/utils";
+import { isInspectorEnabled, secureInspector } from "@/inspector/utils";
 import type { RunConfig } from "@/registry/run-config";
 import type { ActorDriver } from "./driver";
 import { InternalError } from "./errors";
@@ -238,7 +238,7 @@ export function createActorRouter(
 		}
 	});
 
-	if (runConfig.inspector.enabled) {
+	if (isInspectorEnabled(runConfig, "actor")) {
 		router.route(
 			"/inspect",
 			new Hono<ActorInspectorRouterEnv & { Bindings: ActorRouterBindings }>()
