@@ -1131,8 +1131,8 @@ importers:
         specifier: ^0.19.10
         version: 0.19.10(hono@4.8.3)(zod@3.25.76)
       '@rivetkit/engine-runner':
-        specifier: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@f841bef
-        version: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@f841bef
+        specifier: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@b72b232
+        version: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@b72b232
       '@rivetkit/fast-json-patch':
         specifier: ^3.1.2
         version: 3.1.2
@@ -2496,16 +2496,16 @@ packages:
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
 
-  '@rivetkit/engine-runner-protocol@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@f841befe1286003270c8a07f6ee5a703094f12a9':
-    resolution: {tarball: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@f841befe1286003270c8a07f6ee5a703094f12a9}
+  '@rivetkit/engine-runner-protocol@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@b72b2324c50c5449ed1844a060928d80d1151839':
+    resolution: {tarball: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@b72b2324c50c5449ed1844a060928d80d1151839}
     version: 25.6.1
 
-  '@rivetkit/engine-runner@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@f841bef':
-    resolution: {tarball: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@f841bef}
+  '@rivetkit/engine-runner@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@b72b232':
+    resolution: {tarball: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@b72b232}
     version: 25.6.1
 
-  '@rivetkit/engine-tunnel-protocol@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-tunnel-protocol@f841befe1286003270c8a07f6ee5a703094f12a9':
-    resolution: {tarball: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-tunnel-protocol@f841befe1286003270c8a07f6ee5a703094f12a9}
+  '@rivetkit/engine-tunnel-protocol@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-tunnel-protocol@b72b2324c50c5449ed1844a060928d80d1151839':
+    resolution: {tarball: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-tunnel-protocol@b72b2324c50c5449ed1844a060928d80d1151839}
     version: 25.6.1
 
   '@rivetkit/fast-json-patch@3.1.2':
@@ -5773,14 +5773,14 @@ snapshots:
 
   '@polka/url@1.0.0-next.29': {}
 
-  '@rivetkit/engine-runner-protocol@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@f841befe1286003270c8a07f6ee5a703094f12a9':
+  '@rivetkit/engine-runner-protocol@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@b72b2324c50c5449ed1844a060928d80d1151839':
     dependencies:
       '@bare-ts/lib': 0.4.0
 
-  '@rivetkit/engine-runner@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@f841bef':
+  '@rivetkit/engine-runner@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@b72b232':
     dependencies:
-      '@rivetkit/engine-runner-protocol': https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@f841befe1286003270c8a07f6ee5a703094f12a9
-      '@rivetkit/engine-tunnel-protocol': https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-tunnel-protocol@f841befe1286003270c8a07f6ee5a703094f12a9
+      '@rivetkit/engine-runner-protocol': https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@b72b2324c50c5449ed1844a060928d80d1151839
+      '@rivetkit/engine-tunnel-protocol': https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-tunnel-protocol@b72b2324c50c5449ed1844a060928d80d1151839
       pino: 9.9.5
       uuid: 12.0.0
       ws: 8.18.3
@@ -5788,7 +5788,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@rivetkit/engine-tunnel-protocol@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-tunnel-protocol@f841befe1286003270c8a07f6ee5a703094f12a9':
+  '@rivetkit/engine-tunnel-protocol@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-tunnel-protocol@b72b2324c50c5449ed1844a060928d80d1151839':
     dependencies:
       '@bare-ts/lib': 0.4.0
 
