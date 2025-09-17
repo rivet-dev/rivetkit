@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import { getEnvUniversal } from "@/utils";
 import { logger } from "./log";
 
 export async function crossPlatformServe(
@@ -11,7 +10,10 @@ export async function crossPlatformServe(
 	// Import @hono/node-server
 	let serve: any;
 	try {
-		const dep = await import("@hono/node-server");
+		const dep = await import(
+			/* webpackIgnore: true */
+			"@hono/node-server"
+		);
 		serve = dep.serve;
 	} catch (err) {
 		logger().error(
@@ -27,7 +29,10 @@ export async function crossPlatformServe(
 	// Import @hono/node-ws
 	let createNodeWebSocket: any;
 	try {
-		const dep = await import("@hono/node-ws");
+		const dep = await import(
+			/* webpackIgnore: true */
+			"@hono/node-ws"
+		);
 		createNodeWebSocket = dep.createNodeWebSocket;
 	} catch (err) {
 		logger().error(
