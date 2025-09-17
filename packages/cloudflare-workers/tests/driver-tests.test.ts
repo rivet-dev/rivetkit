@@ -94,7 +94,7 @@ runDriverTests({
 		});
 
 		return {
-			endpoint: `http://localhost:${port}`,
+			endpoint: `http://localhost:${port}/rivet`,
 			namespace: "default",
 			runnerName: "rivetkit",
 			async cleanup() {
@@ -203,17 +203,14 @@ async function setupProject(projectPath: string) {
 	await fs.cp(projectPath, projectDestDir, { recursive: true });
 
 	// Write script
-	const indexContent = `import { createServerHandler } from "@rivetkit/cloudflare-workers";
+	const indexContent = `import { createHandler } from "@rivetkit/cloudflare-workers";
 import { registry } from "./actors/registry";
 
 // TODO: Find a cleaner way of flagging an registry as test mode (ideally not in the config itself)
 // Force enable test
 registry.config.test.enabled = true;
 
-// Create handlers for Cloudflare Workers
-const { handler, ActorHandler } = createServerHandler(registry);
-
-// Export the handlers for Cloudflare
+const { handler, ActorHandler } = createHandler(registry);
 export { handler as default, ActorHandler };
 `;
 	await fs.writeFile(path.join(tmpDir, "src/index.ts"), indexContent);
