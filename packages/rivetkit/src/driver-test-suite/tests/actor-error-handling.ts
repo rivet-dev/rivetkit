@@ -63,18 +63,10 @@ export function runActorErrorHandlingTests(driverTestConfig: DriverTestConfig) {
 					// If we get here, the test should fail
 					expect(true).toBe(false); // This should not be reached
 				} catch (error: any) {
-					if (driverTestConfig.clientType === "http") {
-						// Verify the error is converted to a safe format
-						expect(error.code).toBe(INTERNAL_ERROR_CODE);
-						// Original error details should not be exposed
-						expect(error.message).toBe(INTERNAL_ERROR_DESCRIPTION);
-					} else if (driverTestConfig.clientType === "inline") {
-						// Verify that original error is preserved
-						expect(error.code).toBe(INTERNAL_ERROR_CODE);
-						expect(error.message).toBe("This is an internal error");
-					} else {
-						assertUnreachable(driverTestConfig.clientType);
-					}
+					// Verify the error is converted to a safe format
+					expect(error.code).toBe(INTERNAL_ERROR_CODE);
+					// Original error details should not be exposed
+					expect(error.message).toBe(INTERNAL_ERROR_DESCRIPTION);
 				}
 			});
 		});
