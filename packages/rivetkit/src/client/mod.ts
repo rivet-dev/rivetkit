@@ -50,7 +50,7 @@ export function createClient<A extends Registry<any>>(
 		endpointOrConfig === undefined
 			? {}
 			: typeof endpointOrConfig === "string"
-				? { engine: endpointOrConfig }
+				? { endpoint: endpointOrConfig }
 				: endpointOrConfig;
 	const config = ClientConfigSchema.parse(configInput);
 
