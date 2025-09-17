@@ -53,6 +53,11 @@ export function actor<
 	return new ActorDefinition(config);
 }
 export type { Encoding } from "@/actor/protocol/serde";
+export {
+	ALLOWED_PUBLIC_HEADERS,
+	PATH_CONNECT_WEBSOCKET,
+	PATH_RAW_WEBSOCKET_PREFIX,
+} from "@/common/actor-router-consts";
 export type {
 	UniversalErrorEvent,
 	UniversalEvent,
@@ -98,11 +103,8 @@ export type { AnyActorInstance } from "./instance";
 export {
 	type ActorRouter,
 	createActorRouter,
-	PATH_CONNECT_WEBSOCKET,
-	PATH_RAW_WEBSOCKET_PREFIX,
 } from "./router";
 export {
-	ALLOWED_PUBLIC_HEADERS,
 	handleRawWebSocketHandler,
 	handleWebSocketConnect,
 } from "./router-endpoints";

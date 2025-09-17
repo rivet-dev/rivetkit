@@ -1,7 +1,6 @@
 import * as cbor from "cbor-x";
-import type { Hono, Context as HonoContext } from "hono";
+import type { Context as HonoContext } from "hono";
 import invariant from "invariant";
-import { ActorAlreadyExists } from "@/actor/errors";
 import { deserializeActorKey, serializeActorKey } from "@/actor/keys";
 import type { ClientConfig } from "@/client/client";
 import { noopNext } from "@/common/utils";
@@ -14,9 +13,7 @@ import type {
 	ManagerDisplayInformation,
 	ManagerDriver,
 } from "@/driver-helpers/mod";
-import type { ManagerInspector } from "@/inspector/manager";
-import type { Encoding, RegistryConfig, UniversalWebSocket } from "@/mod";
-import type { RunConfig } from "@/registry/run-config";
+import type { Encoding, UniversalWebSocket } from "@/mod";
 import { combineUrlPath } from "@/utils";
 import { sendHttpRequestToActor } from "./actor-http-client";
 import {

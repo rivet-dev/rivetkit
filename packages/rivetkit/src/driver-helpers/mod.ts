@@ -8,7 +8,7 @@ export {
 	HEADER_CONN_PARAMS,
 	HEADER_CONN_TOKEN,
 	HEADER_ENCODING,
-} from "@/actor/router-endpoints";
+} from "@/common/actor-router-consts";
 export type {
 	ActorOutput,
 	CreateInput,

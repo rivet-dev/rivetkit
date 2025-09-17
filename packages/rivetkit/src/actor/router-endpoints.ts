@@ -15,6 +15,11 @@ import * as errors from "@/actor/errors";
 import type { AnyActorInstance } from "@/actor/instance";
 import type { InputData } from "@/actor/protocol/serde";
 import { type Encoding, EncodingSchema } from "@/actor/protocol/serde";
+import {
+	HEADER_ACTOR_QUERY,
+	HEADER_CONN_PARAMS,
+	HEADER_ENCODING,
+} from "@/common/actor-router-consts";
 import type { UpgradeWebSocketArgs } from "@/common/inline-websocket-adapter2";
 import { deconstructError, stringifyError } from "@/common/utils";
 import type { UniversalWebSocket } from "@/common/websocket-interface";
@@ -643,38 +648,6 @@ export function getRequestQuery(c: HonoContext): unknown {
 		throw new errors.InvalidQueryJSON(error);
 	}
 }
-
-export const HEADER_ACTOR_QUERY = "X-RivetKit-Query";
-
-export const HEADER_ENCODING = "X-RivetKit-Encoding";
-
-// IMPORTANT: Params must be in headers or in an E2EE part of the request (i.e. NOT the URL or query string) in order to ensure that tokens can be securely passed in params.
-export const HEADER_CONN_PARAMS = "X-RivetKit-Conn-Params";
-
-// Internal header
-export const HEADER_AUTH_DATA = "X-RivetKit-Auth-Data";
-
-export const HEADER_ACTOR_ID = "X-RivetKit-Actor";
-
-export const HEADER_CONN_ID = "X-RivetKit-Conn";
-
-export const HEADER_CONN_TOKEN = "X-RivetKit-Conn-Token";
-
-/**
- * Headers that publics can send from public clients.
- *
- * Used for CORS.
- **/
-export const ALLOWED_PUBLIC_HEADERS = [
-	"Content-Type",
-	"User-Agent",
-	HEADER_ACTOR_QUERY,
-	HEADER_ENCODING,
-	HEADER_CONN_PARAMS,
-	HEADER_ACTOR_ID,
-	HEADER_CONN_ID,
-	HEADER_CONN_TOKEN,
-];
 
 // Helper to get connection parameters for the request
 export function getRequestConnParams(req: HonoRequest): unknown {

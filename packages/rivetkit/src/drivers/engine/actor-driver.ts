@@ -6,10 +6,26 @@ import { Runner } from "@rivetkit/engine-runner";
 import * as cbor from "cbor-x";
 import { WSContext } from "hono/ws";
 import invariant from "invariant";
+import { lookupInRegistry } from "@/actor/definition";
+import {
+	createGenericConnDrivers,
+	GenericConnGlobalState,
+} from "@/actor/generic-conn-driver";
 import { deserializeActorKey } from "@/actor/keys";
 import { EncodingSchema } from "@/actor/protocol/serde";
+import { type ActorRouter, createActorRouter } from "@/actor/router";
+import {
+	handleRawWebSocketHandler,
+	handleWebSocketConnect,
+} from "@/actor/router-endpoints";
 import type { Client } from "@/client/client";
+import {
+	PATH_CONNECT_WEBSOCKET,
+	PATH_RAW_WEBSOCKET_PREFIX,
+} from "@/common/actor-router-consts";
+import type { UpgradeWebSocketArgs } from "@/common/inline-websocket-adapter2";
 import { getLogger } from "@/common/log";
+import type { UniversalWebSocket } from "@/common/websocket-interface";
 import {
 	type ActorDriver,
 	type AnyActorInstance,
@@ -19,23 +35,8 @@ import {
 	type ManagerDriver,
 	serializeEmptyPersistData,
 } from "@/driver-helpers/mod";
-import type {
-	ActorRouter,
-	RegistryConfig,
-	RunConfig,
-	UniversalWebSocket,
-	UpgradeWebSocketArgs,
-} from "@/mod";
-import {
-	createActorRouter,
-	createGenericConnDrivers,
-	GenericConnGlobalState,
-	handleRawWebSocketHandler,
-	handleWebSocketConnect,
-	lookupInRegistry,
-	PATH_CONNECT_WEBSOCKET,
-	PATH_RAW_WEBSOCKET_PREFIX,
-} from "@/mod";
+import type { RegistryConfig } from "@/registry/config";
+import type { RunConfig } from "@/registry/run-config";
 import type { Config } from "./config";
 import { KEYS } from "./kv";
 import { logger } from "./log";

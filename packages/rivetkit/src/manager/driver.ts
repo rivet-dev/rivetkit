@@ -1,8 +1,8 @@
 import type { Env, Hono, Context as HonoContext } from "hono";
 import type { ActorKey, Encoding, UniversalWebSocket } from "@/actor/mod";
 import type { ManagerInspector } from "@/inspector/manager";
-import type { RunConfig } from "@/mod";
 import type { RegistryConfig } from "@/registry/config";
+import type { RunConfig } from "@/registry/run-config";
 
 export type ManagerDriverBuilder = (
 	registryConfig: RegistryConfig,
