@@ -86,16 +86,17 @@ export function createTestInlineClientDriver(
 			const normalizedPath = oldUrl.pathname.startsWith("/")
 				? oldUrl.pathname.slice(1)
 				: oldUrl.pathname;
+			const pathWithQuery = normalizedPath + oldUrl.search;
 
 			logger().debug({
 				msg: "sending raw http request via test inline driver",
 				actorId,
 				encoding,
-				path: normalizedPath,
+				path: pathWithQuery,
 			});
 
 			// Use the dedicated raw HTTP endpoint
-			const url = `${endpoint}/.test/inline-driver/send-request/${normalizedPath}`;
+			const url = `${endpoint}/.test/inline-driver/send-request/${pathWithQuery}`;
 
 			logger().debug({ msg: "rewriting http url", from: oldUrl, to: url });
 
@@ -163,9 +164,11 @@ export function createTestInlineClientDriver(
 			});
 
 			// Create WebSocket connection to the test endpoint
+			// Use a placeholder path and pass the actual path as a query param to avoid mixing user query params with internal ones
 			const wsUrl = new URL(
-				`${endpoint}/.test/inline-driver/connect-websocket/${normalizedPath}`,
+				`${endpoint}/.test/inline-driver/connect-websocket/ws`,
 			);
+			wsUrl.searchParams.set("path", normalizedPath);
 			wsUrl.searchParams.set("actorId", actorId);
 			if (params !== undefined)
 				wsUrl.searchParams.set("params", JSON.stringify(params));
