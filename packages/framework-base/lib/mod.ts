@@ -157,10 +157,6 @@ export function createRivetKit<
 			mount: () => void;
 			setState: (set: Updater<RivetKitStore["actors"][string]>) => void;
 			create: () => void;
-			addEventListener?: (
-				event: string,
-				handler: (...args: any[]) => void,
-			) => void;
 		}
 	>();
 
@@ -331,7 +327,6 @@ export function createRivetKit<
 			mount,
 			setState,
 			create,
-			addEventListener,
 		});
 
 		return {
