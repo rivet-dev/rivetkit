@@ -347,115 +347,107 @@ export async function handleSseConnect(
 	const parameters = getRequestConnParams(c.req);
 
 	// Return the main handler with all async work inside
-	return streamSSE(
-		c,
-		async (stream) => {
-			let actor: AnyActorInstance | undefined;
-			let connId: string | undefined;
-			let connToken: string | undefined;
-			let connState: unknown;
-			let conn: AnyConn | undefined;
+	return streamSSE(c, async (stream) => {
+		let actor: AnyActorInstance | undefined;
+		let connId: string | undefined;
+		let connToken: string | undefined;
+		let connState: unknown;
+		let conn: AnyConn | undefined;
 
-			try {
-				// Do all async work inside the handler
-				actor = await actorDriver.loadActor(actorId);
-				connId = generateConnId();
-				connToken = generateConnToken();
-				connState = await actor.prepareConn(parameters, c.req.raw);
+		try {
+			// Do all async work inside the handler
+			actor = await actorDriver.loadActor(actorId);
+			connId = generateConnId();
+			connToken = generateConnToken();
+			connState = await actor.prepareConn(parameters, c.req.raw);
 
-				actor.rLog.debug("sse open");
+			actor.rLog.debug("sse open");
 
-				console.log("=== stream open ===");
+			// Save stream
+			actorDriver
+				.getGenericConnGlobalState(actorId)
+				.sseStreams.set(connId, stream);
 
-				// Save stream
+			// Create connection
+			conn = await actor.createConn(
+				connId,
+				connToken,
+				parameters,
+				connState,
+				CONNECTION_DRIVER_SSE,
+				{ encoding } satisfies GenericSseDriverState,
+				authData,
+			);
+
+			// Wait for close
+			const abortResolver = Promise.withResolvers();
+
+			// HACK: This is required so the abort handler below works
+			//
+			// See https://github.com/honojs/hono/issues/1770#issuecomment-2461966225
+			stream.onAbort(() => {});
+
+			// Handle stream abort (when client closes the connection)
+			c.req.raw.signal.addEventListener("abort", async () => {
+				const rLog = actor?.rLog ?? loggerWithoutContext();
+				try {
+					rLog.debug("sse stream aborted");
+
+					// Cleanup
+					if (connId) {
+						actorDriver
+							.getGenericConnGlobalState(actorId)
+							.sseStreams.delete(connId);
+					}
+					if (conn && actor) {
+						actor.__removeConn(conn);
+					}
+
+					abortResolver.resolve(undefined);
+				} catch (error) {
+					rLog.error({ msg: "error closing sse connection", error });
+					abortResolver.resolve(undefined);
+				}
+			});
+
+			// // HACK: Will throw if not configured
+			// try {
+			// 	c.executionCtx.waitUntil(abortResolver.promise);
+			// } catch {}
+
+			// Send ping every second to keep the connection alive
+			//
+			// NOTE: This is required on Cloudflare Workers in order to detect when the connection is closed
+			while (true) {
+				if (stream.closed || stream.aborted) {
+					actor?.rLog.debug({
+						msg: "sse stream closed",
+						closed: stream.closed,
+						aborted: stream.aborted,
+					});
+					break;
+				}
+
+				await stream.writeSSE({ event: "ping", data: "" });
+				await stream.sleep(SSE_PING_INTERVAL);
+			}
+		} catch (error) {
+			loggerWithoutContext().error({ msg: "error in sse connection", error });
+
+			// Cleanup on error
+			if (connId !== undefined) {
 				actorDriver
 					.getGenericConnGlobalState(actorId)
-					.sseStreams.set(connId, stream);
-
-				// Create connection
-				conn = await actor.createConn(
-					connId,
-					connToken,
-					parameters,
-					connState,
-					CONNECTION_DRIVER_SSE,
-					{ encoding } satisfies GenericSseDriverState,
-					authData,
-				);
-
-				// Wait for close
-				const abortResolver = Promise.withResolvers();
-
-				// HACK: This is required so the abort handler below works
-				//
-				// See https://github.com/honojs/hono/issues/1770#issuecomment-2461966225
-				stream.onAbort(() => {});
-
-				// Handle stream abort (when client closes the connection)
-				c.req.raw.signal.addEventListener("abort", async () => {
-					const rLog = actor?.rLog ?? loggerWithoutContext();
-					try {
-						rLog.debug("sse stream aborted");
-
-						// Cleanup
-						if (connId) {
-							actorDriver
-								.getGenericConnGlobalState(actorId)
-								.sseStreams.delete(connId);
-						}
-						if (conn && actor) {
-							actor.__removeConn(conn);
-						}
-
-						abortResolver.resolve(undefined);
-					} catch (error) {
-						rLog.error({ msg: "error closing sse connection", error });
-						abortResolver.resolve(undefined);
-					}
-				});
-
-				// // HACK: Will throw if not configured
-				// try {
-				// 	c.executionCtx.waitUntil(abortResolver.promise);
-				// } catch {}
-
-				// Send ping every second to keep the connection alive
-				//
-				// NOTE: This is required on Cloudflare Workers in order to detect when the connection is closed
-				while (true) {
-					if (stream.closed || stream.aborted) {
-						actor?.rLog.debug({
-							msg: "sse stream closed",
-							closed: stream.closed,
-							aborted: stream.aborted,
-						});
-						break;
-					}
-
-					await stream.writeSSE({ event: "ping", data: "" });
-					await stream.sleep(SSE_PING_INTERVAL);
-				}
-			} catch (error) {
-				loggerWithoutContext().error({ msg: "error in sse connection", error });
-
-				// Cleanup on error
-				if (connId !== undefined) {
-					actorDriver
-						.getGenericConnGlobalState(actorId)
-						.sseStreams.delete(connId);
-				}
-				if (conn && actor !== undefined) {
-					actor.__removeConn(conn);
-				}
-
-				// Close the stream on error
-				stream.close();
+					.sseStreams.delete(connId);
 			}
-		},
-		async (err, stream) => {
-			console.log("=== stream error ===");
-		},
-	);
+			if (conn && actor !== undefined) {
+				actor.__removeConn(conn);
+			}
+
+			// Close the stream on error
+			stream.close();
+		}
+	});
 }
 
 /**
