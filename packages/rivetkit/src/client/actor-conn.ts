@@ -338,6 +338,9 @@ enc
 		this.#transport = { sse: eventSource };
 
 		eventSource.addEventListener("message", (ev: UniversalMessageEvent) => {
+			// Ignore pings
+			if (ev.type === "ping") return;
+
 			this.#handleOnMessage(ev.data);
 		});
 

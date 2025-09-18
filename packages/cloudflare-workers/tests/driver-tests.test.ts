@@ -28,8 +28,6 @@ runDriverTests({
 		}
 		const projectDir = await setupProjectOnce;
 
-		console.log("project dir", projectDir);
-
 		// Get an available port
 		const port = await getPort();
 		const inspectorPort = await getPort();
@@ -118,7 +116,7 @@ async function setupProject(projectPath: string) {
 	await fs.mkdir(tmpDir, { recursive: true });
 
 	// Create package.json with workspace dependencies
-	const wranglerVersion = "^4.22.0";
+	const wranglerVersion = "^4.37.1";
 	const packageJson = {
 		name: "rivetkit-test",
 		private: true,
