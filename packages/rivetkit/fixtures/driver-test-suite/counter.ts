@@ -8,6 +8,11 @@ export const counter = actor({
 			c.broadcast("newCount", c.state.count);
 			return c.state.count;
 		},
+		setCount: (c, x: number) => {
+			c.state.count = x;
+			c.broadcast("newCount", x);
+			return c.state.count;
+		},
 		getCount: (c) => {
 			return c.state.count;
 		},
