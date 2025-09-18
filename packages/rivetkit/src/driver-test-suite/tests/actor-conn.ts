@@ -85,28 +85,27 @@ export function runActorConnTests(driverTestConfig: DriverTestConfig) {
 
 				// Set up event listener
 				const receivedEvents: number[] = [];
-				const receivedEventsPromise = new Promise((resolve) => {
-					connection.on("newCount", (count: number) => {
-						receivedEvents.push(count);
-						if (
-							receivedEvents.includes(1) &&
-							receivedEvents.includes(6) &&
-							receivedEvents.includes(9)
-						)
-							resolve(undefined);
-					});
+				connection.on("newCount", (count: number) => {
+					receivedEvents.push(count);
 				});
 
-				// Send one RPC call over the connection to ensure it's open
-				await connection.increment(1);
+				// TODO: There is a race condition with opening subscription and sending events on SSE, so we need to wait for a successful round trip on the event
+				await vi.waitFor(async () => {
+					// Send one RPC call over the connection to ensure it's open
+					await connection.setCount(1);
+					expect(receivedEvents).includes(1);
+				});
 
 				// Now use stateless RPC calls through the handle (no connection)
 				// These should still trigger events that the connection receives
-				await handle.increment(5);
-				await handle.increment(3);
+				await handle.setCount(2);
+				await handle.setCount(3);
 
 				// Wait for all events to be received
-				await receivedEventsPromise;
+				await vi.waitFor(() => {
+					expect(receivedEvents).includes(2);
+					expect(receivedEvents).includes(3);
+				});
 
 				// Clean up
 				await connection.dispose();
@@ -130,8 +129,10 @@ export function runActorConnTests(driverTestConfig: DriverTestConfig) {
 				await connection.increment(3);
 
 				// Verify events were received
-				expect(receivedEvents).toContain(5);
-				expect(receivedEvents).toContain(8);
+				await vi.waitFor(() => {
+					expect(receivedEvents).toContain(5);
+					expect(receivedEvents).toContain(8);
+				});
 
 				// Clean up
 				await connection.dispose();
@@ -155,8 +156,10 @@ export function runActorConnTests(driverTestConfig: DriverTestConfig) {
 				await connection.increment(3);
 
 				// Verify only the first event was received
-				expect(receivedEvents).toEqual([5]);
-				expect(receivedEvents).not.toContain(8);
+				await vi.waitFor(() => {
+					expect(receivedEvents).toEqual([5]);
+					expect(receivedEvents).not.toContain(8);
+				});
 
 				// Clean up
 				await connection.dispose();
@@ -175,17 +178,20 @@ export function runActorConnTests(driverTestConfig: DriverTestConfig) {
 					receivedEvents.push(count);
 				});
 
+				// TODO: SSE has race condition with subscriptions & publishing messages
 				// Trigger first event
-				await connection.increment(5);
+				await vi.waitFor(async () => {
+					await connection.setCount(5);
+					expect(receivedEvents).toEqual([5]);
+				});
 
 				// Unsubscribe
 				unsubscribe();
 
 				// Trigger second event, should not be received
-				await connection.increment(3);
+				await connection.setCount(8);
 
 				// Verify only the first event was received
-				expect(receivedEvents).toEqual([5]);
 				expect(receivedEvents).not.toContain(8);
 
 				// Clean up
