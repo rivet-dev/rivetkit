@@ -111,7 +111,8 @@ export function createTestInlineClientDriver(
 					headers,
 					body: actorRequest.body,
 					signal: actorRequest.signal,
-				}),
+					duplex: "half",
+				} as RequestInit),
 			);
 
 			// Check if it's an error response from our handler
@@ -560,7 +561,8 @@ async function makeInlineRequest<T>(
 			method,
 			args,
 		} satisfies TestInlineDriverCallRequest),
-	});
+		duplex: "half",
+	} as RequestInit);
 
 	if (!response.ok) {
 		throw new Error(`Failed to call inline ${method}: ${response.statusText}`);
