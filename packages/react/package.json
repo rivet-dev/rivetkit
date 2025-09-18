@@ -11,7 +11,10 @@
     "frontend",
     "ui"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "./dist/chunk-*.js",
+    "./dist/chunk-*.cjs"
+  ],
   "files": [
     "dist",
     "package.json"
