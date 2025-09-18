@@ -1,7 +1,8 @@
-import { resolve } from "node:path";
+import invariant from "invariant";
 import { type TestContext, vi } from "vitest";
 import { assertUnreachable } from "@/actor/utils";
 import { type Client, createClient } from "@/client/mod";
+import { RunConfigSchema } from "@/driver-helpers/mod";
 import { createClientWithDriver } from "@/mod";
 import type { registry } from "../../fixtures/driver-test-suite/registry";
 import type { DriverTestConfig } from "./mod";
@@ -43,7 +44,11 @@ export async function setupDriverTest(
 			"bare",
 			driverTestConfig.transport ?? "websocket",
 		);
-		client = createClientWithDriver(managerDriver);
+		invariant(driverTestConfig.transport, "missing transport");
+		const runConfig = RunConfigSchema.parse({
+			transport: driverTestConfig.transport,
+		});
+		client = createClientWithDriver(managerDriver, runConfig);
 	} else {
 		assertUnreachable(driverTestConfig.clientType);
 	}
