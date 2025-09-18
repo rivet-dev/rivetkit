@@ -1,4 +1,5 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
+import { SSE_PING_INTERVAL } from "@/actor/router-endpoints";
 import type { DriverTestConfig } from "../mod";
 import { FAKE_TIME, setupDriverTest, waitFor } from "../utils";
 
@@ -244,23 +245,32 @@ export function runActorConnTests(driverTestConfig: DriverTestConfig) {
 				// Disconnect should trigger onDisconnect
 				await connection.dispose();
 
-				// Reconnect to check if onDisconnect was called
-				const handle = client.counterWithLifecycle.getOrCreate([
-					"test-lifecycle",
-				]);
-				const finalEvents = await handle.getEvents();
-				expect(finalEvents).toBeOneOf([
-					// Still active
-					["onStart", "onBeforeConnect", "onConnect", "onDisconnect"],
-					// Went to sleep and woke back up
-					[
-						"onStart",
-						"onBeforeConnect",
-						"onConnect",
-						"onDisconnect",
-						"onStart",
-					],
-				]);
+				await vi.waitFor(
+					async () => {
+						// Reconnect to check if onDisconnect was called
+						const handle = client.counterWithLifecycle.getOrCreate([
+							"test-lifecycle",
+						]);
+						const finalEvents = await handle.getEvents();
+						expect(finalEvents).toBeOneOf([
+							// Still active
+							["onStart", "onBeforeConnect", "onConnect", "onDisconnect"],
+							// Went to sleep and woke back up
+							[
+								"onStart",
+								"onBeforeConnect",
+								"onConnect",
+								"onDisconnect",
+								"onStart",
+							],
+						]);
+					},
+					// NOTE: High timeout required for Cloudflare Workers
+					{
+						timeout: 10_000,
+						interval: 100,
+					},
+				);
 			});
 		});
 
