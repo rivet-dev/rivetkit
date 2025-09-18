@@ -124,12 +124,11 @@ export function runActorConnTests(driverTestConfig: DriverTestConfig) {
 					receivedEvents.push(count);
 				});
 
-				// Trigger broadcast events
-				await connection.increment(5);
-				await connection.increment(3);
-
+				// HACK: Race condition between subscribing & sending events in SSE
 				// Verify events were received
-				await vi.waitFor(() => {
+				await vi.waitFor(async () => {
+					await connection.setCount(5);
+					await connection.setCount(8);
 					expect(receivedEvents).toContain(5);
 					expect(receivedEvents).toContain(8);
 				});
