@@ -16,28 +16,23 @@ export async function sendHttpRequestToActor(
 	let bodyToSend: ArrayBuffer | null = null;
 	const guardHeaders = buildGuardHeadersForHttp(actorRequest, actorId);
 
-	if (
-		actorRequest.body &&
-		actorRequest.method !== "GET" &&
-		actorRequest.method !== "HEAD"
-	) {
+	if (actorRequest.method !== "GET" && actorRequest.method !== "HEAD") {
 		if (actorRequest.bodyUsed) {
 			throw new Error("Request body has already been consumed");
 		}
 
 		// TODO: This buffers the entire request in memory every time. We
 		// need to properly implement streaming bodies.
-		// Clone and read the body to ensure it can be sent
-		const clonedRequest = actorRequest.clone();
-		bodyToSend = await clonedRequest.arrayBuffer();
+		const reqBody = await actorRequest.arrayBuffer();
 
-		// If this is a streaming request, we need to convert the headers
-		// for the basic array buffer
-		guardHeaders.delete("transfer-encoding");
-		guardHeaders.set(
-			"content-length",
-			String((bodyToSend as ArrayBuffer).byteLength),
-		);
+		if (reqBody.byteLength !== 0) {
+			bodyToSend = reqBody;
+
+			// If this is a streaming request, we need to convert the headers
+			// for the basic array buffer
+			guardHeaders.delete("transfer-encoding");
+			guardHeaders.set("content-length", String(bodyToSend.byteLength));
+		}
 	}
 
 	const guardRequest = new Request(guardUrl, {

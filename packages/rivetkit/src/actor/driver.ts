@@ -1,3 +1,4 @@
+import type { Context as HonoContext } from "hono";
 import type { CachedSerializer } from "@/actor/protocol/serde";
 import type { AnyClient } from "@/client/client";
 import type { ManagerDriver } from "@/manager/driver";
@@ -45,6 +46,10 @@ export interface ActorDriver {
 	sleep?(actorId: string): Promise<void>;
 
 	shutdown?(immediate: boolean): Promise<void>;
+
+	// Serverless
+	/** This handles the serverless start request. This should manage the lifecycle of the runner tied to the request lifecycle. */
+	serverlessHandleStart?(c: HonoContext): Promise<Response>;
 }
 
 export enum ConnectionReadyState {
