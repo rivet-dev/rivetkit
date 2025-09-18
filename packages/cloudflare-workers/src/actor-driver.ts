@@ -15,6 +15,7 @@ import type {
 	AnyActorInstance,
 	ManagerDriver,
 } from "rivetkit/driver-helpers";
+import { promiseWithResolvers } from "rivetkit/utils";
 import { KEYS } from "./actor-handler-do";
 
 interface DurableObjectGlobalState {
@@ -49,7 +50,8 @@ export interface DriverContext {
 // Actor handler to track running instances
 class ActorHandler {
 	actor?: AnyActorInstance;
-	actorPromise?: PromiseWithResolvers<void> = Promise.withResolvers();
+	actorPromise?: ReturnType<typeof promiseWithResolvers<void>> =
+		promiseWithResolvers();
 	genericConnGlobalState = new GenericConnGlobalState();
 }
 

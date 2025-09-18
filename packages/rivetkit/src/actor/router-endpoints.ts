@@ -36,7 +36,7 @@ import {
 	deserializeWithEncoding,
 	serializeWithEncoding,
 } from "@/serde";
-import { bufferToArrayBuffer } from "@/utils";
+import { bufferToArrayBuffer, promiseWithResolvers } from "@/utils";
 import type { ActorDriver } from "./driver";
 import type {
 	GenericHttpDriverState,
@@ -128,7 +128,7 @@ export async function handleWebSocketConnect(
 		promise: handlersPromise,
 		resolve: handlersResolve,
 		reject: handlersReject,
-	} = Promise.withResolvers<{
+	} = promiseWithResolvers<{
 		conn: AnyConn;
 		actor: AnyActorInstance;
 		connId: string;
@@ -162,7 +162,7 @@ export async function handleWebSocketConnect(
 
 	return {
 		onOpen: (_evt: any, ws: WSContext) => {
-			actor.rLog.debug("websocket open");
+			actor.rLog.debug("actor websocket open");
 
 			// Run async operations in background
 			(async () => {
@@ -380,7 +380,7 @@ export async function handleSseConnect(
 			);
 
 			// Wait for close
-			const abortResolver = Promise.withResolvers();
+			const abortResolver = promiseWithResolvers();
 
 			// HACK: This is required so the abort handler below works
 			//

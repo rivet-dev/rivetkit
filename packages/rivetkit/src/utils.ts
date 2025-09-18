@@ -77,6 +77,25 @@ const TIMEOUT_MAX = 2147483647; // 2^31-1
 
 export type LongTimeoutHandle = { abort: () => void };
 
+/**
+ * Polyfill for Promise.withResolvers().
+ *
+ * This is specifically for Cloudflare Workers. Their implementation of Promise.withResolvers does not work correctly.
+ */
+export function promiseWithResolvers<T>(): {
+	promise: Promise<T>;
+	resolve: (value: T | PromiseLike<T>) => void;
+	reject: (reason?: any) => void;
+} {
+	let resolve!: (value: T | PromiseLike<T>) => void;
+	let reject!: (reason?: any) => void;
+	const promise = new Promise<T>((res, rej) => {
+		resolve = res;
+		reject = rej;
+	});
+	return { promise, resolve, reject };
+}
+
 export function setLongTimeout(
 	listener: () => void,
 	after: number,
@@ -115,7 +134,7 @@ export class SinglePromiseQueue {
 	runningDrainLoop?: Promise<void>;
 
 	/** Pending resolver fro the currently queued entry. */
-	#pending?: PromiseWithResolvers<void>;
+	#pending?: ReturnType<typeof promiseWithResolvers<void>>;
 
 	/** Queue the next operation and return a promise that resolves when it flushes. */
 	enqueue(op: () => Promise<void>): Promise<void> {
@@ -124,7 +143,7 @@ export class SinglePromiseQueue {
 
 		// Ensure a shared resolver exists for all callers in this cycle
 		if (!this.#pending) {
-			this.#pending = Promise.withResolvers<void>();
+			this.#pending = promiseWithResolvers<void>();
 		}
 
 		const waitForThisCycle = this.#pending.promise;
