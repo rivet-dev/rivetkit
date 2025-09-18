@@ -7,6 +7,7 @@ import type * as protocol from "@/schemas/client-protocol/mod";
 import type { AnyConn, ConnectionDriver } from "./connection";
 import type { GenericConnGlobalState } from "./generic-conn-driver";
 import type { AnyActorInstance } from "./instance";
+import { Hono, MiddlewareHandler } from "hono";
 
 export type ConnectionDriversMap = Record<ConnectionDriver, ConnDriver>;
 
@@ -45,6 +46,11 @@ export interface ActorDriver {
 	sleep?(actorId: string): Promise<void>;
 
 	shutdown?(immediate: boolean): Promise<void>;
+
+	// Serverless
+	awaitStarted?(): Promise<void>;
+	awaitStopped?(): Promise<void>;
+	runnerId?(): string | undefined;
 }
 
 export enum ConnectionReadyState {

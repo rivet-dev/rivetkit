@@ -1,6 +1,6 @@
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import * as cbor from "cbor-x";
-import { Hono } from "hono";
+import { Hono, MiddlewareHandler } from "hono";
 import { cors as corsMiddleware } from "hono/cors";
 import { createMiddleware } from "hono/factory";
 import type { WSContext } from "hono/ws";
@@ -20,7 +20,7 @@ import {
 	loggerMiddleware,
 } from "@/common/router";
 import { deconstructError, noopNext } from "@/common/utils";
-import { HEADER_ACTOR_ID } from "@/driver-helpers/mod";
+import { ActorDriver, HEADER_ACTOR_ID } from "@/driver-helpers/mod";
 import type {
 	TestInlineDriverCallRequest,
 	TestInlineDriverCallResponse,
@@ -47,6 +47,7 @@ import type { RunConfig } from "@/registry/run-config";
 import { stringifyError } from "@/utils";
 import type { ManagerDriver } from "./driver";
 import { logger } from "./log";
+import { streamSSE } from "hono/streaming";
 
 function buildOpenApiResponses<T>(schema: T, validateBody: boolean) {
 	return {
@@ -54,10 +55,10 @@ function buildOpenApiResponses<T>(schema: T, validateBody: boolean) {
 			description: "Success",
 			content: validateBody
 				? {
-						"application/json": {
-							schema,
-						},
-					}
+					"application/json": {
+						schema,
+					},
+				}
 				: {},
 		},
 		400: {
@@ -73,8 +74,9 @@ export function createManagerRouter(
 	registryConfig: RegistryConfig,
 	runConfig: RunConfig,
 	managerDriver: ManagerDriver,
+	serverlessActorDriverBuilder: (() => ActorDriver) | undefined,
 	validateBody: boolean,
-): { router: Hono; openapi: OpenAPIHono } {
+): { router: Hono; openapi: OpenAPIHono, cors: MiddlewareHandler } {
 	const router = new OpenAPIHono({ strict: false }).basePath(
 		runConfig.basePath,
 	);
@@ -151,6 +153,7 @@ export function createManagerRouter(
 				method: c.req.raw.method,
 				headers: proxyHeaders,
 				body: c.req.raw.body,
+				duplex: "half",
 				signal: c.req.raw.signal,
 			});
 
@@ -211,10 +214,10 @@ export function createManagerRouter(
 				body: {
 					content: validateBody
 						? {
-								"application/json": {
-									schema: ActorsGetOrCreateByIdRequestSchema,
-								},
-							}
+							"application/json": {
+								schema: ActorsGetOrCreateByIdRequestSchema,
+							},
+						}
 						: {},
 				},
 			},
@@ -323,10 +326,10 @@ export function createManagerRouter(
 				body: {
 					content: validateBody
 						? {
-								"application/json": {
-									schema: ActorsCreateRequestSchema,
-								},
-							}
+							"application/json": {
+								schema: ActorsCreateRequestSchema,
+							},
+						}
 						: {},
 				},
 			},
@@ -500,6 +503,7 @@ export function createManagerRouter(
 						method: c.req.method,
 						headers: c.req.raw.headers,
 						body: c.req.raw.body,
+						duplex: "half",
 					}),
 				);
 
@@ -532,6 +536,27 @@ export function createManagerRouter(
 		router as unknown as Hono,
 	);
 
+	// This will only be set with the engine driver
+	if (serverlessActorDriverBuilder) {
+		// Serverless start endpoint
+		router.get("/start", cors, async (c) => {
+			const actorDriver = serverlessActorDriverBuilder();
+
+			await actorDriver.awaitStarted!();
+
+			return streamSSE(c, async (stream) => {
+				// Runner id should be set if the runner started
+				stream.writeSSE({ data: actorDriver.runnerId!()! });
+
+				await actorDriver.awaitStopped!();
+			});
+		});
+
+		router.get("/health", cors, (c) => {
+			return c.text("ok");
+		});
+	}
+
 	if (runConfig.inspector?.enabled) {
 		if (!managerDriver.inspector) {
 			throw new Unsupported("inspector");
@@ -553,7 +578,7 @@ export function createManagerRouter(
 	router.notFound(handleRouteNotFound);
 	router.onError(handleRouteError);
 
-	return { router: router as Hono, openapi: router };
+	return { router: router as Hono, openapi: router, cors };
 }
 /**
  * Creates a WebSocket proxy for test endpoints that forwards messages between server and client WebSockets
@@ -598,9 +623,9 @@ async function createTestWebSocketProxy(
 			onOpen: (_evt, serverWs) => {
 				serverWs.close(1011, "Failed to establish connection");
 			},
-			onMessage: () => {},
-			onError: () => {},
-			onClose: () => {},
+			onMessage: () => { },
+			onError: () => { },
+			onClose: () => { },
 		};
 	}
 

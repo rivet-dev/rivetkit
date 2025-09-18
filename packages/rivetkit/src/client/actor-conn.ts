@@ -391,9 +391,9 @@ enc
 		logger().trace(
 			getEnvUniversal("_RIVETKIT_LOG_MESSAGE")
 				? {
-						msg: "parsed message",
-						message: jsonStringifyCompat(response).substring(0, 100) + "...",
-					}
+					msg: "parsed message",
+					message: jsonStringifyCompat(response).substring(0, 100) + "...",
+				}
 				: { msg: "parsed message" },
 		);
 
@@ -717,9 +717,9 @@ enc
 			logger().trace(
 				getEnvUniversal("_RIVETKIT_LOG_MESSAGE")
 					? {
-							msg: "sent http message",
-							message: `${jsonStringifyCompat(message).substring(0, 100)}...`,
-						}
+						msg: "sent http message",
+						message: `${jsonStringifyCompat(message).substring(0, 100)}...`,
+					}
 					: { msg: "sent http message" },
 			);
 

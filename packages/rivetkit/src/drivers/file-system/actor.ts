@@ -9,6 +9,8 @@ import type {
 import type { RegistryConfig, RunConfig } from "@/mod";
 import { bufferToArrayBuffer } from "@/utils";
 import type { FileSystemGlobalState } from "./global-state";
+import { Hono, MiddlewareHandler } from "hono";
+import { streamSSE } from "hono/streaming";
 
 export type ActorDriverContext = Record<never, never>;
 
