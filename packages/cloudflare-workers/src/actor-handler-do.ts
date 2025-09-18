@@ -3,6 +3,7 @@ import type { ExecutionContext } from "hono";
 import invariant from "invariant";
 import type { ActorKey, ActorRouter, Registry, RunConfig } from "rivetkit";
 import { createActorRouter, createClientWithDriver } from "rivetkit";
+import type { ActorDriver } from "rivetkit/driver-helpers";
 import { serializeEmptyPersistData } from "rivetkit/driver-helpers";
 import {
 	CloudflareDurableObjectGlobalState,
@@ -38,6 +39,7 @@ export type DurableObjectConstructor = new (
 
 interface LoadedActor {
 	actorRouter: ActorRouter;
+	actorDriver: ActorDriver;
 }
 
 export function createActorDurableObject(
@@ -135,6 +137,7 @@ export function createActorDurableObject(
 			// Save actor
 			this.#actor = {
 				actorRouter,
+				actorDriver,
 			};
 
 			// Initialize the actor instance with proper metadata
@@ -174,22 +177,8 @@ export function createActorDurableObject(
 		}
 
 		async alarm(): Promise<void> {
-			await this.#loadActor();
+			const { actorDriver } = await this.#loadActor();
 			const actorId = this.ctx.id.toString();
-
-			// Get the actor driver
-			invariant(runConfig.driver, "runConfig.driver");
-			const managerDriver = runConfig.driver.manager(
-				registry.config,
-				runConfig,
-			);
-			const inlineClient = createClientWithDriver(managerDriver);
-			const actorDriver = runConfig.driver.actor(
-				registry.config,
-				runConfig,
-				managerDriver,
-				inlineClient,
-			);
 
 			// Load the actor instance and trigger alarm
 			const actor = await actorDriver.loadActor(actorId);
