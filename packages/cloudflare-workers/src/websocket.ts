@@ -57,14 +57,18 @@ export const upgradeWebSocket: UpgradeWebSocket<
 	// we have to do this after `server.accept() is called`
 	events.onOpen?.(new Event("open"), wsContext);
 
+	// Build response headers
+	const headers: Record<string, string> = {};
+
+	// Set Sec-WebSocket-Protocol if does not exist
+	const protocols = c.req.header("Sec-WebSocket-Protocol");
+	if (typeof protocols === "string" && protocols.includes("rivetkit")) {
+		headers["Sec-WebSocket-Protocol"] = "rivetkit";
+	}
+
 	return new Response(null, {
 		status: 101,
-		headers: {
-			// HACK: Required in order for Cloudflare to not error with "Network connection lost"
-			//
-			// This bug undocumented. Cannot easily reproduce outside of RivetKit.
-			"Sec-WebSocket-Protocol": "rivetkit",
-		},
+		headers,
 		webSocket: client,
 	});
 });

@@ -13,6 +13,10 @@ const execPromise = promisify(exec);
 runDriverTests({
 	useRealTimers: true,
 	HACK_skipCleanupNet: true,
+	skip: {
+		// CF does not support sleeping
+		sleep: true,
+	},
 	async start() {
 		// Setup project
 		const projectPath = path.resolve(
