@@ -162,20 +162,19 @@ export function runActorConnStateTests(driverTestConfig: DriverTestConfig) {
 				});
 
 				// Initial disconnection count
-				const initialDisconnections = await conn.getDisconnectionCount();
+				await vi.waitFor(async () => {
+					const disconnects = await conn.getDisconnectionCount();
+					expect(disconnects).toBe(0);
+				});
 
 				// Dispose the connection
 				await conn.dispose();
 
-				// Create a new connection to check the disconnection count
-				const newConn = handle.connect();
-
-				// Verify disconnection was tracked
+				// Validate conn count
 				await vi.waitFor(
 					async () => {
-						const newDisconnections = await newConn.getDisconnectionCount();
-
-						expect(newDisconnections).toBeGreaterThan(initialDisconnections);
+						const disconnects = await newConn.getDisconnectionCount();
+						expect(disconnects).toBe(1);
 					},
 					// SSE takes a long time to disconnect on CF Workers
 					{
@@ -184,8 +183,30 @@ export function runActorConnStateTests(driverTestConfig: DriverTestConfig) {
 					},
 				);
 
+				// Create a new connection to check the disconnection count
+				const newConn = handle.connect();
+
+				// Verify the connection is tracked
+				await vi.waitFor(async () => {
+					const connectionIds = await conn.getConnectionIds();
+					expect(connectionIds.length).toBe(2);
+				});
+
 				// Clean up
 				await newConn.dispose();
+
+				// Verify disconnection was tracked
+				await vi.waitFor(
+					async () => {
+						const disconnects = await newConn.getDisconnectionCount();
+						expect(disconnects).toBe(2);
+					},
+					// SSE takes a long time to disconnect on CF Workers
+					{
+						timeout: 10_000,
+						interval: 100,
+					},
+				);
 			});
 
 			test("should update connection state", async (c) => {
