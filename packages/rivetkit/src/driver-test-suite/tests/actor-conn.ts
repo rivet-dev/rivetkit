@@ -126,12 +126,15 @@ export function runActorConnTests(driverTestConfig: DriverTestConfig) {
 
 				// HACK: Race condition between subscribing & sending events in SSE
 				// Verify events were received
-				await vi.waitFor(async () => {
-					await connection.setCount(5);
-					await connection.setCount(8);
-					expect(receivedEvents).toContain(5);
-					expect(receivedEvents).toContain(8);
-				});
+				await vi.waitFor(
+					async () => {
+						await connection.setCount(5);
+						await connection.setCount(8);
+						expect(receivedEvents).toContain(5);
+						expect(receivedEvents).toContain(8);
+					},
+					{ timeout: 10_000 },
+				);
 
 				// Clean up
 				await connection.dispose();

@@ -170,7 +170,11 @@ async function setupProject(projectPath: string) {
 	const wranglerConfig = {
 		name: "rivetkit-test",
 		compatibility_date: "2025-01-29",
-		compatibility_flags: ["nodejs_compat"],
+		compatibility_flags: [
+			"nodejs_compat",
+			// Required for passing log env vars
+			"nodejs_compat_populate_process_env",
+		],
 		migrations: [
 			{
 				new_classes: ["ActorHandler"],
@@ -193,6 +197,13 @@ async function setupProject(projectPath: string) {
 		],
 		observability: {
 			enabled: true,
+		},
+		vars: {
+			LOG_LEVEL: "DEBUG",
+			LOG_TARGET: "1",
+			LOG_TIMESTAMP: "1",
+			_RIVETKIT_ERROR_STACK: "1",
+			_RIVETKIT_LOG_MESSAGE: "1",
 		},
 	};
 	await fs.writeFile(

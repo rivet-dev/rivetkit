@@ -8,6 +8,7 @@ import type {
 	AnyDatabaseProvider,
 	InferDatabaseClient,
 } from "@/actor/database";
+import { promiseWithResolvers } from "@/utils";
 import {
 	ColumnsSchema,
 	type Connection,
@@ -99,7 +100,7 @@ export function createActorInspectorRouter() {
 						});
 					});
 
-					const { promise } = Promise.withResolvers<void>();
+					const { promise } = promiseWithResolvers<void>();
 
 					return promise;
 				},
@@ -128,7 +129,7 @@ export function createActorInspectorRouter() {
 						});
 					});
 
-					const { promise } = Promise.withResolvers<void>();
+					const { promise } = promiseWithResolvers<void>();
 
 					return promise;
 				},
@@ -159,7 +160,7 @@ export function createActorInspectorRouter() {
 						});
 					});
 
-					const { promise } = Promise.withResolvers<void>();
+					const { promise } = promiseWithResolvers<void>();
 
 					return promise;
 				},

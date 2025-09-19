@@ -6,7 +6,8 @@
     "paths": {
       "@/*": ["./src/*"],
       // Used for test fixtures
-      "rivetkit": ["./src/mod.ts"]
+      "rivetkit": ["./src/mod.ts"],
+      "rivetkit/utils": ["./src/utils.ts"]
     }
   },
   "include": [

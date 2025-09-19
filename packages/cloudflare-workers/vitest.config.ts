@@ -6,6 +6,6 @@ export default defineConfig({
 	test: {
 		...defaultConfig.test,
 		// Requires time for installing packages
-		testTimeout: 60_000,
+		testTimeout: 15_000,
 	},
 });

@@ -15,6 +15,7 @@ import { TO_CLIENT_VERSIONED } from "@/schemas/client-protocol/versioned";
 import {
 	bufferToArrayBuffer,
 	getEnvUniversal,
+	promiseWithResolvers,
 	SinglePromiseQueue,
 } from "@/utils";
 import type { ActionContext } from "./action";
@@ -543,7 +544,7 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 	}
 
 	/** Promise used to wait for a save to complete. This is required since you cannot await `#saveStateThrottled`. */
-	#onPersistSavedPromise?: PromiseWithResolvers<void>;
+	#onPersistSavedPromise?: ReturnType<typeof promiseWithResolvers<void>>;
 
 	/** Throttled save state method. Used to write to KV at a reasonable cadence. */
 	#savePersistThrottled() {
@@ -1562,7 +1563,7 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 			} else {
 				// Create callback
 				if (!this.#onPersistSavedPromise) {
-					this.#onPersistSavedPromise = Promise.withResolvers();
+					this.#onPersistSavedPromise = promiseWithResolvers();
 				}
 
 				// Save state throttled
