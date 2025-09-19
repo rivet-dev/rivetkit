@@ -40,6 +40,8 @@ import type { RunConfig } from "@/registry/run-config";
 import type { Config } from "./config";
 import { KEYS } from "./kv";
 import { logger } from "./log";
+import { Hono, MiddlewareHandler } from "hono";
+import { streamSSE } from "hono/streaming";
 
 interface ActorHandler {
 	actor?: AnyActorInstance;
@@ -60,6 +62,9 @@ export class EngineActorDriver implements ActorDriver {
 	#actors: Map<string, ActorHandler> = new Map();
 	#actorRouter: ActorRouter;
 	#version: number = 1; // Version for the runner protocol
+
+	#runnerStarted: PromiseWithResolvers<undefined> = Promise.withResolvers();
+	#runnerStopped: PromiseWithResolvers<undefined> = Promise.withResolvers();
 
 	constructor(
 		registryConfig: RegistryConfig,
@@ -108,6 +113,8 @@ export class EngineActorDriver implements ActorDriver {
 						runnerName: this.#config.runnerName,
 					});
 				}
+
+				this.#runnerStarted.resolve(undefined);
 			},
 			onDisconnected: () => {
 				logger().warn({
@@ -117,7 +124,9 @@ export class EngineActorDriver implements ActorDriver {
 				});
 				hasDisconnected = true;
 			},
-			onShutdown: () => {},
+			onShutdown: () => {
+				this.#runnerStopped.resolve(undefined);
+			},
 			fetch: this.#runnerFetch.bind(this),
 			websocket: this.#runnerWebSocket.bind(this),
 			onActorStart: this.#runnerOnActorStart.bind(this),
@@ -366,5 +375,17 @@ export class EngineActorDriver implements ActorDriver {
 	async shutdown(immediate: boolean): Promise<void> {
 		logger().info({ msg: "stopping engine actor driver" });
 		await this.#runner.shutdown(immediate);
+	}
+
+	awaitStarted(): Promise<void> {
+		return this.#runnerStarted.promise;
+	}
+
+	awaitStopped(): Promise<void> {
+		return this.#runnerStopped.promise;
+	}
+
+	runnerId(): string | undefined {
+		return this.#runner.runnerId;
 	}
 }
