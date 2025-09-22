@@ -170,8 +170,8 @@
     "invariant": "^2.2.4",
     "nanoevents": "^9.1.0",
     "on-change": "^5.0.1",
-    "pino": "^9.5.0",
     "p-retry": "^6.2.1",
+    "pino": "^9.5.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
