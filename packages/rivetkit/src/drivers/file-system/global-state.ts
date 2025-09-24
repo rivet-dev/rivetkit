@@ -27,6 +27,7 @@ import {
 import {
 	bufferToArrayBuffer,
 	type LongTimeoutHandle,
+	promiseWithResolvers,
 	SinglePromiseQueue,
 	setLongTimeout,
 	stringifyError,
@@ -49,7 +50,7 @@ interface ActorEntry {
 
 	actor?: AnyActorInstance;
 	/** Promise for starting the actor. */
-	startPromise?: PromiseWithResolvers<void>;
+	startPromise?: ReturnType<typeof promiseWithResolvers<void>>;
 
 	genericConnGlobalState: GenericConnGlobalState;
 
@@ -469,7 +470,7 @@ export class FileSystemGlobalState {
 		}
 
 		// Create start promise
-		entry.startPromise = Promise.withResolvers();
+		entry.startPromise = promiseWithResolvers();
 
 		try {
 			// Create actor

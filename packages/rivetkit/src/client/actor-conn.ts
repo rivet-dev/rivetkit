@@ -32,7 +32,12 @@ import {
 	encodingIsBinary,
 	serializeWithEncoding,
 } from "@/serde";
-import { bufferToArrayBuffer, getEnvUniversal, httpUserAgent } from "@/utils";
+import {
+	bufferToArrayBuffer,
+	getEnvUniversal,
+	httpUserAgent,
+	promiseWithResolvers,
+} from "@/utils";
 import type { ActorDefinitionActions } from "./actor-common";
 import { queryActor } from "./actor-query";
 import { ACTOR_CONNS_SYMBOL, type ClientRaw, TRANSPORT_SYMBOL } from "./client";
@@ -119,7 +124,7 @@ export class ActorConnRaw {
 	#keepNodeAliveInterval: NodeJS.Timeout;
 
 	/** Promise used to indicate the socket has connected successfully. This will be rejected if the connection fails. */
-	#onOpenPromise?: PromiseWithResolvers<undefined>;
+	#onOpenPromise?: ReturnType<typeof promiseWithResolvers<undefined>>;
 
 	#client: ClientRaw;
 	#driver: ManagerDriver;
@@ -177,7 +182,7 @@ export class ActorConnRaw {
 		this.#actionIdCounter += 1;
 
 		const { promise, resolve, reject } =
-			Promise.withResolvers<protocol.ActionResponse>();
+			promiseWithResolvers<protocol.ActionResponse>();
 		this.#actionsInFlight.set(actionId, { name: opts.name, resolve, reject });
 
 		this.#sendMessage({
@@ -253,7 +258,7 @@ enc
 			// Create promise for open
 			if (this.#onOpenPromise)
 				throw new Error("#onOpenPromise already defined");
-			this.#onOpenPromise = Promise.withResolvers();
+			this.#onOpenPromise = promiseWithResolvers();
 
 			// Connect transport
 			if (this.#client[TRANSPORT_SYMBOL] === "websocket") {
@@ -285,7 +290,7 @@ enc
 		);
 		this.#transport = { websocket: ws };
 		ws.addEventListener("open", () => {
-			logger().debug({ msg: "websocket open" });
+			logger().debug({ msg: "client websocket open" });
 		});
 		ws.addEventListener("message", async (ev) => {
 			this.#handleOnMessage(ev.data);
@@ -818,7 +823,7 @@ enc
 			) {
 				logger().debug({ msg: "ws already closed or closing" });
 			} else {
-				const { promise, resolve } = Promise.withResolvers();
+				const { promise, resolve } = promiseWithResolvers();
 				ws.addEventListener("close", () => {
 					logger().debug({ msg: "ws closed" });
 					resolve(undefined);

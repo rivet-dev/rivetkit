@@ -37,13 +37,14 @@ import {
 } from "@/driver-helpers/mod";
 import type { RegistryConfig } from "@/registry/config";
 import type { RunConfig } from "@/registry/run-config";
+import { promiseWithResolvers } from "@/utils";
 import type { Config } from "./config";
 import { KEYS } from "./kv";
 import { logger } from "./log";
 
 interface ActorHandler {
 	actor?: AnyActorInstance;
-	actorStartPromise?: PromiseWithResolvers<void>;
+	actorStartPromise?: ReturnType<typeof promiseWithResolvers<void>>;
 	genericConnGlobalState: GenericConnGlobalState;
 	persistedData?: Uint8Array;
 }
@@ -222,7 +223,7 @@ export class EngineActorDriver implements ActorDriver {
 		if (!handler) {
 			handler = {
 				genericConnGlobalState: new GenericConnGlobalState(),
-				actorStartPromise: Promise.withResolvers(),
+				actorStartPromise: promiseWithResolvers(),
 				persistedData: serializeEmptyPersistData(input),
 			};
 			this.#actors.set(actorId, handler);

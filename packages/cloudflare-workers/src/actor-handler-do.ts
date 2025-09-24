@@ -5,6 +5,7 @@ import type { ActorKey, ActorRouter, Registry, RunConfig } from "rivetkit";
 import { createActorRouter, createClientWithDriver } from "rivetkit";
 import type { ActorDriver } from "rivetkit/driver-helpers";
 import { serializeEmptyPersistData } from "rivetkit/driver-helpers";
+import { promiseWithResolvers } from "rivetkit/utils";
 import {
 	CloudflareDurableObjectGlobalState,
 	createCloudflareActorsActorDriverBuilder,
@@ -62,7 +63,7 @@ export function createActorDurableObject(
 		implements ActorHandlerInterface
 	{
 		#initialized?: InitializedData;
-		#initializedPromise?: PromiseWithResolvers<void>;
+		#initializedPromise?: ReturnType<typeof promiseWithResolvers<void>>;
 
 		#actor?: LoadedActor;
 
@@ -73,7 +74,7 @@ export function createActorDurableObject(
 				if (this.#initializedPromise) {
 					await this.#initializedPromise.promise;
 				} else {
-					this.#initializedPromise = Promise.withResolvers();
+					this.#initializedPromise = promiseWithResolvers();
 					const res = await this.ctx.storage.get([
 						KEYS.NAME,
 						KEYS.KEY,

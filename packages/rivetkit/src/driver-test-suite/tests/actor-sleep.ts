@@ -318,7 +318,6 @@ export function runActorSleepTests(driverTestConfig: DriverTestConfig) {
 
 			// Close WebSocket
 			ws.close();
-			await new Promise((resolve) => setTimeout(resolve, 100));
 
 			// Wait for sleep timeout after WebSocket closed
 			await waitFor(driverTestConfig, SLEEP_TIMEOUT + 100);

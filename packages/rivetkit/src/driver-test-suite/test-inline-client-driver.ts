@@ -160,10 +160,6 @@ export function createTestInlineClientDriver(
 			// Normalize path to match other drivers
 			const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
 
-			logger().debug({
-				msg: "creating websocket connection via test inline driver",
-			});
-
 			// Create WebSocket connection to the test endpoint
 			// Use a placeholder path and pass the actual path as a query param to avoid mixing user query params with internal ones
 			const wsUrl = new URL(
@@ -174,6 +170,12 @@ export function createTestInlineClientDriver(
 			if (params !== undefined)
 				wsUrl.searchParams.set("params", JSON.stringify(params));
 			wsUrl.searchParams.set("encodingKind", encoding);
+			wsUrl.searchParams.set("transport", transport);
+
+			logger().debug({
+				msg: "creating websocket connection via test inline driver",
+				url: wsUrl.toString(),
+			});
 
 			// Convert http/https to ws/wss
 			const wsProtocol = wsUrl.protocol === "https:" ? "wss:" : "ws:";

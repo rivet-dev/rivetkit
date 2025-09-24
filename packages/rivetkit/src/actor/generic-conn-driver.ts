@@ -16,6 +16,7 @@ import type { AnyActorInstance } from "@/actor/instance";
 import type { CachedSerializer, Encoding } from "@/actor/protocol/serde";
 import { encodeDataToString } from "@/actor/protocol/serde";
 import type * as protocol from "@/schemas/client-protocol/mod";
+import { promiseWithResolvers } from "@/utils";
 import { loggerWithoutContext } from "./log";
 
 // This state is different than `PersistedConn` state since the connection-specific state is persisted & must be serializable. This is also part of the connection driver, not part of the core actor.
@@ -133,7 +134,7 @@ export function createGenericWebSocketDriver(
 			}
 
 			// Create promise to wait for socket to close gracefully
-			const { promise, resolve } = Promise.withResolvers<void>();
+			const { promise, resolve } = promiseWithResolvers<void>();
 			raw.addEventListener("close", () => resolve());
 
 			// Close socket

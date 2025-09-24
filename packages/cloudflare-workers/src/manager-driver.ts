@@ -93,7 +93,8 @@ export class CloudflareActorsManagerDriver implements ManagerDriver {
 		headers["sec-websocket-protocol"] = "rivetkit";
 
 		// Use the path parameter to determine the URL
-		const url = `http://actor${path}`;
+		const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+		const url = `http://actor${normalizedPath}`;
 
 		logger().debug({ msg: "rewriting websocket url", from: path, to: url });
 
@@ -104,7 +105,7 @@ export class CloudflareActorsManagerDriver implements ManagerDriver {
 
 		if (!webSocket) {
 			throw new InternalError(
-				"missing websocket connection in response from DO",
+				`missing websocket connection in response from DO\n\nStatus: ${response.status}\nResponse: ${await response.text()}`,
 			);
 		}
 
