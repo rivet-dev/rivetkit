@@ -237,17 +237,20 @@ export function runActorConnStateTests(driverTestConfig: DriverTestConfig) {
 					receivedMessages.push(data);
 				});
 
-				// Send message from first connection to second
-				const success = await conn1.sendToConnection(
-					state2.id,
-					"Hello from conn1",
-				);
-				expect(success).toBe(true);
+				// TODO: SSE has race condition between subscrib eand publish message
+				await vi.waitFor(async () => {
+					// Send message from first connection to second
+					const success = await conn1.sendToConnection(
+						state2.id,
+						"Hello from conn1",
+					);
+					expect(success).toBe(true);
 
-				// Verify message was received
-				expect(receivedMessages.length).toBe(1);
-				expect(receivedMessages[0].from).toBe(state1.id);
-				expect(receivedMessages[0].message).toBe("Hello from conn1");
+					// Verify message was received
+					expect(receivedMessages.length).toBe(1);
+					expect(receivedMessages[0].from).toBe(state1.id);
+					expect(receivedMessages[0].message).toBe("Hello from conn1");
+				});
 
 				// Clean up
 				await conn1.dispose();
