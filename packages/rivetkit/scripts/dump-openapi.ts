@@ -37,7 +37,6 @@ function main() {
 		registryConfig,
 		driverConfig,
 		managerDriver,
-		true,
 	);
 
 	const openApiDoc = openapi.getOpenAPIDocument({

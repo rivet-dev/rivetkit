@@ -24,8 +24,8 @@ import {
 	createActor,
 	destroyActor,
 	getActor,
-	getActorById,
-	getOrCreateActorById,
+	getActorByKey,
+	getOrCreateActor,
 } from "./api-endpoints";
 import { EngineApiError, getEndpoint } from "./api-utils";
 import { logger } from "./log";
@@ -58,39 +58,30 @@ export class RemoteManagerDriver implements ManagerDriver {
 		actorId,
 	}: GetForIdInput): Promise<ActorOutput | undefined> {
 		// Fetch from API if not in cache
-		try {
-			const response = await getActor(this.#config, actorId);
+		const response = await getActor(this.#config, name, actorId);
+		const actor = response.actors[0];
+		if (!actor) return undefined;
 
-			// Validate name matches
-			if (response.actor.name !== name) {
-				logger().debug({
-					msg: "actor name mismatch from api",
-					actorId,
-					apiName: response.actor.name,
-					requestedName: name,
-				});
-				return undefined;
-			}
-
-			const keyRaw = response.actor.key;
-			invariant(keyRaw, `actor ${actorId} should have key`);
-			const key = deserializeActorKey(keyRaw);
-
-			return {
+		// Validate name matches
+		if (actor.name !== name) {
+			logger().debug({
+				msg: "actor name mismatch from api",
 				actorId,
-				name,
-				key,
-			};
-		} catch (error) {
-			if (
-				error instanceof EngineApiError &&
-				(error as EngineApiError).group === "actor" &&
-				(error as EngineApiError).code === "not_found"
-			) {
-				return undefined;
-			}
-			throw error;
+				apiName: actor.name,
+				requestedName: name,
+			});
+			return undefined;
 		}
+
+		const keyRaw = actor.key;
+		invariant(keyRaw, `actor ${actorId} should have key`);
+		const key = deserializeActorKey(keyRaw);
+
+		return {
+			actorId,
+			name,
+			key,
+		};
 	}
 
 	async getWithKey({
@@ -102,13 +93,11 @@ export class RemoteManagerDriver implements ManagerDriver {
 
 		// If not in local cache, fetch by key from API
 		try {
-			const response = await getActorById(this.#config, name, key);
+			const response = await getActorByKey(this.#config, name, key);
+			const actor = response.actors[0];
+			if (!actor) return undefined;
 
-			if (!response.actor_id) {
-				return undefined;
-			}
-
-			const actorId = response.actor_id;
+			const actorId = actor.actor_id;
 
 			logger().debug({
 				msg: "getWithKey: found actor via api",
@@ -145,7 +134,7 @@ export class RemoteManagerDriver implements ManagerDriver {
 			key,
 		});
 
-		const response = await getOrCreateActorById(this.#config, {
+		const { actor, created } = await getOrCreateActor(this.#config, {
 			name,
 			key: serializeActorKey(key),
 			runner_name_selector: this.#config.runnerName,
@@ -153,14 +142,14 @@ export class RemoteManagerDriver implements ManagerDriver {
 			crash_policy: "sleep",
 		});
 
-		const actorId = response.actor_id;
+		const actorId = actor.actor_id;
 
 		logger().info({
 			msg: "getOrCreateWithKey: actor ready",
 			actorId,
 			name,
 			key,
-			created: response.created,
+			created,
 		});
 
 		return {

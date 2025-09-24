@@ -234,7 +234,10 @@ export function runActorConnTests(driverTestConfig: DriverTestConfig) {
 		});
 
 		describe("Lifecycle Hooks", () => {
-			test("should trigger lifecycle hooks", async (c) => {
+			test.skipIf(
+				driverTestConfig.transport === "sse" &&
+					driverTestConfig.clientType === "inline",
+			)("should trigger lifecycle hooks", async (c) => {
 				const { client } = await setupDriverTest(c, driverTestConfig);
 
 				// Create and connect

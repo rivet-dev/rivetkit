@@ -8,11 +8,11 @@ import invariant from "invariant";
 import { z } from "zod";
 import {
 	ActorNotFound,
-	FeatureNotImplemented,
 	MissingActorHeader,
 	Unsupported,
 	WebSocketsNotEnabled,
 } from "@/actor/errors";
+import { serializeActorKey } from "@/actor/keys";
 import type { Encoding, Transport } from "@/client/mod";
 import {
 	handleRouteError,
@@ -30,35 +30,33 @@ import { secureInspector } from "@/inspector/utils";
 import {
 	type ActorsCreateRequest,
 	ActorsCreateRequestSchema,
+	type ActorsCreateResponse,
 	ActorsCreateResponseSchema,
-} from "@/manager-api/routes/actors-create";
-import { ActorsDeleteResponseSchema } from "@/manager-api/routes/actors-delete";
-import { ActorsGetResponseSchema } from "@/manager-api/routes/actors-get";
-import { ActorsGetByIdResponseSchema } from "@/manager-api/routes/actors-get-by-id";
-import {
-	type ActorsGetOrCreateByIdRequest,
-	ActorsGetOrCreateByIdRequestSchema,
-	ActorsGetOrCreateByIdResponseSchema,
-} from "@/manager-api/routes/actors-get-or-create-by-id";
-import { RivetIdSchema } from "@/manager-api/routes/common";
+	type ActorsGetOrCreateRequest,
+	ActorsGetOrCreateRequestSchema,
+	type ActorsGetOrCreateResponse,
+	ActorsGetOrCreateResponseSchema,
+	type ActorsListResponse,
+	ActorsListResponseSchema,
+	type Actor as ApiActor,
+} from "@/manager-api/actors";
+import { RivetIdSchema } from "@/manager-api/common";
 import type { UniversalWebSocket, UpgradeWebSocketArgs } from "@/mod";
 import type { RegistryConfig } from "@/registry/config";
 import type { RunConfig } from "@/registry/run-config";
 import { promiseWithResolvers, stringifyError } from "@/utils";
-import type { ManagerDriver } from "./driver";
+import type { ActorOutput, ManagerDriver } from "./driver";
 import { logger } from "./log";
 
-function buildOpenApiResponses<T>(schema: T, validateBody: boolean) {
+function buildOpenApiResponses<T>(schema: T) {
 	return {
 		200: {
 			description: "Success",
-			content: validateBody
-				? {
-						"application/json": {
-							schema,
-						},
-					}
-				: {},
+			content: {
+				"application/json": {
+					schema,
+				},
+			},
 		},
 		400: {
 			description: "User error",
@@ -73,7 +71,6 @@ export function createManagerRouter(
 	registryConfig: RegistryConfig,
 	runConfig: RunConfig,
 	managerDriver: ManagerDriver,
-	validateBody: boolean,
 ): { router: Hono; openapi: OpenAPIHono } {
 	const router = new OpenAPIHono({ strict: false }).basePath(
 		runConfig.basePath,
@@ -167,72 +164,99 @@ export function createManagerRouter(
 		);
 	});
 
-	// GET /actors/by-id
+	// GET /actors
 	{
 		const route = createRoute({
 			middleware: [cors],
 			method: "get",
-			path: "/actors/by-id",
+			path: "/actors",
 			request: {
 				query: z.object({
 					name: z.string(),
-					key: z.string(),
+					actor_ids: z.string().optional(),
+					key: z.string().optional(),
 				}),
 			},
-			responses: buildOpenApiResponses(
-				ActorsGetByIdResponseSchema,
-				validateBody,
-			),
+			responses: buildOpenApiResponses(ActorsListResponseSchema),
 		});
 
 		router.openapi(route, async (c) => {
-			const { name, key } = c.req.valid("query");
+			const { name, actor_ids, key } = c.req.valid("query");
 
-			// Get actor by key from the driver
-			const actorOutput = await managerDriver.getWithKey({
-				c,
-				name,
-				key: [key], // Convert string to ActorKey array
-			});
+			const actorIdsParsed = actor_ids
+				? actor_ids
+						.split(",")
+						.map((id) => id.trim())
+						.filter((id) => id.length > 0)
+				: undefined;
 
-			return c.json({
-				actor_id: actorOutput?.actorId || null,
+			const actors: ActorOutput[] = [];
+
+			if (actorIdsParsed) {
+				if (actorIdsParsed.length > 32) {
+					return c.json(
+						{
+							error: `Too many actor IDs. Maximum is 32, got ${actorIdsParsed.length}.`,
+						},
+						400,
+					);
+				}
+
+				if (actorIdsParsed.length === 0) {
+					return c.json<ActorsListResponse>({
+						actors: [],
+					});
+				}
+
+				for (const actorId of actorIdsParsed) {
+					if (name) {
+						const actorOutput = await managerDriver.getForId({
+							c,
+							name,
+							actorId,
+						});
+						if (actorOutput) {
+							actors.push(actorOutput);
+						}
+					}
+				}
+			} else if (key) {
+				const actorOutput = await managerDriver.getWithKey({
+					c,
+					name,
+					key: [key], // Convert string to ActorKey array
+				});
+				if (actorOutput) {
+					actors.push(actorOutput);
+				}
+			}
+
+			return c.json<ActorsListResponse>({
+				actors: actors.map(createApiActor),
 			});
 		});
 	}
 
-	// PUT /actors/by-id
+	// PUT /actors
 	{
 		const route = createRoute({
 			cors: [cors],
 			method: "put",
-			path: "/actors/by-id",
+			path: "/actors",
 			request: {
 				body: {
-					content: validateBody
-						? {
-								"application/json": {
-									schema: ActorsGetOrCreateByIdRequestSchema,
-								},
-							}
-						: {},
+					content: {
+						"application/json": {
+							schema: ActorsGetOrCreateRequestSchema,
+						},
+					},
 				},
 			},
-			responses: buildOpenApiResponses(
-				ActorsGetOrCreateByIdResponseSchema,
-				validateBody,
-			),
+			responses: buildOpenApiResponses(ActorsGetOrCreateResponseSchema),
 		});
 
 		router.openapi(route, async (c) => {
-			const body = validateBody
-				? await c.req.json<ActorsGetOrCreateByIdRequest>()
-				: await c.req.json();
-
-			// Parse and validate the request body if validation is enabled
-			if (validateBody) {
-				ActorsGetOrCreateByIdRequestSchema.parse(body);
-			}
+			const body = c.req.valid("json");
 
 			// Check if actor already exists
 			const existingActor = await managerDriver.getWithKey({
@@ -242,8 +266,8 @@ export function createManagerRouter(
 			});
 
 			if (existingActor) {
-				return c.json({
-					actor_id: existingActor.actorId,
+				return c.json<ActorsGetOrCreateResponse>({
+					actor: createApiActor(existingActor),
 					created: false,
 				});
 			}
@@ -259,57 +283,10 @@ export function createManagerRouter(
 				region: undefined, // Not provided in the request schema
 			});
 
-			return c.json({
-				actor_id: newActor.actorId,
+			return c.json<ActorsGetOrCreateResponse>({
+				actor: createApiActor(newActor),
 				created: true,
 			});
-		});
-	}
-
-	// GET /actors/{actor_id}
-	{
-		const route = createRoute({
-			middleware: [cors],
-			method: "get",
-			path: "/actors/{actor_id}",
-			request: {
-				params: z.object({
-					actor_id: RivetIdSchema,
-				}),
-			},
-			responses: buildOpenApiResponses(ActorsGetResponseSchema, validateBody),
-		});
-
-		router.openapi(route, async (c) => {
-			const { actor_id } = c.req.valid("param");
-
-			// Get actor by ID from the driver
-			const actorOutput = await managerDriver.getForId({
-				c,
-				name: "", // TODO: The API doesn't provide the name, this may need to be resolved
-				actorId: actor_id,
-			});
-
-			if (!actorOutput) {
-				throw new ActorNotFound(actor_id);
-			}
-
-			// Transform ActorOutput to match ActorSchema
-			// Note: Some fields are not available from the driver and need defaults
-			const actor = {
-				actor_id: actorOutput.actorId,
-				name: actorOutput.name,
-				key: actorOutput.key,
-				namespace_id: "default", // Assert default namespace
-				runner_name_selector: "rivetkit", // Assert rivetkit runner
-				create_ts: Date.now(), // Not available from driver
-				connectable_ts: null,
-				destroy_ts: null,
-				sleep_ts: null,
-				start_ts: null,
-			};
-
-			return c.json({ actor });
 		});
 	}
 
@@ -321,30 +298,18 @@ export function createManagerRouter(
 			path: "/actors",
 			request: {
 				body: {
-					content: validateBody
-						? {
-								"application/json": {
-									schema: ActorsCreateRequestSchema,
-								},
-							}
-						: {},
+					content: {
+						"application/json": {
+							schema: ActorsCreateRequestSchema,
+						},
+					},
 				},
 			},
-			responses: buildOpenApiResponses(
-				ActorsCreateResponseSchema,
-				validateBody,
-			),
+			responses: buildOpenApiResponses(ActorsCreateResponseSchema),
 		});
 
 		router.openapi(route, async (c) => {
-			const body = validateBody
-				? await c.req.json<ActorsCreateRequest>()
-				: await c.req.json();
-
-			// Parse and validate the request body if validation is enabled
-			if (validateBody) {
-				ActorsCreateRequestSchema.parse(body);
-			}
+			const body = c.req.valid("json");
 
 			// Create actor using the driver
 			const actorOutput = await managerDriver.createActor({
@@ -358,20 +323,9 @@ export function createManagerRouter(
 			});
 
 			// Transform ActorOutput to match ActorSchema
-			const actor = {
-				actor_id: actorOutput.actorId,
-				name: actorOutput.name,
-				key: actorOutput.key,
-				namespace_id: "default", // Assert default namespace
-				runner_name_selector: "rivetkit", // Assert rivetkit runner
-				create_ts: Date.now(),
-				connectable_ts: null,
-				destroy_ts: null,
-				sleep_ts: null,
-				start_ts: null,
-			};
+			const actor = createApiActor(actorOutput);
 
-			return c.json({ actor });
+			return c.json<ActorsCreateResponse>({ actor });
 		});
 	}
 
@@ -793,5 +747,20 @@ async function createTestWebSocketProxy(
 
 			serverWsReject();
 		},
+	};
+}
+
+function createApiActor(actor: ActorOutput): ApiActor {
+	return {
+		actor_id: actor.actorId,
+		name: actor.name,
+		key: serializeActorKey(actor.key),
+		namespace_id: "default", // Assert default namespace
+		runner_name_selector: "rivetkit", // Assert rivetkit runner
+		create_ts: Date.now(),
+		connectable_ts: null,
+		destroy_ts: null,
+		sleep_ts: null,
+		start_ts: null,
 	};
 }

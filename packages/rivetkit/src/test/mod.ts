@@ -31,7 +31,6 @@ function serve(registry: Registry<any>, inputConfig?: InputConfig): ServerType {
 		registry.config,
 		runConfig,
 		managerDriver,
-		false,
 	);
 
 	// Inject WebSocket

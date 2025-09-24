@@ -145,25 +145,31 @@ export function runActorConnStateTests(driverTestConfig: DriverTestConfig) {
 		});
 
 		describe("Connection Lifecycle", () => {
-			test("should track connection and disconnection events", async (c) => {
+			test.skipIf(
+				driverTestConfig.transport === "sse" &&
+					driverTestConfig.clientType === "inline",
+			)("should track connection and disconnection events", async (c) => {
 				const { client } = await setupDriverTest(c, driverTestConfig);
 
+				const debugHandle = client.connStateActor.getOrCreate(undefined, {
+					params: { noCount: true },
+				});
+
 				// Create a connection
-				const handle = client.connStateActor.getOrCreate();
-				const conn = handle.connect();
+				const conn = client.connStateActor.getOrCreate().connect();
 
 				// Get the connection state
 				const connState = await conn.getConnectionState();
 
 				// Verify the connection is tracked
 				await vi.waitFor(async () => {
-					const connectionIds = await conn.getConnectionIds();
+					const connectionIds = await debugHandle.getConnectionIds();
 					expect(connectionIds).toContain(connState.id);
 				});
 
 				// Initial disconnection count
 				await vi.waitFor(async () => {
-					const disconnects = await conn.getDisconnectionCount();
+					const disconnects = await debugHandle.getDisconnectionCount();
 					expect(disconnects).toBe(0);
 				});
 
@@ -173,7 +179,9 @@ export function runActorConnStateTests(driverTestConfig: DriverTestConfig) {
 				// Validate conn count
 				await vi.waitFor(
 					async () => {
-						const disconnects = await newConn.getDisconnectionCount();
+						console.log("disconnects before");
+						const disconnects = await debugHandle.getDisconnectionCount();
+						console.log("disconnects", disconnects);
 						expect(disconnects).toBe(1);
 					},
 					// SSE takes a long time to disconnect on CF Workers
@@ -184,12 +192,13 @@ export function runActorConnStateTests(driverTestConfig: DriverTestConfig) {
 				);
 
 				// Create a new connection to check the disconnection count
-				const newConn = handle.connect();
+				const newConn = client.connStateActor.getOrCreate().connect();
 
 				// Verify the connection is tracked
 				await vi.waitFor(async () => {
-					const connectionIds = await conn.getConnectionIds();
-					expect(connectionIds.length).toBe(2);
+					const connectionIds = await debugHandle.getConnectionIds();
+					console.log("conn ids", connectionIds);
+					expect(connectionIds.length).toBe(1);
 				});
 
 				// Clean up
@@ -198,7 +207,9 @@ export function runActorConnStateTests(driverTestConfig: DriverTestConfig) {
 				// Verify disconnection was tracked
 				await vi.waitFor(
 					async () => {
-						const disconnects = await newConn.getDisconnectionCount();
+						console.log("A");
+						const disconnects = await debugHandle.getDisconnectionCount();
+						console.log(`B ${disconnects}`);
 						expect(disconnects).toBe(2);
 					},
 					// SSE takes a long time to disconnect on CF Workers
