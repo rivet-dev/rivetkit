@@ -18,6 +18,8 @@ export const HEADER_CONN_ID = "x-rivet-conn";
 
 export const HEADER_CONN_TOKEN = "x-rivet-conn-token";
 
+export const HEADER_RIVET_TOKEN = "x-rivet-token";
+
 // MARK: Manager Gateway Headers
 export const HEADER_RIVET_TARGET = "x-rivet-target";
 export const HEADER_RIVET_ACTOR = "x-rivet-actor";
@@ -29,6 +31,7 @@ export const WS_PROTOCOL_TARGET = "rivet_target.";
 export const WS_PROTOCOL_ACTOR = "rivet_actor.";
 export const WS_PROTOCOL_ENCODING = "rivet_encoding.";
 export const WS_PROTOCOL_CONN_PARAMS = "rivet_conn_params.";
+export const WS_PROTOCOL_TOKEN = "rivet_token.";
 
 // MARK: WebSocket Inline Test Protocol Prefixes
 export const WS_PROTOCOL_TRANSPORT = "test_transport.";
@@ -50,4 +53,5 @@ export const ALLOWED_PUBLIC_HEADERS = [
 	HEADER_CONN_TOKEN,
 	HEADER_RIVET_TARGET,
 	HEADER_RIVET_ACTOR,
+	HEADER_RIVET_TOKEN,
 ];

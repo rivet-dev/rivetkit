@@ -1,4 +1,9 @@
 import type { ClientConfig } from "@/client/config";
+import {
+	HEADER_RIVET_ACTOR,
+	HEADER_RIVET_TARGET,
+	HEADER_RIVET_TOKEN,
+} from "@/common/actor-router-consts";
 import { combineUrlPath } from "@/utils";
 import { getEndpoint } from "./api-utils";
 
@@ -14,7 +19,11 @@ export async function sendHttpRequestToActor(
 
 	// Handle body properly based on method and presence
 	let bodyToSend: ArrayBuffer | null = null;
-	const guardHeaders = buildGuardHeadersForHttp(actorRequest, actorId);
+	const guardHeaders = buildGuardHeadersForHttp(
+		runConfig,
+		actorRequest,
+		actorId,
+	);
 
 	if (
 		actorRequest.body &&
@@ -58,6 +67,7 @@ function mutableResponse(fetchRes: Response): Response {
 }
 
 function buildGuardHeadersForHttp(
+	runConfig: ClientConfig,
 	actorRequest: Request,
 	actorId: string,
 ): Headers {
@@ -66,9 +76,15 @@ function buildGuardHeadersForHttp(
 	for (const [key, value] of actorRequest.headers.entries()) {
 		headers.set(key, value);
 	}
+	// Add extra headers from config
+	for (const [key, value] of Object.entries(runConfig.headers)) {
+		headers.set(key, value);
+	}
 	// Add guard-specific headers
-	headers.set("x-rivet-target", "actor");
-	headers.set("x-rivet-actor", actorId);
-	headers.set("x-rivet-port", "main");
+	headers.set(HEADER_RIVET_TARGET, "actor");
+	headers.set(HEADER_RIVET_ACTOR, actorId);
+	if (runConfig.token) {
+		headers.set(HEADER_RIVET_TOKEN, runConfig.token);
+	}
 	return headers;
 }
