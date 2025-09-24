@@ -1,0 +1,15 @@
+{
+  "tasks": {
+    "dev": "deno run --allow-env --allow-sys --allow-read --allow-ffi --allow-net src/server.ts",
+    "check-types": "deno check",
+    "test": "deno test --allow-env --allow-sys --allow-read --allow-ffi --allow-net",
+    "connect": "deno run --allow-env --allow-sys --allow-read --allow-ffi --allow-net scripts/connect.ts"
+  },
+  "imports": {
+    "os": "node:os",
+    "path": "node:path",
+    "fs": "node:fs",
+    "fs/promises": "node:fs/promises",
+    "crypto": "node:crypto"
+  }
+}
