@@ -6,11 +6,13 @@ import {
 	type GetForIdInput,
 	type GetOrCreateWithKeyInput,
 	type GetWithKeyInput,
-	HEADER_AUTH_DATA,
-	HEADER_CONN_PARAMS,
-	HEADER_ENCODING,
 	type ManagerDisplayInformation,
 	type ManagerDriver,
+	WS_PROTOCOL_ACTOR,
+	WS_PROTOCOL_CONN_PARAMS,
+	WS_PROTOCOL_ENCODING,
+	WS_PROTOCOL_STANDARD,
+	WS_PROTOCOL_TARGET,
 } from "rivetkit/driver-helpers";
 import { ActorAlreadyExists, InternalError } from "rivetkit/errors";
 import { getCloudflareAmbientEnv } from "./handler";
@@ -81,16 +83,22 @@ export class CloudflareActorsManagerDriver implements ManagerDriver {
 		const id = env.ACTOR_DO.idFromString(actorId);
 		const stub = env.ACTOR_DO.get(id);
 
+		const protocols: string[] = [];
+		protocols.push(WS_PROTOCOL_STANDARD);
+		protocols.push(`${WS_PROTOCOL_TARGET}actor`);
+		protocols.push(`${WS_PROTOCOL_ACTOR}${actorId}`);
+		protocols.push(`${WS_PROTOCOL_ENCODING}${encoding}`);
+		if (params) {
+			protocols.push(
+				`${WS_PROTOCOL_CONN_PARAMS}${encodeURIComponent(JSON.stringify(params))}`,
+			);
+		}
+
 		const headers: Record<string, string> = {
 			Upgrade: "websocket",
 			Connection: "Upgrade",
-			[HEADER_ENCODING]: encoding,
+			"sec-websocket-protocol": protocols.join(", "),
 		};
-		if (params) {
-			headers[HEADER_CONN_PARAMS] = JSON.stringify(params);
-		}
-		// HACK: See packages/drivers/cloudflare-workers/src/websocket.ts
-		headers["sec-websocket-protocol"] = "rivetkit";
 
 		// Use the path parameter to determine the URL
 		const normalizedPath = path.startsWith("/") ? path : `/${path}`;
@@ -152,7 +160,6 @@ export class CloudflareActorsManagerDriver implements ManagerDriver {
 		actorId: string,
 		encoding: Encoding,
 		params: unknown,
-		authData: unknown,
 	): Promise<Response> {
 		logger().debug({
 			msg: "forwarding websocket to durable object",
@@ -188,14 +195,18 @@ export class CloudflareActorsManagerDriver implements ManagerDriver {
 			}
 		}
 
-		// Add RivetKit headers
-		actorRequest.headers.set(HEADER_ENCODING, encoding);
+		// Build protocols for WebSocket connection
+		const protocols: string[] = [];
+		protocols.push(WS_PROTOCOL_STANDARD);
+		protocols.push(`${WS_PROTOCOL_TARGET}actor`);
+		protocols.push(`${WS_PROTOCOL_ACTOR}${actorId}`);
+		protocols.push(`${WS_PROTOCOL_ENCODING}${encoding}`);
 		if (params) {
-			actorRequest.headers.set(HEADER_CONN_PARAMS, JSON.stringify(params));
+			protocols.push(
+				`${WS_PROTOCOL_CONN_PARAMS}${encodeURIComponent(JSON.stringify(params))}`,
+			);
 		}
-		if (authData) {
-			actorRequest.headers.set(HEADER_AUTH_DATA, JSON.stringify(authData));
-		}
+		actorRequest.headers.set("sec-websocket-protocol", protocols.join(", "));
 
 		const id = c.env.ACTOR_DO.idFromString(actorId);
 		const stub = c.env.ACTOR_DO.get(id);

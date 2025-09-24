@@ -17,7 +17,7 @@ import type { Encoding, UniversalWebSocket } from "@/mod";
 import { combineUrlPath } from "@/utils";
 import { sendHttpRequestToActor } from "./actor-http-client";
 import {
-	buildGuardHeadersForWebSocket,
+	buildWebSocketProtocols,
 	openWebSocketToActor,
 } from "./actor-websocket-client";
 import {
@@ -227,7 +227,6 @@ export class RemoteManagerDriver implements ManagerDriver {
 		actorId: string,
 		encoding: Encoding,
 		params: unknown,
-		authData: unknown,
 	): Promise<Response> {
 		const upgradeWebSocket = this.#config.getUpgradeWebSocket?.();
 		invariant(upgradeWebSocket, "missing getUpgradeWebSocket");
@@ -243,14 +242,9 @@ export class RemoteManagerDriver implements ManagerDriver {
 			guardUrl,
 		});
 
-		// Build headers
-		const headers = buildGuardHeadersForWebSocket(
-			actorId,
-			encoding,
-			params,
-			authData,
-		);
-		const args = await createWebSocketProxy(c, wsGuardUrl, headers);
+		// Build protocols
+		const protocols = buildWebSocketProtocols(actorId, encoding, params);
+		const args = await createWebSocketProxy(c, wsGuardUrl, protocols);
 
 		return await upgradeWebSocket(() => args)(c, noopNext());
 	}

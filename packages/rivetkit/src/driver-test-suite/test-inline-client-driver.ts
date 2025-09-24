@@ -10,6 +10,12 @@ import {
 	HEADER_ACTOR_QUERY,
 	HEADER_CONN_PARAMS,
 	HEADER_ENCODING,
+	WS_PROTOCOL_ACTOR,
+	WS_PROTOCOL_CONN_PARAMS,
+	WS_PROTOCOL_ENCODING,
+	WS_PROTOCOL_PATH,
+	WS_PROTOCOL_TARGET,
+	WS_PROTOCOL_TRANSPORT,
 } from "@/common/actor-router-consts";
 import type { UniversalEventSource } from "@/common/eventsource-interface";
 import type { DeconstructedError } from "@/common/utils";
@@ -161,16 +167,9 @@ export function createTestInlineClientDriver(
 			const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
 
 			// Create WebSocket connection to the test endpoint
-			// Use a placeholder path and pass the actual path as a query param to avoid mixing user query params with internal ones
 			const wsUrl = new URL(
 				`${endpoint}/.test/inline-driver/connect-websocket/ws`,
 			);
-			wsUrl.searchParams.set("path", normalizedPath);
-			wsUrl.searchParams.set("actorId", actorId);
-			if (params !== undefined)
-				wsUrl.searchParams.set("params", JSON.stringify(params));
-			wsUrl.searchParams.set("encodingKind", encoding);
-			wsUrl.searchParams.set("transport", transport);
 
 			logger().debug({
 				msg: "creating websocket connection via test inline driver",
@@ -179,16 +178,28 @@ export function createTestInlineClientDriver(
 
 			// Convert http/https to ws/wss
 			const wsProtocol = wsUrl.protocol === "https:" ? "wss:" : "ws:";
-			const finalWsUrl = `${wsProtocol}//${wsUrl.host}${wsUrl.pathname}${wsUrl.search}`;
+			const finalWsUrl = `${wsProtocol}//${wsUrl.host}${wsUrl.pathname}`;
 
 			logger().debug({ msg: "connecting to websocket", url: finalWsUrl });
 
+			// Build protocols for the connection
+			const protocols: string[] = [];
+			protocols.push(`${WS_PROTOCOL_TARGET}actor`);
+			protocols.push(`${WS_PROTOCOL_ACTOR}${actorId}`);
+			protocols.push(`${WS_PROTOCOL_ENCODING}${encoding}`);
+			protocols.push(`${WS_PROTOCOL_TRANSPORT}${transport}`);
+			protocols.push(
+				`${WS_PROTOCOL_PATH}${encodeURIComponent(normalizedPath)}`,
+			);
+			if (params !== undefined) {
+				protocols.push(
+					`${WS_PROTOCOL_CONN_PARAMS}${encodeURIComponent(JSON.stringify(params))}`,
+				);
+			}
+
 			// Create and return the WebSocket
 			// Node & browser WebSocket types are incompatible
-			const ws = new WebSocket(finalWsUrl, [
-				// HACK: See packages/drivers/cloudflare-workers/src/websocket.ts
-				"rivetkit",
-			]) as any;
+			const ws = new WebSocket(finalWsUrl, protocols) as any;
 
 			return ws;
 		},
@@ -205,7 +216,6 @@ export function createTestInlineClientDriver(
 			_actorId: string,
 			_encoding: Encoding,
 			_params: unknown,
-			_authData: unknown,
 		): Promise<Response> {
 			throw "UNIMPLEMENTED";
 			// const upgradeWebSocket = this.#runConfig.getUpgradeWebSocket?.();

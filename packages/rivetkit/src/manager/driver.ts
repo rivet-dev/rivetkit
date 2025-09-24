@@ -33,7 +33,6 @@ export interface ManagerDriver {
 		actorId: string,
 		encoding: Encoding,
 		params: unknown,
-		authData: unknown,
 	): Promise<Response>;
 
 	displayInformation(): ManagerDisplayInformation;

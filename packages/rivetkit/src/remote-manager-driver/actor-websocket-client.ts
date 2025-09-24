@@ -1,8 +1,12 @@
 import type { ClientConfig } from "@/client/config";
 import {
-	HEADER_AUTH_DATA,
 	HEADER_CONN_PARAMS,
 	HEADER_ENCODING,
+	WS_PROTOCOL_ACTOR,
+	WS_PROTOCOL_CONN_PARAMS,
+	WS_PROTOCOL_ENCODING,
+	WS_PROTOCOL_STANDARD as WS_PROTOCOL_RIVETKIT,
+	WS_PROTOCOL_TARGET,
 } from "@/common/actor-router-consts";
 import { importWebSocket } from "@/common/websocket";
 import type { Encoding, UniversalWebSocket } from "@/mod";
@@ -31,9 +35,10 @@ export async function openWebSocketToActor(
 	});
 
 	// Create WebSocket connection
-	const ws = new WebSocket(guardUrl, {
-		headers: buildGuardHeadersForWebSocket(actorId, encoding, params),
-	});
+	const ws = new WebSocket(
+		guardUrl,
+		buildWebSocketProtocols(actorId, encoding, params),
+	);
 
 	// Set binary type to arraybuffer for proper encoding support
 	ws.binaryType = "arraybuffer";
@@ -43,22 +48,20 @@ export async function openWebSocketToActor(
 	return ws as UniversalWebSocket;
 }
 
-export function buildGuardHeadersForWebSocket(
+export function buildWebSocketProtocols(
 	actorId: string,
 	encoding: Encoding,
 	params?: unknown,
-	authData?: unknown,
-): Record<string, string> {
-	const headers: Record<string, string> = {};
-	headers["x-rivet-target"] = "actor";
-	headers["x-rivet-actor"] = actorId;
-	headers["x-rivet-port"] = "main";
-	headers[HEADER_ENCODING] = encoding;
+): string[] {
+	const protocols: string[] = [];
+	protocols.push(WS_PROTOCOL_RIVETKIT);
+	protocols.push(`${WS_PROTOCOL_TARGET}actor`);
+	protocols.push(`${WS_PROTOCOL_ACTOR}${actorId}`);
+	protocols.push(`${WS_PROTOCOL_ENCODING}${encoding}`);
 	if (params) {
-		headers[HEADER_CONN_PARAMS] = JSON.stringify(params);
+		protocols.push(
+			`${WS_PROTOCOL_CONN_PARAMS}${encodeURIComponent(JSON.stringify(params))}`,
+		);
 	}
-	if (authData) {
-		headers[HEADER_AUTH_DATA] = JSON.stringify(authData);
-	}
-	return headers;
+	return protocols;
 }

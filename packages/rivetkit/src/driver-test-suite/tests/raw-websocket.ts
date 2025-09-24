@@ -277,41 +277,6 @@ export function runRawWebSocketTests(driverTestConfig: DriverTestConfig) {
 			ws.close();
 		});
 
-		test("should pass connection parameters through subprotocols", async (c) => {
-			const { client } = await setupDriverTest(c, driverTestConfig);
-
-			// Create actor with connection parameters
-			const testParams = { userId: "test123", role: "admin" };
-			const actor = client.rawWebSocketActor.getOrCreate(["params"], {
-				params: testParams,
-			});
-
-			const ws = await actor.websocket();
-
-			await new Promise<void>((resolve) => {
-				ws.addEventListener("open", () => resolve(), { once: true });
-			});
-
-			// Send a request to echo the auth data (which should include conn params from auth)
-			ws.send(JSON.stringify({ type: "getAuthData" }));
-
-			const response = await new Promise<any>((resolve, reject) => {
-				ws.addEventListener("message", (event: any) => {
-					const data = JSON.parse(event.data as string);
-					if (data.type === "authData") {
-						resolve(data);
-					}
-				});
-				ws.addEventListener("close", reject);
-			});
-
-			// For now, just verify we get a response
-			// The actual connection params handling needs to be implemented
-			expect(response).toBeDefined();
-
-			ws.close();
-		});
-
 		test("should handle connection close properly", async (c) => {
 			const { client } = await setupDriverTest(c, driverTestConfig);
 			const actor = client.rawWebSocketActor.getOrCreate(["close-test"]);

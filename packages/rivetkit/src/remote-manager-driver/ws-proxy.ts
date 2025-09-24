@@ -11,16 +11,9 @@ import { logger } from "./log";
 export async function createWebSocketProxy(
 	c: HonoContext,
 	targetUrl: string,
-	headers: Record<string, string>,
+	protocols: string[],
 ): Promise<UpgradeWebSocketArgs> {
 	const WebSocket = await importWebSocket();
-
-	// HACK: Sanitize WebSocket-specific headers. If we don't do this, some WebSocket implementations (i.e. native WebSocket in Node.js) will fail to connect.
-	for (const [k, v] of c.req.raw.headers.entries()) {
-		if (!k.startsWith("sec-") && k !== "connection" && k !== "upgrade") {
-			headers[k] = v;
-		}
-	}
 
 	// WebSocket state
 	interface WsState {
@@ -43,7 +36,7 @@ export async function createWebSocketProxy(
 			}
 
 			// Create WebSocket
-			const targetWs = new WebSocket(targetUrl, { headers });
+			const targetWs = new WebSocket(targetUrl, protocols);
 			state.targetWs = targetWs;
 
 			// Setup connection promise

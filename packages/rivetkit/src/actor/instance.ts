@@ -918,7 +918,6 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 		state: CS,
 		driverId: ConnectionDriver,
 		driverState: unknown,
-		authData: unknown,
 	): Promise<Conn<S, CP, CS, V, I, DB>> {
 		this.#assertReady();
 
@@ -935,7 +934,6 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 			connDriverState: driverState,
 			params: params,
 			state: state,
-			authData: authData,
 			lastSeen: Date.now(),
 			subscriptions: [],
 		};
