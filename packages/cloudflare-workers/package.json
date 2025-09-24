@@ -29,7 +29,10 @@
     },
     "./tsconfig": "./dist/tsconfig.json"
   },
-  "sideEffects": false,
+  "sideEffects": [
+    "./dist/chunk-*.js",
+    "./dist/chunk-*.cjs"
+  ],
   "scripts": {
     "build": "tsup src/mod.ts",
     "check-types": "tsc --noEmit",
