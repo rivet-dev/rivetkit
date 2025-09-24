@@ -5,6 +5,7 @@ export type ConnState = {
 	role: string;
 	counter: number;
 	createdAt: number;
+	noCount: boolean;
 };
 
 export const connStateActor = actor({
@@ -16,13 +17,14 @@ export const connStateActor = actor({
 	createConnState: (
 		c,
 		opts,
-		params: { username?: string; role?: string },
+		params: { username?: string; role?: string; noCount?: boolean },
 	): ConnState => {
 		return {
 			username: params?.username || "anonymous",
 			role: params?.role || "user",
 			counter: 0,
 			createdAt: Date.now(),
+			noCount: params?.noCount ?? false,
 		};
 	},
 	// Lifecycle hook when a connection is established
@@ -36,10 +38,12 @@ export const connStateActor = actor({
 	},
 	// Lifecycle hook when a connection is closed
 	onDisconnect: (c, conn) => {
-		c.state.disconnectionCount += 1;
-		c.broadcast("userDisconnected", {
-			id: conn.id,
-		});
+		if (!conn.state?.noCount) {
+			c.state.disconnectionCount += 1;
+			c.broadcast("userDisconnected", {
+				id: conn.id,
+			});
+		}
 	},
 	actions: {
 		// Action to increment the connection's counter
@@ -60,7 +64,11 @@ export const connStateActor = actor({
 
 		// Check all active connections
 		getConnectionIds: (c) => {
-			return c.conns.keys().toArray();
+			return c.conns
+				.entries()
+				.filter((c) => !c[1].state?.noCount)
+				.map((x) => x[0])
+				.toArray();
 		},
 
 		// Get disconnection count

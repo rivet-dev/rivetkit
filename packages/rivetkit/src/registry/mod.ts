@@ -80,7 +80,6 @@ export class Registry<A extends RegistryActors> {
 			this.#config,
 			config,
 			managerDriver,
-			false,
 		);
 
 		// Create client

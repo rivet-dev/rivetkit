@@ -9,7 +9,7 @@
     "parameters": {}
   },
   "paths": {
-    "/actors/by-id": {
+    "/actors": {
       "get": {
         "parameters": [
           {
@@ -37,11 +37,60 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "actor_id": {
-                      "type": "string",
-                      "nullable": true
+                    "actors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "actor_id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "key": {
+                            "type": "string"
+                          },
+                          "namespace_id": {
+                            "type": "string"
+                          },
+                          "runner_name_selector": {
+                            "type": "string"
+                          },
+                          "create_ts": {
+                            "type": "number"
+                          },
+                          "connectable_ts": {
+                            "type": "number",
+                            "nullable": true
+                          },
+                          "destroy_ts": {
+                            "type": "number",
+                            "nullable": true
+                          },
+                          "sleep_ts": {
+                            "type": "number",
+                            "nullable": true
+                          },
+                          "start_ts": {
+                            "type": "number",
+                            "nullable": true
+                          }
+                        },
+                        "required": [
+                          "actor_id",
+                          "name",
+                          "key",
+                          "namespace_id",
+                          "runner_name_selector",
+                          "create_ts"
+                        ]
+                      }
                     }
-                  }
+                  },
+                  "required": [
+                    "actors"
+                  ]
                 }
               }
             }
@@ -99,50 +148,6 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "actor_id": {
-                      "type": "string"
-                    },
-                    "created": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "actor_id",
-                    "created"
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "User error"
-          },
-          "500": {
-            "description": "Internal error"
-          }
-        }
-      }
-    },
-    "/actors/{actor_id}": {
-      "get": {
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "required": true,
-            "name": "actor_id",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
                     "actor": {
                       "type": "object",
                       "properties": {
@@ -189,10 +194,14 @@
                         "runner_name_selector",
                         "create_ts"
                       ]
+                    },
+                    "created": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
-                    "actor"
+                    "actor",
+                    "created"
                   ]
                 }
               }
@@ -205,9 +214,7 @@
             "description": "Internal error"
           }
         }
-      }
-    },
-    "/actors": {
+      },
       "post": {
         "requestBody": {
           "content": {

@@ -3,52 +3,50 @@ import type { ClientConfig } from "@/client/client";
 import type {
 	ActorsCreateRequest,
 	ActorsCreateResponse,
-} from "@/manager-api/routes/actors-create";
-import type { ActorsDeleteResponse } from "@/manager-api/routes/actors-delete";
-import type { ActorsGetResponse } from "@/manager-api/routes/actors-get";
-import type { ActorsGetByIdResponse } from "@/manager-api/routes/actors-get-by-id";
-import type {
-	ActorsGetOrCreateByIdRequest,
-	ActorsGetOrCreateByIdResponse,
-} from "@/manager-api/routes/actors-get-or-create-by-id";
-import type { RivetId } from "@/manager-api/routes/common";
+	ActorsDeleteResponse,
+	ActorsGetOrCreateRequest,
+	ActorsGetOrCreateResponse,
+	ActorsListResponse,
+} from "@/manager-api/actors";
+import type { RivetId } from "@/manager-api/common";
 import { apiCall } from "./api-utils";
 
 // MARK: Get actor
 export async function getActor(
 	config: ClientConfig,
+	name: string,
 	actorId: RivetId,
-): Promise<ActorsGetResponse> {
-	return apiCall<never, ActorsGetResponse>(
+): Promise<ActorsListResponse> {
+	return apiCall<never, ActorsListResponse>(
 		config,
 		"GET",
-		`/actors/${encodeURIComponent(actorId)}`,
+		`/actors?name=${name}&actor_ids=${encodeURIComponent(actorId)}`,
 	);
 }
 
 // MARK: Get actor by id
-export async function getActorById(
+export async function getActorByKey(
 	config: ClientConfig,
 	name: string,
 	key: string[],
-): Promise<ActorsGetByIdResponse> {
+): Promise<ActorsListResponse> {
 	const serializedKey = serializeActorKey(key);
-	return apiCall<never, ActorsGetByIdResponse>(
+	return apiCall<never, ActorsListResponse>(
 		config,
 		"GET",
-		`/actors/by-id?name=${encodeURIComponent(name)}&key=${encodeURIComponent(serializedKey)}`,
+		`/actors?name=${encodeURIComponent(name)}&key=${encodeURIComponent(serializedKey)}`,
 	);
 }
 
 // MARK: Get or create actor by id
-export async function getOrCreateActorById(
+export async function getOrCreateActor(
 	config: ClientConfig,
-	request: ActorsGetOrCreateByIdRequest,
-): Promise<ActorsGetOrCreateByIdResponse> {
-	return apiCall<ActorsGetOrCreateByIdRequest, ActorsGetOrCreateByIdResponse>(
+	request: ActorsGetOrCreateRequest,
+): Promise<ActorsGetOrCreateResponse> {
+	return apiCall<ActorsGetOrCreateRequest, ActorsGetOrCreateResponse>(
 		config,
 		"PUT",
-		`/actors/by-id`,
+		`/actors`,
 		request,
 	);
 }
