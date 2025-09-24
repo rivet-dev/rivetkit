@@ -22,6 +22,9 @@ import type { Client } from "@/client/client";
 import {
 	PATH_CONNECT_WEBSOCKET,
 	PATH_RAW_WEBSOCKET_PREFIX,
+	WS_PROTOCOL_CONN_PARAMS,
+	WS_PROTOCOL_ENCODING,
+	WS_PROTOCOL_TOKEN,
 } from "@/common/actor-router-consts";
 import type { UpgradeWebSocketArgs } from "@/common/inline-websocket-adapter2";
 import { getLogger } from "@/common/log";
@@ -29,8 +32,6 @@ import type { UniversalWebSocket } from "@/common/websocket-interface";
 import {
 	type ActorDriver,
 	type AnyActorInstance,
-	HEADER_CONN_PARAMS,
-	HEADER_ENCODING,
 	type ManagerDriver,
 	serializeEmptyPersistData,
 } from "@/driver-helpers/mod";
@@ -293,9 +294,26 @@ export class EngineActorDriver implements ActorDriver {
 
 		const url = new URL(request.url);
 
-		// Parse headers
-		const encodingRaw = request.headers.get(HEADER_ENCODING);
-		const connParamsRaw = request.headers.get(HEADER_CONN_PARAMS);
+		// Parse configuration from Sec-WebSocket-Protocol header
+		const protocols = request.headers.get("sec-websocket-protocol");
+		let encodingRaw: string | undefined;
+		let connParamsRaw: string | undefined;
+		let token: string | undefined;
+
+		if (protocols) {
+			const protocolList = protocols.split(",").map((p) => p.trim());
+			for (const protocol of protocolList) {
+				if (protocol.startsWith(WS_PROTOCOL_ENCODING)) {
+					encodingRaw = protocol.substring(WS_PROTOCOL_ENCODING.length);
+				} else if (protocol.startsWith(WS_PROTOCOL_CONN_PARAMS)) {
+					connParamsRaw = decodeURIComponent(
+						protocol.substring(WS_PROTOCOL_CONN_PARAMS.length),
+					);
+				} else if (protocol.startsWith(WS_PROTOCOL_TOKEN)) {
+					token = protocol.substring(WS_PROTOCOL_TOKEN.length);
+				}
+			}
+		}
 
 		const encoding = EncodingSchema.parse(encodingRaw);
 		const connParams = connParamsRaw ? JSON.parse(connParamsRaw) : undefined;

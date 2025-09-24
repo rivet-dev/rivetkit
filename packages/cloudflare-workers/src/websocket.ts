@@ -65,7 +65,10 @@ export const upgradeWebSocket: UpgradeWebSocket<
 	const protocols = c.req.header("Sec-WebSocket-Protocol");
 	if (
 		typeof protocols === "string" &&
-		protocols.includes(WS_PROTOCOL_STANDARD)
+		protocols
+			.split(",")
+			.map((x) => x.trim())
+			.includes(WS_PROTOCOL_STANDARD)
 	) {
 		headers["Sec-WebSocket-Protocol"] = WS_PROTOCOL_STANDARD;
 	}
