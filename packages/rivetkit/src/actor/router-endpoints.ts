@@ -53,7 +53,6 @@ export interface ConnectWebSocketOpts {
 	encoding: Encoding;
 	actorId: string;
 	params: unknown;
-	authData: unknown;
 }
 
 export interface ConnectWebSocketOutput {
@@ -67,7 +66,6 @@ export interface ConnectSseOpts {
 	encoding: Encoding;
 	params: unknown;
 	actorId: string;
-	authData: unknown;
 }
 
 export interface ConnectSseOutput {
@@ -81,7 +79,6 @@ export interface ActionOpts {
 	actionName: string;
 	actionArgs: unknown[];
 	actorId: string;
-	authData: unknown;
 }
 
 export interface ActionOutput {
@@ -99,14 +96,12 @@ export interface ConnsMessageOpts {
 export interface FetchOpts {
 	request: Request;
 	actorId: string;
-	authData: unknown;
 }
 
 export interface WebSocketOpts {
 	request: Request;
 	websocket: UniversalWebSocket;
 	actorId: string;
-	authData: unknown;
 }
 
 /**
@@ -119,7 +114,6 @@ export async function handleWebSocketConnect(
 	actorId: string,
 	encoding: Encoding,
 	parameters: unknown,
-	authData: unknown,
 ): Promise<UpgradeWebSocketArgs> {
 	const exposeInternalError = req ? getRequestExposeInternalError(req) : false;
 
@@ -189,7 +183,6 @@ export async function handleWebSocketConnect(
 						connState,
 						CONNECTION_DRIVER_WEBSOCKET,
 						{ encoding } satisfies GenericWebSocketDriverState,
-						authData,
 					);
 
 					// Unblock other handlers
@@ -339,7 +332,6 @@ export async function handleSseConnect(
 	_runConfig: RunConfig,
 	actorDriver: ActorDriver,
 	actorId: string,
-	authData: unknown,
 ) {
 	c.header("Content-Encoding", "Identity");
 
@@ -376,7 +368,6 @@ export async function handleSseConnect(
 				connState,
 				CONNECTION_DRIVER_SSE,
 				{ encoding } satisfies GenericSseDriverState,
-				authData,
 			);
 
 			// Wait for close
@@ -459,7 +450,6 @@ export async function handleAction(
 	actorDriver: ActorDriver,
 	actionName: string,
 	actorId: string,
-	authData: unknown,
 ) {
 	const encoding = getRequestEncoding(c.req);
 	const parameters = getRequestConnParams(c.req);
@@ -491,7 +481,6 @@ export async function handleAction(
 			connState,
 			CONNECTION_DRIVER_HTTP,
 			{} satisfies GenericHttpDriverState,
-			authData,
 		);
 
 		// Call action
@@ -562,7 +551,6 @@ export async function handleRawWebSocketHandler(
 	path: string,
 	actorDriver: ActorDriver,
 	actorId: string,
-	authData: unknown,
 ): Promise<UpgradeWebSocketArgs> {
 	const actor = await actorDriver.loadActor(actorId);
 

@@ -17,7 +17,6 @@ export interface PersistedConn<CP, CS> {
 	connDriverState: unknown;
 	params: CP;
 	state: CS;
-	authData?: unknown;
 	subscriptions: PersistedSubscription[];
 	lastSeen: number;
 }

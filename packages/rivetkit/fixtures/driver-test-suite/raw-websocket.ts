@@ -48,16 +48,6 @@ export const rawWebSocketActor = actor({
 								messageCount: ctx.state.messageCount,
 							}),
 						);
-					} else if (parsed.type === "getAuthData") {
-						// Auth data is not directly available in raw WebSocket handler
-						// Send a message indicating this limitation
-						websocket.send(
-							JSON.stringify({
-								type: "authData",
-								authData: null,
-								message: "Auth data not available in raw WebSocket handler",
-							}),
-						);
 					} else if (parsed.type === "getRequestInfo") {
 						// Send back the request URL info
 						websocket.send(

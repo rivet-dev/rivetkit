@@ -29,7 +29,6 @@ import type { UniversalWebSocket } from "@/common/websocket-interface";
 import {
 	type ActorDriver,
 	type AnyActorInstance,
-	HEADER_AUTH_DATA,
 	HEADER_CONN_PARAMS,
 	HEADER_ENCODING,
 	type ManagerDriver,
@@ -297,11 +296,9 @@ export class EngineActorDriver implements ActorDriver {
 		// Parse headers
 		const encodingRaw = request.headers.get(HEADER_ENCODING);
 		const connParamsRaw = request.headers.get(HEADER_CONN_PARAMS);
-		const authDataRaw = request.headers.get(HEADER_AUTH_DATA);
 
 		const encoding = EncodingSchema.parse(encodingRaw);
 		const connParams = connParamsRaw ? JSON.parse(connParamsRaw) : undefined;
-		const authData = authDataRaw ? JSON.parse(authDataRaw) : undefined;
 
 		// Fetch WS handler
 		//
@@ -315,7 +312,6 @@ export class EngineActorDriver implements ActorDriver {
 				actorId,
 				encoding,
 				connParams,
-				authData,
 			);
 		} else if (url.pathname.startsWith(PATH_RAW_WEBSOCKET_PREFIX)) {
 			wsHandlerPromise = handleRawWebSocketHandler(
@@ -323,7 +319,6 @@ export class EngineActorDriver implements ActorDriver {
 				url.pathname + url.search,
 				this,
 				actorId,
-				authData,
 			);
 		} else {
 			throw new Error(`Unreachable path: ${url.pathname}`);

@@ -17,7 +17,6 @@ import {
 	handleWebSocketConnect,
 } from "@/actor/router-endpoints";
 import {
-	HEADER_AUTH_DATA,
 	HEADER_CONN_ID,
 	HEADER_CONN_PARAMS,
 	HEADER_CONN_TOKEN,
@@ -84,13 +83,11 @@ export function createActorRouter(
 			return upgradeWebSocket(async (c) => {
 				const encodingRaw = c.req.header(HEADER_ENCODING);
 				const connParamsRaw = c.req.header(HEADER_CONN_PARAMS);
-				const authDataRaw = c.req.header(HEADER_AUTH_DATA);
 
 				const encoding = EncodingSchema.parse(encodingRaw);
 				const connParams = connParamsRaw
 					? JSON.parse(connParamsRaw)
 					: undefined;
-				const authData = authDataRaw ? JSON.parse(authDataRaw) : undefined;
 
 				return await handleWebSocketConnect(
 					c.req.raw,
@@ -99,7 +96,6 @@ export function createActorRouter(
 					c.env.actorId,
 					encoding,
 					connParams,
-					authData,
 				);
 			})(c, noopNext());
 		} else {
@@ -111,32 +107,13 @@ export function createActorRouter(
 	});
 
 	router.get("/connect/sse", async (c) => {
-		const authDataRaw = c.req.header(HEADER_AUTH_DATA);
-		let authData: unknown;
-		if (authDataRaw) {
-			authData = JSON.parse(authDataRaw);
-		}
-
-		return handleSseConnect(c, runConfig, actorDriver, c.env.actorId, authData);
+		return handleSseConnect(c, runConfig, actorDriver, c.env.actorId);
 	});
 
 	router.post("/action/:action", async (c) => {
 		const actionName = c.req.param("action");
 
-		const authDataRaw = c.req.header(HEADER_AUTH_DATA);
-		let authData: unknown;
-		if (authDataRaw) {
-			authData = JSON.parse(authDataRaw);
-		}
-
-		return handleAction(
-			c,
-			runConfig,
-			actorDriver,
-			actionName,
-			c.env.actorId,
-			authData,
-		);
+		return handleAction(c, runConfig, actorDriver, actionName, c.env.actorId);
 	});
 
 	router.post("/connections/message", async (c) => {
@@ -157,12 +134,6 @@ export function createActorRouter(
 
 	// Raw HTTP endpoints - /http/*
 	router.all("/raw/http/*", async (c) => {
-		const authDataRaw = c.req.header(HEADER_AUTH_DATA);
-		let authData: unknown;
-		if (authDataRaw) {
-			authData = JSON.parse(authDataRaw);
-		}
-
 		const actor = await actorDriver.loadActor(c.env.actorId);
 
 		// TODO: This is not a clean way of doing this since `/http/` might exist mid-path
@@ -186,9 +157,7 @@ export function createActorRouter(
 		});
 
 		// Call the actor's onFetch handler - it will throw appropriate errors
-		const response = await actor.handleFetch(correctedRequest, {
-			auth: authData,
-		});
+		const response = await actor.handleFetch(correctedRequest, {});
 
 		// This should never happen now since handleFetch throws errors
 		if (!response) {
@@ -205,13 +174,11 @@ export function createActorRouter(
 			return upgradeWebSocket(async (c) => {
 				const encodingRaw = c.req.header(HEADER_ENCODING);
 				const connParamsRaw = c.req.header(HEADER_CONN_PARAMS);
-				const authDataRaw = c.req.header(HEADER_AUTH_DATA);
 
 				const encoding = EncodingSchema.parse(encodingRaw);
 				const connParams = connParamsRaw
 					? JSON.parse(connParamsRaw)
 					: undefined;
-				const authData = authDataRaw ? JSON.parse(authDataRaw) : undefined;
 
 				const url = new URL(c.req.url);
 				const pathWithQuery = c.req.path + url.search;
@@ -229,7 +196,6 @@ export function createActorRouter(
 					pathWithQuery,
 					actorDriver,
 					c.env.actorId,
-					authData,
 				);
 			})(c, noopNext());
 		} else {

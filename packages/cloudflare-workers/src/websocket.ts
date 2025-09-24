@@ -4,6 +4,7 @@
 
 import type { UpgradeWebSocket, WSEvents, WSReadyState } from "hono/ws";
 import { defineWebSocketHelper, WSContext } from "hono/ws";
+import { WS_PROTOCOL_STANDARD } from "rivetkit/driver-helpers";
 
 // Based on https://github.com/honojs/hono/issues/1153#issuecomment-1767321332
 export const upgradeWebSocket: UpgradeWebSocket<
@@ -62,8 +63,11 @@ export const upgradeWebSocket: UpgradeWebSocket<
 
 	// Set Sec-WebSocket-Protocol if does not exist
 	const protocols = c.req.header("Sec-WebSocket-Protocol");
-	if (typeof protocols === "string" && protocols.includes("rivetkit")) {
-		headers["Sec-WebSocket-Protocol"] = "rivetkit";
+	if (
+		typeof protocols === "string" &&
+		protocols.includes(WS_PROTOCOL_STANDARD)
+	) {
+		headers["Sec-WebSocket-Protocol"] = WS_PROTOCOL_STANDARD;
 	}
 
 	return new Response(null, {
