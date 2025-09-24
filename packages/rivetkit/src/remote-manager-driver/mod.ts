@@ -246,7 +246,12 @@ export class RemoteManagerDriver implements ManagerDriver {
 		});
 
 		// Build protocols
-		const protocols = buildWebSocketProtocols(actorId, encoding, params);
+		const protocols = buildWebSocketProtocols(
+			this.#config,
+			actorId,
+			encoding,
+			params,
+		);
 		const args = await createWebSocketProxy(c, wsGuardUrl, protocols);
 
 		return await upgradeWebSocket(() => args)(c, noopNext());
