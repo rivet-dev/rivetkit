@@ -23,6 +23,9 @@ import {
 	HEADER_ENCODING,
 	PATH_CONNECT_WEBSOCKET,
 	PATH_RAW_WEBSOCKET_PREFIX,
+	WS_PROTOCOL_CONN_PARAMS,
+	WS_PROTOCOL_ENCODING,
+	WS_PROTOCOL_TOKEN,
 } from "@/common/actor-router-consts";
 import {
 	handleRouteError,
@@ -81,8 +84,23 @@ export function createActorRouter(
 		const upgradeWebSocket = runConfig.getUpgradeWebSocket?.();
 		if (upgradeWebSocket) {
 			return upgradeWebSocket(async (c) => {
-				const encodingRaw = c.req.header(HEADER_ENCODING);
-				const connParamsRaw = c.req.header(HEADER_CONN_PARAMS);
+				// Parse configuration from Sec-WebSocket-Protocol header
+				const protocols = c.req.header("sec-websocket-protocol");
+				let encodingRaw: string | undefined;
+				let connParamsRaw: string | undefined;
+
+				if (protocols) {
+					const protocolList = protocols.split(",").map((p) => p.trim());
+					for (const protocol of protocolList) {
+						if (protocol.startsWith(WS_PROTOCOL_ENCODING)) {
+							encodingRaw = protocol.substring(WS_PROTOCOL_ENCODING.length);
+						} else if (protocol.startsWith(WS_PROTOCOL_CONN_PARAMS)) {
+							connParamsRaw = decodeURIComponent(
+								protocol.substring(WS_PROTOCOL_CONN_PARAMS.length),
+							);
+						}
+					}
+				}
 
 				const encoding = EncodingSchema.parse(encodingRaw);
 				const connParams = connParamsRaw
@@ -172,14 +190,6 @@ export function createActorRouter(
 		const upgradeWebSocket = runConfig.getUpgradeWebSocket?.();
 		if (upgradeWebSocket) {
 			return upgradeWebSocket(async (c) => {
-				const encodingRaw = c.req.header(HEADER_ENCODING);
-				const connParamsRaw = c.req.header(HEADER_CONN_PARAMS);
-
-				const encoding = EncodingSchema.parse(encodingRaw);
-				const connParams = connParamsRaw
-					? JSON.parse(connParamsRaw)
-					: undefined;
-
 				const url = new URL(c.req.url);
 				const pathWithQuery = c.req.path + url.search;
 
