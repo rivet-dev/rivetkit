@@ -169,7 +169,7 @@ export function createManagerRouter(
 	// PUT /actors
 	{
 		const route = createRoute({
-			cors: [cors],
+			middleware: [cors],
 			method: "put",
 			path: "/actors",
 			request: {
