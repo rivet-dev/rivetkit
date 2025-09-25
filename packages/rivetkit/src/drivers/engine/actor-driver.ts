@@ -22,6 +22,8 @@ import type { Client } from "@/client/client";
 import {
 	PATH_CONNECT_WEBSOCKET,
 	PATH_RAW_WEBSOCKET_PREFIX,
+	WS_PROTOCOL_CONN_PARAMS,
+	WS_PROTOCOL_ENCODING,
 } from "@/common/actor-router-consts";
 import type { UpgradeWebSocketArgs } from "@/common/inline-websocket-adapter2";
 import { getLogger } from "@/common/log";
@@ -85,6 +87,7 @@ export class EngineActorDriver implements ActorDriver {
 			totalSlots: config.totalSlots,
 			runnerName: config.runnerName,
 			runnerKey: config.runnerKey,
+			token: config.token,
 			metadata: {
 				inspectorToken: this.#runConfig.inspector.token(),
 			},
@@ -293,9 +296,24 @@ export class EngineActorDriver implements ActorDriver {
 
 		const url = new URL(request.url);
 
-		// Parse headers
-		const encodingRaw = request.headers.get(HEADER_ENCODING);
-		const connParamsRaw = request.headers.get(HEADER_CONN_PARAMS);
+		const protocols = request.headers.get("sec-websocket-protocol");
+		if (protocols === null)
+			throw new Error(`Missing sec-websocket-protocol header`);
+
+		let encodingRaw: string | undefined;
+		let connParamsRaw: string | undefined;
+
+		// Parse protocols
+		const protocolList = protocols.split(",").map((p) => p.trim());
+		for (const protocol of protocolList) {
+			if (protocol.startsWith(WS_PROTOCOL_ENCODING)) {
+				encodingRaw = protocol.substring(WS_PROTOCOL_ENCODING.length);
+			} else if (protocol.startsWith(WS_PROTOCOL_CONN_PARAMS)) {
+				connParamsRaw = decodeURIComponent(
+					protocol.substring(WS_PROTOCOL_CONN_PARAMS.length),
+				);
+			}
+		}
 
 		const encoding = EncodingSchema.parse(encodingRaw);
 		const connParams = connParamsRaw ? JSON.parse(connParamsRaw) : undefined;

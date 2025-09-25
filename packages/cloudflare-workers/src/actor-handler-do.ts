@@ -63,7 +63,8 @@ export function createActorDurableObject(
 	 */
 	return class ActorHandler
 		extends DurableObject<Bindings>
-		implements ActorHandlerInterface {
+		implements ActorHandlerInterface
+	{
 		#initialized?: InitializedData;
 		#initializedPromise?: ReturnType<typeof promiseWithResolvers<void>>;
 
