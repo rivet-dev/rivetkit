@@ -32,16 +32,11 @@ npm run dev
 Open your browser to `http://localhost:3000` to use the web chat interface.
 
 #### CLI Interface
+
 Alternatively, use the CLI interface:
 
 ```sh
 npm run dev:cli
-```
-
-Or connect programmatically:
-
-```sh
-tsx src/scripts/connect.ts
 ```
 
 ## Features

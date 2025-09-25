@@ -3,8 +3,11 @@ import type { ExecutionContext } from "hono";
 import invariant from "invariant";
 import type { ActorKey, ActorRouter, Registry, RunConfig } from "rivetkit";
 import { createActorRouter, createClientWithDriver } from "rivetkit";
-import type { ActorDriver, ManagerDriver } from "rivetkit/driver-helpers";
-import { serializeEmptyPersistData } from "rivetkit/driver-helpers";
+import type { ActorDriver } from "rivetkit/driver-helpers";
+import {
+	type ManagerDriver,
+	serializeEmptyPersistData,
+} from "rivetkit/driver-helpers";
 import { promiseWithResolvers } from "rivetkit/utils";
 import {
 	CloudflareDurableObjectGlobalState,
@@ -60,8 +63,7 @@ export function createActorDurableObject(
 	 */
 	return class ActorHandler
 		extends DurableObject<Bindings>
-		implements ActorHandlerInterface
-	{
+		implements ActorHandlerInterface {
 		#initialized?: InitializedData;
 		#initializedPromise?: ReturnType<typeof promiseWithResolvers<void>>;
 

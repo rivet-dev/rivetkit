@@ -19,16 +19,16 @@
     "@vitejs/plugin-react": "^4.2.0",
     "concurrently": "^8.2.2",
     "prompts": "^2.4.2",
-    "rivetkit": "workspace:*",
     "tsx": "^3.12.7",
     "typescript": "^5.5.2",
     "vite": "^5.0.0",
-    "vitest": "^3.1.1"
-  },
-  "dependencies": {
+    "vitest": "^3.1.1",
     "@rivetkit/react": "workspace:*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
+  },
+  "dependencies": {
+    "rivetkit": "workspace:*"
   },
   "stableVersion": "0.8.0"
 }
