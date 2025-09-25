@@ -139,7 +139,9 @@ export class RemoteManagerDriver implements ManagerDriver {
 			name,
 			key: serializeActorKey(key),
 			runner_name_selector: this.#config.runnerName,
-			input: input ? cbor.encode(actorInput).toString("base64") : undefined,
+			input: actorInput
+				? cbor.encode(actorInput).toString("base64")
+				: undefined,
 			crash_policy: "sleep",
 		});
 
