@@ -79,15 +79,15 @@ export function createManagerRouter(
 
 	router.use("*", loggerMiddleware(logger()));
 
-	const cors = runConfig.cors
-		? corsMiddleware(runConfig.cors)
-		: createMiddleware((_c, next) => next());
+	if (runConfig.cors) {
+		router.use("*", corsMiddleware(runConfig.cors));
+	}
 
 	// Actor gateway
-	router.use("*", cors, actorGateway.bind(undefined, runConfig, managerDriver));
+	router.use("*", actorGateway.bind(undefined, runConfig, managerDriver));
 
 	// GET /
-	router.get("/", cors, (c) => {
+	router.get("/", (c) => {
 		return c.text(
 			"This is a RivetKit server.\n\nLearn more at https://rivetkit.org",
 		);
@@ -96,7 +96,6 @@ export function createManagerRouter(
 	// GET /actors
 	{
 		const route = createRoute({
-			middleware: [cors],
 			method: "get",
 			path: "/actors",
 			request: {
@@ -169,7 +168,6 @@ export function createManagerRouter(
 	// PUT /actors
 	{
 		const route = createRoute({
-			cors: [cors],
 			method: "put",
 			path: "/actors",
 			request: {
@@ -222,7 +220,6 @@ export function createManagerRouter(
 	// POST /actors
 	{
 		const route = createRoute({
-			middleware: [cors],
 			method: "post",
 			path: "/actors",
 			request: {
@@ -262,7 +259,6 @@ export function createManagerRouter(
 	// // DELETE /actors/{actor_id}
 	// {
 	// 	const route = createRoute({
-	// 		middleware: [cors],
 	// 		method: "delete",
 	// 		path: "/actors/{actor_id}",
 	// 		request: {
@@ -443,7 +439,6 @@ export function createManagerRouter(
 		router.route(
 			"/inspect",
 			new Hono<{ Variables: { inspector: any } }>()
-				.use(corsMiddleware(runConfig.inspector.cors))
 				.use(secureInspector(runConfig))
 				.use((c, next) => {
 					c.set("inspector", managerDriver.inspector!);
