@@ -23,6 +23,10 @@ export const ConfigSchema = z
 			.default(
 				() => getEnvUniversal("RIVET_RUNNER_KEY") ?? crypto.randomUUID(),
 			),
+		token: z
+			.string()
+			.optional()
+			.transform((val) => val ?? getEnvUniversal("RIVET_TOKEN")),
 		totalSlots: z.number().default(100_000),
 	})
 	.default({});

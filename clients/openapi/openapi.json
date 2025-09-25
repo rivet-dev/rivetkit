@@ -24,7 +24,15 @@
             "schema": {
               "type": "string"
             },
-            "required": true,
+            "required": false,
+            "name": "actor_ids",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
             "name": "key",
             "in": "query"
           }
