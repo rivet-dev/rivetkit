@@ -10,6 +10,11 @@ export const ConfigSchema = z
 			.default(
 				() => getEnvUniversal("RIVET_ENGINE") ?? "http://localhost:6420",
 			),
+		// TODO: USe undefined instead of null
+		token: z
+			.string()
+			.nullable()
+			.default(() => getEnvUniversal("RIVET_TOKEN") ?? null),
 		pegboardEndpoint: z.string().optional(),
 		namespace: z
 			.string()

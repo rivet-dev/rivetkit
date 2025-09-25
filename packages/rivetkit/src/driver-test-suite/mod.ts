@@ -32,6 +32,7 @@ import { runRequestAccessTests } from "./tests/request-access";
 export interface SkipTests {
 	schedule?: boolean;
 	sleep?: boolean;
+	sse?: boolean;
 }
 
 export interface DriverTestConfig {
@@ -86,7 +87,10 @@ export function runDriverTests(
 			runActorDriverTests(driverTestConfig);
 			runManagerDriverTests(driverTestConfig);
 
-			for (const transport of ["websocket", "sse"] as Transport[]) {
+			const transports: Transport[] = driverTestConfig.skip?.sse
+				? ["websocket"]
+				: ["websocket", "sse"];
+			for (const transport of transports) {
 				describe(`transport (${transport})`, () => {
 					runActorConnTests({
 						...driverTestConfig,

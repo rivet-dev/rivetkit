@@ -81,6 +81,7 @@ export class EngineActorDriver implements ActorDriver {
 		const runnerConfig: RunnerConfig = {
 			version: this.#version,
 			endpoint: config.endpoint,
+			token: config.token ?? undefined,
 			pegboardEndpoint: config.pegboardEndpoint,
 			namespace: config.namespace,
 			totalSlots: config.totalSlots,
