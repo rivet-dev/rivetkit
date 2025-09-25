@@ -4,11 +4,11 @@ import invariant from "invariant";
 import type { ActorKey, ActorRouter, Registry, RunConfig } from "rivetkit";
 import { createActorRouter, createClientWithDriver } from "rivetkit";
 import type { ActorDriver } from "rivetkit/driver-helpers";
-import { promiseWithResolvers } from "rivetkit/utils";
 import {
 	type ManagerDriver,
 	serializeEmptyPersistData,
 } from "rivetkit/driver-helpers";
+import { promiseWithResolvers } from "rivetkit/utils";
 import {
 	CloudflareDurableObjectGlobalState,
 	createCloudflareActorsActorDriverBuilder,

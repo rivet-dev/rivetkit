@@ -171,16 +171,13 @@ importers:
 
   examples/chat-room:
     dependencies:
+      rivetkit:
+        specifier: workspace:*
+        version: link:../../packages/rivetkit
+    devDependencies:
       '@rivetkit/react':
         specifier: workspace:*
         version: link:../../packages/react
-      react:
-        specifier: ^18.3
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.3.1(react@18.3.1)
-    devDependencies:
       '@types/node':
         specifier: ^22.13.9
         version: 22.15.32
@@ -202,9 +199,12 @@ importers:
       prompts:
         specifier: ^2.4.2
         version: 2.4.2
-      rivetkit:
-        specifier: workspace:*
-        version: link:../../packages/rivetkit
+      react:
+        specifier: ^18.3
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.2.0
+        version: 18.3.1(react@18.3.1)
       tsx:
         specifier: ^3.12.7
         version: 3.14.0

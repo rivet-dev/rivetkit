@@ -6,7 +6,7 @@ async function main() {
 	const { username, room } = await initPrompt();
 
 	// Create type-aware client
-	const client = createClient<typeof registry>("http://localhost:8080");
+	const client = createClient<typeof registry>("http://localhost:6420");
 
 	// connect to chat room
 	const chatRoom = client.chatRoom.getOrCreate([room]).connect();
