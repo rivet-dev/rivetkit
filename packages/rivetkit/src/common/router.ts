@@ -76,5 +76,6 @@ export function handleRouteError(error: unknown, c: HonoContext) {
 		HTTP_RESPONSE_ERROR_VERSIONED,
 	);
 
-	return c.body(output, { status: statusCode });
+	// TODO: Remove any
+	return c.body(output as any, { status: statusCode });
 }

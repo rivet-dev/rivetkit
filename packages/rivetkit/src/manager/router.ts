@@ -310,7 +310,8 @@ export function createManagerRouter(
 				response = { err };
 			}
 
-			return c.body(cbor.encode(response));
+			// TODO: Remove any
+			return c.body(cbor.encode(response) as any);
 		});
 
 		router.get(".test/inline-driver/connect-websocket/*", async (c) => {
