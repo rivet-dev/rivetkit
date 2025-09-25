@@ -501,7 +501,9 @@ export async function handleAction(
 		responseData,
 		HTTP_ACTION_RESPONSE_VERSIONED,
 	);
-	return c.body(serialized as Uint8Array, 200, {
+
+	// TODO: Remvoe any, Hono is being a dumbass
+	return c.body(serialized as Uint8Array as any, 200, {
 		"Content-Type": contentTypeForEncoding(encoding),
 	});
 }
