@@ -11,6 +11,7 @@ runDriverTests({
 	skip: {
 		// Skip tests that aren't applicable for engine-runner
 		schedule: true, // Scheduling handled by engine
+		sse: true,
 	},
 	async start() {
 		return await createTestRuntime(

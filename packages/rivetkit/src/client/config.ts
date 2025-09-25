@@ -16,8 +16,8 @@ export const ClientConfigSchema = z.object({
 
 	token: z
 		.string()
-		.nullable()
-		.default(() => getEnvUniversal("RIVET_TOKEN") ?? null),
+		.optional()
+		.transform((x) => x ?? getEnvUniversal("RIVET_TOKEN")),
 
 	headers: z.record(z.string()).optional().default({}),
 

@@ -10,6 +10,10 @@ export const ConfigSchema = z
 			.default(
 				() => getEnvUniversal("RIVET_ENGINE") ?? "http://localhost:6420",
 			),
+		token: z
+			.string()
+			.optional()
+			.transform((val) => val ?? getEnvUniversal("RIVET_TOKEN")),
 		pegboardEndpoint: z.string().optional(),
 		namespace: z
 			.string()
@@ -23,10 +27,6 @@ export const ConfigSchema = z
 			.default(
 				() => getEnvUniversal("RIVET_RUNNER_KEY") ?? crypto.randomUUID(),
 			),
-		token: z
-			.string()
-			.optional()
-			.transform((val) => val ?? getEnvUniversal("RIVET_TOKEN")),
 		totalSlots: z.number().default(100_000),
 	})
 	.default({});
