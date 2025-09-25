@@ -2,6 +2,7 @@ import * as cbor from "cbor-x";
 import type { Context as HonoContext } from "hono";
 import invariant from "invariant";
 import { deserializeActorKey, serializeActorKey } from "@/actor/keys";
+import { generateRandomString } from "@/actor/utils";
 import type { ClientConfig } from "@/client/client";
 import { noopNext } from "@/common/utils";
 import type {
@@ -251,5 +252,9 @@ export class RemoteManagerDriver implements ManagerDriver {
 
 	displayInformation(): ManagerDisplayInformation {
 		return { name: "Remote", properties: {} };
+	}
+
+	getOrCreateInspectorAccessToken() {
+		return generateRandomString();
 	}
 }
