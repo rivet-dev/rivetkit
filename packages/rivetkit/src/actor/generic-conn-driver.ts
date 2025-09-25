@@ -127,7 +127,7 @@ export function createGenericWebSocketDriver(
 				});
 				return;
 			}
-			const raw = ws.raw as WebSocket;
+			const raw = ws.raw as WebSocket | undefined;
 			if (!raw) {
 				actor.rLog.warn({ msg: "ws.raw does not exist" });
 				return;
@@ -156,7 +156,8 @@ export function createGenericWebSocketDriver(
 				return undefined;
 			}
 
-			const raw = ws.raw as WebSocket;
+			const raw = ws.raw as WebSocket | undefined;
+			if (!raw) return undefined;
 
 			return raw.readyState as ConnectionReadyState;
 		},
