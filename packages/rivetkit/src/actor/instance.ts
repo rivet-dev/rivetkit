@@ -660,7 +660,7 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 					});
 				}
 				this.#persistChanged = true;
-
+				const previousState = structuredClone(this.#persist.s);
 				// Inform the inspector about state changes
 				this.inspector.emitter.emit("stateUpdated", this.#persist.state);
 

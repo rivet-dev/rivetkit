@@ -252,7 +252,16 @@ interface BaseActorConfig<
 	 * @param newState The updated state
 	 */
 	onStateChange?: (
-		c: ActorContext<TState, TConnParams, TConnState, TVars, TInput, TDatabase>,
+		c: ActorContext<
+			TState,
+			TConnParams,
+			TConnState,
+			TVars,
+			TInput,
+			TAuthData,
+			TDatabase
+		>,
+		prevState: TState,
 		newState: TState,
 	) => void;
 
