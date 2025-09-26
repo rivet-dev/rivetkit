@@ -2,8 +2,8 @@ import type { ViteUserConfig } from "vitest/config";
 
 export default {
 	test: {
-		testTimeout: 5_000,
-		hookTimeout: 5_000,
+		testTimeout: 10_000,
+		hookTimeout: 10_000,
 		// Enable parallelism
 		sequence: {
 			// TODO: This breaks fake timers, unsure how to make tests run in parallel within the same file

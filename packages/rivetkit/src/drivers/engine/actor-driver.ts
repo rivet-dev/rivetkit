@@ -86,12 +86,12 @@ export class EngineActorDriver implements ActorDriver {
 		const runnerConfig: RunnerConfig = {
 			version: this.#version,
 			endpoint: config.endpoint,
+			token: config.token,
 			pegboardEndpoint: config.pegboardEndpoint,
 			namespace: config.namespace,
 			totalSlots: config.totalSlots,
 			runnerName: config.runnerName,
 			runnerKey: config.runnerKey,
-			token: config.token,
 			metadata: {
 				inspectorToken: this.#runConfig.inspector.token(),
 			},
@@ -304,15 +304,13 @@ export class EngineActorDriver implements ActorDriver {
 
 		const url = new URL(request.url);
 
+		// Parse configuration from Sec-WebSocket-Protocol header
 		const protocols = request.headers.get("sec-websocket-protocol");
 		if (protocols === null)
 			throw new Error(`Missing sec-websocket-protocol header`);
 
-		// Parse configuration from Sec-WebSocket-Protocol header
-		const protocols = request.headers.get("sec-websocket-protocol");
 		let encodingRaw: string | undefined;
 		let connParamsRaw: string | undefined;
-		let token: string | undefined;
 
 		if (protocols) {
 			const protocolList = protocols.split(",").map((p) => p.trim());
@@ -323,8 +321,6 @@ export class EngineActorDriver implements ActorDriver {
 					connParamsRaw = decodeURIComponent(
 						protocol.substring(WS_PROTOCOL_CONN_PARAMS.length),
 					);
-				} else if (protocol.startsWith(WS_PROTOCOL_TOKEN)) {
-					token = protocol.substring(WS_PROTOCOL_TOKEN.length);
 				}
 			}
 		}
