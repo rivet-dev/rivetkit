@@ -234,6 +234,8 @@ export class RemoteManagerDriver implements ManagerDriver {
 		actorId: string,
 		encoding: Encoding,
 		params: unknown,
+		connId?: string,
+		connToken?: string,
 	): Promise<Response> {
 		const upgradeWebSocket = this.#config.getUpgradeWebSocket?.();
 		invariant(upgradeWebSocket, "missing getUpgradeWebSocket");
@@ -255,6 +257,8 @@ export class RemoteManagerDriver implements ManagerDriver {
 			actorId,
 			encoding,
 			params,
+			connId,
+			connToken,
 		);
 		const args = await createWebSocketProxy(c, wsGuardUrl, protocols);
 

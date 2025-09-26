@@ -42,6 +42,7 @@ import {
 } from "@/inspector/actor";
 import { isInspectorEnabled, secureInspector } from "@/inspector/utils";
 import type { RunConfig } from "@/registry/run-config";
+import { ConnDriverKind } from "./conn-drivers";
 import type { ActorDriver } from "./driver";
 import { InternalError } from "./errors";
 import { loggerWithoutContext } from "./log";
@@ -81,6 +82,38 @@ export function createActorRouter(
 
 	router.get("/health", (c) => {
 		return c.text("ok");
+	});
+
+	// Test endpoint to force disconnect a connection non-cleanly
+	router.post("/.test/force-disconnect", async (c) => {
+		const connId = c.req.query("conn");
+
+		if (!connId) {
+			return c.text("Missing conn query parameter", 400);
+		}
+
+		const actor = await actorDriver.loadActor(c.env.actorId);
+		const conn = actor.__getConnForId(connId);
+
+		if (!conn) {
+			return c.text(`Connection not found: ${connId}`, 404);
+		}
+
+		// Force close the websocket/SSE connection without clean shutdown
+		const driverState = conn.__driverState;
+		if (driverState && ConnDriverKind.WEBSOCKET in driverState) {
+			const ws = driverState[ConnDriverKind.WEBSOCKET].websocket;
+
+			// Force close without sending close frame
+			(ws.raw as any).terminate();
+		} else if (driverState && ConnDriverKind.SSE in driverState) {
+			const stream = driverState[ConnDriverKind.SSE].stream;
+
+			// Force close the SSE stream
+			stream.abort();
+		}
+
+		return c.json({ success: true });
 	});
 
 	router.get(PATH_CONNECT_WEBSOCKET, async (c) => {

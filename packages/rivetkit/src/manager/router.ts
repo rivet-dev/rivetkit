@@ -16,7 +16,9 @@ import { serializeActorKey } from "@/actor/keys";
 import type { Encoding, Transport } from "@/client/mod";
 import {
 	WS_PROTOCOL_ACTOR,
+	WS_PROTOCOL_CONN_ID,
 	WS_PROTOCOL_CONN_PARAMS,
+	WS_PROTOCOL_CONN_TOKEN,
 	WS_PROTOCOL_ENCODING,
 	WS_PROTOCOL_PATH,
 	WS_PROTOCOL_TRANSPORT,
@@ -26,7 +28,7 @@ import {
 	handleRouteNotFound,
 	loggerMiddleware,
 } from "@/common/router";
-import { deconstructError, noopNext } from "@/common/utils";
+import { deconstructError, noopNext, stringifyError } from "@/common/utils";
 import { type ActorDriver, HEADER_ACTOR_ID } from "@/driver-helpers/mod";
 import type {
 	TestInlineDriverCallRequest,
@@ -50,7 +52,6 @@ import {
 import { RivetIdSchema } from "@/manager-api/common";
 import type { RegistryConfig } from "@/registry/config";
 import type { RunConfig } from "@/registry/run-config";
-import { stringifyError } from "@/utils";
 import type { ActorOutput, ManagerDriver } from "./driver";
 import { actorGateway, createTestWebSocketProxy } from "./gateway";
 import { logger } from "./log";
@@ -383,6 +384,8 @@ function addManagerRoutes(
 				let transport: Transport = "websocket";
 				let path = "";
 				let params: unknown;
+				let connId: string | undefined;
+				let connToken: string | undefined;
 
 				for (const protocol of protocols) {
 					if (protocol.startsWith(WS_PROTOCOL_ACTOR)) {
@@ -404,6 +407,10 @@ function addManagerRoutes(
 							protocol.substring(WS_PROTOCOL_CONN_PARAMS.length),
 						);
 						params = JSON.parse(paramsRaw);
+					} else if (protocol.startsWith(WS_PROTOCOL_CONN_ID)) {
+						connId = protocol.substring(WS_PROTOCOL_CONN_ID.length);
+					} else if (protocol.startsWith(WS_PROTOCOL_CONN_TOKEN)) {
+						connToken = protocol.substring(WS_PROTOCOL_CONN_TOKEN.length);
 					}
 				}
 
@@ -422,6 +429,8 @@ function addManagerRoutes(
 					actorId,
 					encoding,
 					params,
+					connId,
+					connToken,
 				);
 
 				return await createTestWebSocketProxy(clientWsPromise);
@@ -483,6 +492,48 @@ function addManagerRoutes(
 					},
 					err.statusCode,
 				);
+			}
+		});
+
+		// Test endpoint to force disconnect a connection non-cleanly
+		router.post("/.test/force-disconnect", async (c) => {
+			const actorId = c.req.query("actor");
+			const connId = c.req.query("conn");
+
+			if (!actorId || !connId) {
+				return c.text("Missing actor or conn query parameters", 400);
+			}
+
+			logger().debug({
+				msg: "forcing unclean disconnect",
+				actorId,
+				connId,
+			});
+
+			try {
+				// Send a special request to the actor to force disconnect the connection
+				const response = await managerDriver.sendRequest(
+					actorId,
+					new Request(`http://actor/.test/force-disconnect?conn=${connId}`, {
+						method: "POST",
+					}),
+				);
+
+				if (!response.ok) {
+					const text = await response.text();
+					return c.text(
+						`Failed to force disconnect: ${text}`,
+						response.status as any,
+					);
+				}
+
+				return c.json({ success: true });
+			} catch (error) {
+				logger().error({
+					msg: "error forcing disconnect",
+					error: stringifyError(error),
+				});
+				return c.text(`Error: ${error}`, 500);
 			}
 		});
 	}

@@ -166,12 +166,17 @@ export async function handleWebSocketConnect(
 				try {
 					let conn: AnyConn;
 
-					// Check if this is a reconnection
-					if (connId && connToken) {
-						// This is a reconnection - use the existing connection
-						actor.rLog.debug({ msg: "websocket reconnection attempt", connId });
+					// Create or reconnect connection
+					actor.rLog.debug({
+						msg: connId
+							? "websocket reconnection attempt"
+							: "new websocket connection",
+						connId,
+						actorId,
+					});
 
-						conn = await actor.reconnectConn(connId, connToken, {
+					conn = await actor.createConn(
+						{
 							socketId,
 							driverState: {
 								[ConnDriverKind.WEBSOCKET]: {
@@ -180,37 +185,12 @@ export async function handleWebSocketConnect(
 									closePromise,
 								},
 							},
-						});
-					} else {
-						// This is a new connection
-						const newConnId = generateConnId();
-						const newConnToken = generateConnToken();
-						const connState = await actor.prepareConn(parameters, req);
-
-						// Save socket
-						actor.rLog.debug({
-							msg: "registered websocket for conn",
-							actorId,
-						});
-
-						// Create connection
-						conn = await actor.createConn(
-							newConnId,
-							newConnToken,
-							parameters,
-							connState,
-							{
-								socketId,
-								driverState: {
-									[ConnDriverKind.WEBSOCKET]: {
-										encoding,
-										websocket: ws,
-										closePromise,
-									},
-								},
-							},
-						);
-					}
+						},
+						parameters,
+						req,
+						connId,
+						connToken,
+					);
 
 					// Unblock other handlers
 					handlersResolve({ conn, actor, connId: conn.id });
@@ -367,12 +347,14 @@ export async function handleSseConnect(
 			// Do all async work inside the handler
 			actor = await actorDriver.loadActor(actorId);
 
-			// Check if this is a reconnection
-			if (connId && connToken) {
-				// This is a reconnection - use the existing connection
-				actor.rLog.debug({ msg: "sse reconnection attempt", connId });
+			// Create or reconnect connection
+			actor.rLog.debug({
+				msg: connId ? "sse reconnection attempt" : "sse open",
+				connId,
+			});
 
-				conn = await actor.reconnectConn(connId, connToken, {
+			conn = await actor.createConn(
+				{
 					socketId,
 					driverState: {
 						[ConnDriverKind.SSE]: {
@@ -380,32 +362,12 @@ export async function handleSseConnect(
 							stream: stream,
 						},
 					},
-				});
-			} else {
-				// This is a new connection
-				const newConnId = generateConnId();
-				const newConnToken = generateConnToken();
-				const connState = await actor.prepareConn(parameters, c.req.raw);
-
-				actor.rLog.debug("sse open");
-
-				// Create connection
-				conn = await actor.createConn(
-					newConnId,
-					newConnToken,
-					parameters,
-					connState,
-					{
-						socketId,
-						driverState: {
-							[ConnDriverKind.SSE]: {
-								encoding,
-								stream: stream,
-							},
-						},
-					},
-				);
-			}
+				},
+				parameters,
+				c.req.raw,
+				connId,
+				connToken,
+			);
 
 			// Wait for close
 			const abortResolver = promiseWithResolvers();
@@ -502,16 +464,13 @@ export async function handleAction(
 		actor.rLog.debug({ msg: "handling action", actionName, encoding });
 
 		// Create conn
-		const connState = await actor.prepareConn(parameters, c.req.raw);
 		conn = await actor.createConn(
-			generateConnId(),
-			generateConnToken(),
-			parameters,
-			connState,
 			{
 				socketId,
 				driverState: { [ConnDriverKind.HTTP]: {} },
 			},
+			parameters,
+			c.req.raw,
 		);
 
 		// Call action

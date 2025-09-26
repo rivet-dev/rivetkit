@@ -87,7 +87,11 @@ export class Lock<T> {
 export function generateSecureToken(length = 32) {
 	const array = new Uint8Array(length);
 	crypto.getRandomValues(array);
-	return btoa(String.fromCharCode(...array));
+	// Replace base64 chars that are not URL safe with URL-safe chars and strip padding
+	return btoa(String.fromCharCode(...array))
+		.replace(/\+/g, "-")
+		.replace(/\//g, "_")
+		.replace(/=/g, "");
 }
 
 export function generateRandomString(length = 32) {

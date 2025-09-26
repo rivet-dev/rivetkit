@@ -17,6 +17,7 @@ import { counterWithParams } from "./conn-params";
 import { connStateActor } from "./conn-state";
 // Import actors from individual files
 import { counter } from "./counter";
+import { counterConn } from "./counter-conn";
 import { customTimeoutActor, errorHandlingActor } from "./error-handling";
 import { inlineClientActor } from "./inline-client";
 import { counterWithLifecycle } from "./lifecycle";
@@ -51,6 +52,8 @@ export const registry = setup({
 	use: {
 		// From counter.ts
 		counter,
+		// From counter-conn.ts
+		counterConn,
 		// From lifecycle.ts
 		counterWithLifecycle,
 		// From scheduled.ts

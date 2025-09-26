@@ -1,4 +1,5 @@
 import * as cbor from "cbor-x";
+import invariant from "invariant";
 import type * as protocol from "@/schemas/client-protocol/mod";
 import { TO_CLIENT_VERSIONED } from "@/schemas/client-protocol/versioned";
 import { bufferToArrayBuffer } from "@/utils";
@@ -7,7 +8,7 @@ import {
 	ConnDriverKind,
 	type ConnDriverState,
 	ConnReadyState,
-	getConnDriverFromState,
+	getConnDriverKindFromState,
 } from "./conn-drivers";
 import type { ConnSocket } from "./conn-socket";
 import type { AnyDatabaseProvider } from "./database";
@@ -161,9 +162,15 @@ export class Conn<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 	 */
 	public _sendMessage(message: CachedSerializer<protocol.ToClient>) {
 		if (this.__driverState) {
-			const driver = getConnDriverFromState(this.__driverState);
+			const driverKind = getConnDriverKindFromState(this.__driverState);
+			const driver = CONN_DRIVERS[driverKind];
 			if (driver.sendMessage) {
-				driver.sendMessage(this.#actor, this, this.__driverState, message);
+				driver.sendMessage(
+					this.#actor,
+					this,
+					(this.__driverState as any)[driverKind],
+					message,
+				);
 			} else {
 				this.#actor.rLog.debug({
 					msg: "conn driver does not support sending messages",
@@ -215,9 +222,15 @@ export class Conn<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 	 */
 	public async disconnect(reason?: string) {
 		if (this.__socket && this.__driverState) {
-			const driver = getConnDriverFromState(this.__driverState);
+			const driverKind = getConnDriverKindFromState(this.__driverState);
+			const driver = CONN_DRIVERS[driverKind];
 			if (driver.disconnect) {
-				driver.disconnect(this.#actor, this, this.__driverState, reason);
+				driver.disconnect(
+					this.#actor,
+					this,
+					(this.__driverState as any)[driverKind],
+					reason,
+				);
 			} else {
 				this.#actor.rLog.debug({
 					msg: "no disconnect handler for conn driver",

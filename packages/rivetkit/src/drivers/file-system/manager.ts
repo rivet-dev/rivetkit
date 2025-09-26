@@ -190,6 +190,8 @@ export class FileSystemManagerDriver implements ManagerDriver {
 		actorId: string,
 		encoding: Encoding,
 		connParams: unknown,
+		connId?: string,
+		connToken?: string,
 	): Promise<Response> {
 		const upgradeWebSocket = this.#runConfig.getUpgradeWebSocket?.();
 		invariant(upgradeWebSocket, "missing getUpgradeWebSocket");
@@ -206,9 +208,8 @@ export class FileSystemManagerDriver implements ManagerDriver {
 				actorId,
 				encoding,
 				connParams,
-				// Extract connId and connToken from query parameters or headers if needed
-				undefined,
-				undefined,
+				connId,
+				connToken,
 			);
 			return upgradeWebSocket(() => wsHandler)(c, noopNext());
 		} else if (

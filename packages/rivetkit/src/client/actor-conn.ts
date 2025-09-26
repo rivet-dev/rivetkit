@@ -301,9 +301,18 @@ enc
 			isReconnection ? this.#connectionId : undefined,
 			isReconnection ? this.#connectionToken : undefined,
 		);
+		logger().debug({
+			msg: "transport set to new websocket",
+			connectionId: this.#connectionId,
+			readyState: ws.readyState,
+			messageQueueLength: this.#messageQueue.length,
+		});
 		this.#transport = { websocket: ws };
 		ws.addEventListener("open", () => {
-			logger().debug({ msg: "client websocket open" });
+			logger().debug({
+				msg: "client websocket open",
+				connectionId: this.#connectionId,
+			});
 		});
 		ws.addEventListener("message", async (ev) => {
 			this.#handleOnMessage(ev.data);
@@ -380,6 +389,7 @@ enc
 		logger().debug({
 			msg: "socket open",
 			messageQueueLength: this.#messageQueue.length,
+			connectionId: this.#connectionId,
 		});
 
 		// Resolve open promise
@@ -399,6 +409,10 @@ enc
 		// If the message fails to send, the message will be re-queued
 		const queue = this.#messageQueue;
 		this.#messageQueue = [];
+		logger().debug({
+			msg: "flushing message queue",
+			queueLength: queue.length,
+		});
 		for (const msg of queue) {
 			this.#sendMessage(msg);
 		}
@@ -520,26 +534,46 @@ enc
 		//
 		// These properties will be undefined
 		const closeEvent = event as CloseEvent;
-		if (closeEvent.wasClean) {
-			logger().info({
-				msg: "socket closed",
-				code: closeEvent.code,
-				reason: closeEvent.reason,
-				wasClean: closeEvent.wasClean,
+		const wasClean = closeEvent.wasClean;
+
+		logger().info({
+			msg: "socket closed",
+			code: closeEvent.code,
+			reason: closeEvent.reason,
+			wasClean: wasClean,
+			connectionId: this.#connectionId,
+			messageQueueLength: this.#messageQueue.length,
+			actionsInFlight: this.#actionsInFlight.size,
+		});
+
+		// Reject all in-flight actions
+		if (this.#actionsInFlight.size > 0) {
+			logger().debug({
+				msg: "rejecting in-flight actions after disconnect",
+				count: this.#actionsInFlight.size,
+				connectionId: this.#connectionId,
+				wasClean,
 			});
-		} else {
-			logger().warn({
-				msg: "socket closed",
-				code: closeEvent.code,
-				reason: closeEvent.reason,
-				wasClean: closeEvent.wasClean,
-			});
+
+			const disconnectError = new Error(
+				wasClean ? "Connection closed" : "Connection lost",
+			);
+
+			for (const actionInfo of this.#actionsInFlight.values()) {
+				actionInfo.reject(disconnectError);
+			}
+			this.#actionsInFlight.clear();
 		}
 
 		this.#transport = undefined;
 
 		// Automatically reconnect. Skip if already attempting to connect.
 		if (!this.#disposed && !this.#connecting) {
+			logger().debug({
+				msg: "triggering reconnect",
+				connectionId: this.#connectionId,
+				messageQueueLength: this.#messageQueue.length,
+			});
 			// TODO: Fetch actor to check if it's destroyed
 			// TODO: Add backoff for reconnect
 			// TODO: Add a way of preserving connection ID for connection state
@@ -689,9 +723,26 @@ enc
 		let queueMessage = false;
 		if (!this.#transport) {
 			// No transport connected yet
+			logger().debug({ msg: "no transport, queueing message" });
 			queueMessage = true;
 		} else if ("websocket" in this.#transport) {
-			if (this.#transport.websocket.readyState === 1) {
+			const readyState = this.#transport.websocket.readyState;
+			logger().debug({
+				msg: "websocket send attempt",
+				readyState,
+				readyStateString:
+					readyState === 0
+						? "CONNECTING"
+						: readyState === 1
+							? "OPEN"
+							: readyState === 2
+								? "CLOSING"
+								: "CLOSED",
+				connectionId: this.#connectionId,
+				messageType: (message.body as any).tag,
+				actionName: (message.body as any).val?.name,
+			});
+			if (readyState === 1) {
 				try {
 					const messageSerialized = serializeWithEncoding(
 						this.#encoding,
@@ -707,12 +758,17 @@ enc
 					logger().warn({
 						msg: "failed to send message, added to queue",
 						error,
+						connectionId: this.#connectionId,
 					});
 
 					// Assuming the socket is disconnected and will be reconnected soon
 					queueMessage = true;
 				}
 			} else {
+				logger().debug({
+					msg: "websocket not open, queueing message",
+					readyState,
+				});
 				queueMessage = true;
 			}
 		} else if ("sse" in this.#transport) {
@@ -728,7 +784,13 @@ enc
 
 		if (!opts?.ephemeral && queueMessage) {
 			this.#messageQueue.push(message);
-			logger().debug({ msg: "queued connection message" });
+			logger().debug({
+				msg: "queued connection message",
+				queueLength: this.#messageQueue.length,
+				connectionId: this.#connectionId,
+				messageType: (message.body as any).tag,
+				actionName: (message.body as any).val?.name,
+			});
 		}
 	}
 
@@ -805,6 +867,22 @@ enc
 		const buffer = await inputDataToBuffer(data);
 
 		return deserializeWithEncoding(this.#encoding, buffer, TO_CLIENT_VERSIONED);
+	}
+
+	/**
+	 * Get the actor ID (for testing purposes).
+	 * @internal
+	 */
+	get actorId(): string | undefined {
+		return this.#actorId;
+	}
+
+	/**
+	 * Get the connection ID (for testing purposes).
+	 * @internal
+	 */
+	get connectionId(): string | undefined {
+		return this.#connectionId;
 	}
 
 	/**
