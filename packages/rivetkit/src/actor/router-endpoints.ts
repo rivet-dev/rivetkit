@@ -580,6 +580,43 @@ export async function handleConnectionMessage(
 	return c.json({});
 }
 
+export async function handleConnectionClose(
+	c: HonoContext,
+	_runConfig: RunConfig,
+	actorDriver: ActorDriver,
+	connId: string,
+	connToken: string,
+	actorId: string,
+) {
+	const actor = await actorDriver.loadActor(actorId);
+
+	// Find connection
+	const conn = actor.conns.get(connId);
+	if (!conn) {
+		throw new errors.ConnNotFound(connId);
+	}
+
+	// Authenticate connection
+	if (conn._token !== connToken) {
+		throw new errors.IncorrectConnToken();
+	}
+
+	// Check if this is an SSE connection
+	if (
+		!conn.__socket?.driverState ||
+		!(ConnDriverKind.SSE in conn.__socket.driverState)
+	) {
+		throw new errors.UserError(
+			"Connection close is only supported for SSE connections",
+		);
+	}
+
+	// Close the SSE connection
+	await conn.disconnect("Connection closed by client request");
+
+	return c.json({});
+}
+
 export async function handleRawWebSocketHandler(
 	req: Request | undefined,
 	path: string,

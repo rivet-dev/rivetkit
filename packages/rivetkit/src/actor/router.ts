@@ -11,6 +11,7 @@ import {
 	type ConnectWebSocketOutput,
 	type ConnsMessageOpts,
 	handleAction,
+	handleConnectionClose,
 	handleConnectionMessage,
 	handleRawWebSocketHandler,
 	handleSseConnect,
@@ -151,6 +152,22 @@ export function createActorRouter(
 			throw new Error("Missing required parameters");
 		}
 		return handleConnectionMessage(
+			c,
+			runConfig,
+			actorDriver,
+			connId,
+			connToken,
+			c.env.actorId,
+		);
+	});
+
+	router.post("/connections/close", async (c) => {
+		const connId = c.req.header(HEADER_CONN_ID);
+		const connToken = c.req.header(HEADER_CONN_TOKEN);
+		if (!connId || !connToken) {
+			throw new Error("Missing required parameters");
+		}
+		return handleConnectionClose(
 			c,
 			runConfig,
 			actorDriver,

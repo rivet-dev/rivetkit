@@ -853,6 +853,30 @@ enc
 				await promise;
 			}
 		} else if ("sse" in this.#transport) {
+			// Send close request to server for SSE connections
+			if (this.#connectionId && this.#connectionToken) {
+				try {
+					await sendHttpRequest({
+						url: "http://actor/connections/close",
+						method: "POST",
+						headers: {
+							[HEADER_CONN_ID]: this.#connectionId,
+							[HEADER_CONN_TOKEN]: this.#connectionToken,
+						},
+						encoding: this.#encoding,
+						skipParseResponse: true,
+						customFetch: this.#driver.sendRequest.bind(
+							this.#driver,
+							this.#actorId!,
+						),
+						requestVersionedDataHandler: TO_SERVER_VERSIONED,
+						responseVersionedDataHandler: TO_CLIENT_VERSIONED,
+					});
+				} catch (error) {
+					// Ignore errors when closing - connection may already be closed
+					logger().warn({ msg: "failed to send close request", error });
+				}
+			}
 			this.#transport.sse.close();
 		} else {
 			assertUnreachable(this.#transport);

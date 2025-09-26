@@ -214,7 +214,7 @@ export class Conn<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 	 * @param reason - The reason for disconnection.
 	 */
 	public async disconnect(reason?: string) {
-		if (this.__driverState) {
+		if (this.__socket && this.__driverState) {
 			const driver = getConnDriverFromState(this.__driverState);
 			if (driver.disconnect) {
 				driver.disconnect(this.#actor, this, this.__driverState, reason);
@@ -224,6 +224,8 @@ export class Conn<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 					conn: this.id,
 				});
 			}
+
+			this.#actor.__connDisconnected(this, true, this.__socket.socketId);
 		} else {
 			this.#actor.rLog.warn({
 				msg: "missing connection driver state for disconnect",
