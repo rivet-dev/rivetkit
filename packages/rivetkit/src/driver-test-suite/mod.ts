@@ -199,6 +199,7 @@ export async function createTestRuntime(
 			registry.config,
 			config,
 			managerDriver,
+			undefined,
 		);
 
 		// Inject WebSocket

@@ -188,7 +188,8 @@
     "tsx": "^4.19.4",
     "typescript": "^5.7.3",
     "vitest": "^3.1.1",
-    "ws": "^8.18.1"
+    "ws": "^8.18.1",
+    "bufferutil": "^4.0.9"
   },
   "peerDependencies": {
     "@hono/node-server": "^1.14.0",

@@ -4,6 +4,8 @@ import type {
 } from "@rivetkit/engine-runner";
 import { Runner } from "@rivetkit/engine-runner";
 import * as cbor from "cbor-x";
+import type { Context as HonoContext } from "hono";
+import { streamSSE } from "hono/streaming";
 import { WSContext } from "hono/ws";
 import invariant from "invariant";
 import { lookupInRegistry } from "@/actor/definition";
@@ -63,6 +65,9 @@ export class EngineActorDriver implements ActorDriver {
 	#actorRouter: ActorRouter;
 	#version: number = 1; // Version for the runner protocol
 
+	#runnerStarted: PromiseWithResolvers<undefined> = Promise.withResolvers();
+	#runnerStopped: PromiseWithResolvers<undefined> = Promise.withResolvers();
+
 	constructor(
 		registryConfig: RegistryConfig,
 		runConfig: RunConfig,
@@ -111,6 +116,8 @@ export class EngineActorDriver implements ActorDriver {
 						runnerName: this.#config.runnerName,
 					});
 				}
+
+				this.#runnerStarted.resolve(undefined);
 			},
 			onDisconnected: () => {
 				logger().warn({
@@ -120,7 +127,9 @@ export class EngineActorDriver implements ActorDriver {
 				});
 				hasDisconnected = true;
 			},
-			onShutdown: () => {},
+			onShutdown: () => {
+				this.#runnerStopped.resolve(undefined);
+			},
 			fetch: this.#runnerFetch.bind(this),
 			websocket: this.#runnerWebSocket.bind(this),
 			onActorStart: this.#runnerOnActorStart.bind(this),
@@ -380,5 +389,18 @@ export class EngineActorDriver implements ActorDriver {
 	async shutdown(immediate: boolean): Promise<void> {
 		logger().info({ msg: "stopping engine actor driver" });
 		await this.#runner.shutdown(immediate);
+	}
+
+	async serverlessHandleStart(c: HonoContext): Promise<Response> {
+		await this.#runnerStarted.promise;
+
+		return streamSSE(c, async (stream) => {
+			// Runner id should be set if the runner started
+			const runnerId = this.#runner.runnerId;
+			invariant(runnerId, "runnerId not set");
+			stream.writeSSE({ data: runnerId });
+
+			return this.#runnerStopped.promise;
+		});
 	}
 }

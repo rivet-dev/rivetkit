@@ -63,8 +63,8 @@ export class VersionedDataHandler<T> {
 	}
 
 	private embedVersion(data: VersionedData<Uint8Array>): Uint8Array {
-		const versionBytes = new Uint8Array(4);
-		new DataView(versionBytes.buffer).setUint32(0, data.version, true);
+		const versionBytes = new Uint8Array(2);
+		new DataView(versionBytes.buffer).setUint16(0, data.version, true);
 
 		const result = new Uint8Array(versionBytes.length + data.data.length);
 		result.set(versionBytes);
@@ -74,15 +74,15 @@ export class VersionedDataHandler<T> {
 	}
 
 	private extractVersion(bytes: Uint8Array): VersionedData<Uint8Array> {
-		if (bytes.length < 4) {
+		if (bytes.length < 2) {
 			throw new Error("Invalid versioned data: too short");
 		}
 
-		const version = new DataView(bytes.buffer, bytes.byteOffset).getUint32(
+		const version = new DataView(bytes.buffer, bytes.byteOffset).getUint16(
 			0,
 			true,
 		);
-		const data = bytes.slice(4);
+		const data = bytes.slice(2);
 
 		return { version, data };
 	}

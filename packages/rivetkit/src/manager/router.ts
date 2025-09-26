@@ -1,8 +1,14 @@
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import * as cbor from "cbor-x";
-import { Hono, Context as HonoContext, Next } from "hono";
+import {
+	Hono,
+	Context as HonoContext,
+	type MiddlewareHandler,
+	Next,
+} from "hono";
 import { cors as corsMiddleware } from "hono/cors";
 import { createMiddleware } from "hono/factory";
+import { streamSSE } from "hono/streaming";
 import invariant from "invariant";
 import { z } from "zod";
 import { ActorNotFound, Unsupported } from "@/actor/errors";
@@ -21,7 +27,7 @@ import {
 	loggerMiddleware,
 } from "@/common/router";
 import { deconstructError, noopNext } from "@/common/utils";
-import { HEADER_ACTOR_ID } from "@/driver-helpers/mod";
+import { type ActorDriver, HEADER_ACTOR_ID } from "@/driver-helpers/mod";
 import type {
 	TestInlineDriverCallRequest,
 	TestInlineDriverCallResponse,
@@ -72,7 +78,8 @@ export function createManagerRouter(
 	registryConfig: RegistryConfig,
 	runConfig: RunConfig,
 	managerDriver: ManagerDriver,
-): { router: Hono; openapi: OpenAPIHono } {
+	serverlessActorDriverBuilder: (() => ActorDriver) | undefined,
+): { router: Hono; openapi: OpenAPIHono; cors: MiddlewareHandler } {
 	const router = new OpenAPIHono({ strict: false }).basePath(
 		runConfig.basePath,
 	);
@@ -83,6 +90,53 @@ export function createManagerRouter(
 		? corsMiddleware(runConfig.cors)
 		: createMiddleware((_c, next) => next());
 
+	if (serverlessActorDriverBuilder) {
+		addServerlessRoutes(serverlessActorDriverBuilder, router, cors);
+	} else {
+		addManagerRoutes(registryConfig, runConfig, managerDriver, router, cors);
+	}
+
+	// Error handling
+	router.notFound(handleRouteNotFound);
+	router.onError(handleRouteError);
+
+	return { router: router as Hono, openapi: router, cors };
+}
+
+function addServerlessRoutes(
+	serverlessActorDriverBuilder: () => ActorDriver,
+	router: OpenAPIHono,
+	cors: MiddlewareHandler,
+) {
+	// GET /
+	router.get("/", cors, (c) => {
+		return c.text(
+			"This is a RivetKit server.\n\nLearn more at https://rivetkit.org",
+		);
+	});
+
+	// Serverless start endpoint
+	router.get("/start", cors, async (c) => {
+		const actorDriver = serverlessActorDriverBuilder();
+		invariant(
+			actorDriver.serverlessHandleStart,
+			"missing serverlessHandleStart on ActorDriver",
+		);
+		return await actorDriver.serverlessHandleStart(c);
+	});
+
+	router.get("/health", cors, (c) => {
+		return c.text("ok");
+	});
+}
+
+function addManagerRoutes(
+	registryConfig: RegistryConfig,
+	runConfig: RunConfig,
+	managerDriver: ManagerDriver,
+	router: OpenAPIHono,
+	cors: MiddlewareHandler,
+) {
 	// Actor gateway
 	router.use("*", cors, actorGateway.bind(undefined, runConfig, managerDriver));
 
@@ -405,6 +459,7 @@ export function createManagerRouter(
 						method: c.req.method,
 						headers: c.req.raw.headers,
 						body: c.req.raw.body,
+						duplex: "half",
 					}),
 				);
 
@@ -432,6 +487,10 @@ export function createManagerRouter(
 		});
 	}
 
+	router.get("/health", cors, (c) => {
+		return c.text("ok");
+	});
+
 	managerDriver.modifyManagerRouter?.(
 		registryConfig,
 		router as unknown as Hono,
@@ -453,12 +512,6 @@ export function createManagerRouter(
 				.route("/", createManagerInspectorRouter()),
 		);
 	}
-
-	// Error handling
-	router.notFound(handleRouteNotFound);
-	router.onError(handleRouteError);
-
-	return { router: router as Hono, openapi: router };
 }
 
 function createApiActor(actor: ActorOutput): ApiActor {
