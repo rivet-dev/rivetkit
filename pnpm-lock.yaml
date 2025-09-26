@@ -20,7 +20,7 @@ importers:
         version: 1.14.4(hono@4.9.8)
       '@hono/node-ws':
         specifier: ^1.1.7
-        version: 1.1.7(@hono/node-server@1.14.4(hono@4.9.8))(hono@4.9.8)
+        version: 1.1.7(@hono/node-server@1.14.4(hono@4.9.8))(bufferutil@4.0.9)(hono@4.9.8)
       esbuild:
         specifier: ^0.25.1
         version: 0.25.5
@@ -241,7 +241,7 @@ importers:
         version: 5.8.3
       wrangler:
         specifier: ^4.22.0
-        version: 4.22.0(@cloudflare/workers-types@4.20250619.0)
+        version: 4.22.0(@cloudflare/workers-types@4.20250619.0)(bufferutil@4.0.9)
 
   examples/cloudflare-workers-hono:
     dependencies:
@@ -269,7 +269,7 @@ importers:
         version: 5.8.3
       wrangler:
         specifier: ^4.22.0
-        version: 4.22.0(@cloudflare/workers-types@4.20250619.0)
+        version: 4.22.0(@cloudflare/workers-types@4.20250619.0)(bufferutil@4.0.9)
 
   examples/counter:
     devDependencies:
@@ -990,7 +990,7 @@ importers:
         version: 3.2.4(@types/node@24.0.4)(tsx@4.20.3)(yaml@2.8.0)
       wrangler:
         specifier: ^4.22.0
-        version: 4.22.0(@cloudflare/workers-types@4.20250619.0)
+        version: 4.22.0(@cloudflare/workers-types@4.20250619.0)(bufferutil@4.0.9)
 
   packages/core:
     devDependencies:
@@ -1131,8 +1131,8 @@ importers:
         specifier: ^0.19.10
         version: 0.19.10(hono@4.9.8)(zod@3.25.76)
       '@rivetkit/engine-runner':
-        specifier: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@0cfcf3d
-        version: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@0cfcf3d
+        specifier: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@3002
+        version: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@3002(bufferutil@4.0.9)
       '@rivetkit/fast-json-patch':
         specifier: ^3.1.2
         version: 3.1.2
@@ -1169,7 +1169,7 @@ importers:
         version: 1.18.2(hono@4.9.8)
       '@hono/node-ws':
         specifier: ^1.1.1
-        version: 1.1.7(@hono/node-server@1.18.2(hono@4.9.8))(hono@4.9.8)
+        version: 1.1.7(@hono/node-server@1.18.2(hono@4.9.8))(bufferutil@4.0.9)(hono@4.9.8)
       '@types/invariant':
         specifier: ^2
         version: 2.2.37
@@ -1182,6 +1182,9 @@ importers:
       '@vitest/ui':
         specifier: 3.1.1
         version: 3.1.1(vitest@3.2.4)
+      bufferutil:
+        specifier: ^4.0.9
+        version: 4.0.9
       bundle-require:
         specifier: ^5.1.0
         version: 5.1.0(esbuild@0.25.5)
@@ -1202,7 +1205,7 @@ importers:
         version: 3.2.4(@types/node@22.15.32)(@vitest/ui@3.1.1)(tsx@4.20.3)(yaml@2.8.0)
       ws:
         specifier: ^8.18.1
-        version: 8.18.3
+        version: 8.18.3(bufferutil@4.0.9)
 
   packages/sql-loader:
     devDependencies:
@@ -2496,12 +2499,12 @@ packages:
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
 
-  '@rivetkit/engine-runner-protocol@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@0cfcf3dbc4bf6eec94dad1cc61b6465553775c8c':
-    resolution: {tarball: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@0cfcf3dbc4bf6eec94dad1cc61b6465553775c8c}
+  '@rivetkit/engine-runner-protocol@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@f0701041420d626c85c98628fd496e4b3d082eb2':
+    resolution: {tarball: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@f0701041420d626c85c98628fd496e4b3d082eb2}
     version: 25.7.1
 
-  '@rivetkit/engine-runner@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@0cfcf3d':
-    resolution: {tarball: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@0cfcf3d}
+  '@rivetkit/engine-runner@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@3002':
+    resolution: {tarball: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@3002}
     version: 25.7.1
 
   '@rivetkit/fast-json-patch@3.1.2':
@@ -2993,6 +2996,10 @@ packages:
 
   buffer@5.7.1:
     resolution: {integrity: sha512-EHcyIPBQ4BSGlvjB16k5KgAJ27CIsHY/2JBmCRReo48y9rQ3MaUzWX3KVlBa4U7MyX02HdVj0K7C3WaB3ju7FQ==}
+
+  bufferutil@4.0.9:
+    resolution: {integrity: sha512-WDtdLmJvAuNNPzByAYpRo2rF1Mmradw6gvWsQKf63476DDXmomT9zUiGypLcG4ibIM67vhAj8jJRdbmEws2Aqw==}
+    engines: {node: '>=6.14.2'}
 
   bundle-require@5.1.0:
     resolution: {integrity: sha512-3WrrOuZiyaaZPWiEt4G3+IffISVC9HYlWueJEBWED4ZH4aIAC2PnkdnuRrR94M+w6yGWn4AglWtJtBI8YqvgoA==}
@@ -3881,6 +3888,10 @@ packages:
 
   node-gyp-build-optional-packages@5.1.1:
     resolution: {integrity: sha512-+P72GAjVAbTxjjwUmwjVrqrdZROD4nf8KgpBoDxqXXTiYZZt/ud60dE5yvCSr9lRO8e8yv6kgJIC0K0PfZFVQw==}
+    hasBin: true
+
+  node-gyp-build@4.8.4:
+    resolution: {integrity: sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==}
     hasBin: true
 
   node-releases@2.0.19:
@@ -5404,20 +5415,20 @@ snapshots:
     dependencies:
       hono: 4.9.8
 
-  '@hono/node-ws@1.1.7(@hono/node-server@1.14.4(hono@4.9.8))(hono@4.9.8)':
+  '@hono/node-ws@1.1.7(@hono/node-server@1.14.4(hono@4.9.8))(bufferutil@4.0.9)(hono@4.9.8)':
     dependencies:
       '@hono/node-server': 1.14.4(hono@4.9.8)
       hono: 4.9.8
-      ws: 8.18.2
+      ws: 8.18.2(bufferutil@4.0.9)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  '@hono/node-ws@1.1.7(@hono/node-server@1.18.2(hono@4.9.8))(hono@4.9.8)':
+  '@hono/node-ws@1.1.7(@hono/node-server@1.18.2(hono@4.9.8))(bufferutil@4.0.9)(hono@4.9.8)':
     dependencies:
       '@hono/node-server': 1.18.2(hono@4.9.8)
       hono: 4.9.8
-      ws: 8.18.2
+      ws: 8.18.2(bufferutil@4.0.9)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -5769,16 +5780,16 @@ snapshots:
 
   '@polka/url@1.0.0-next.29': {}
 
-  '@rivetkit/engine-runner-protocol@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@0cfcf3dbc4bf6eec94dad1cc61b6465553775c8c':
+  '@rivetkit/engine-runner-protocol@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@f0701041420d626c85c98628fd496e4b3d082eb2':
     dependencies:
       '@bare-ts/lib': 0.4.0
 
-  '@rivetkit/engine-runner@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@0cfcf3d':
+  '@rivetkit/engine-runner@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@3002(bufferutil@4.0.9)':
     dependencies:
-      '@rivetkit/engine-runner-protocol': https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@0cfcf3dbc4bf6eec94dad1cc61b6465553775c8c
+      '@rivetkit/engine-runner-protocol': https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@f0701041420d626c85c98628fd496e4b3d082eb2
       pino: 9.9.5
       uuid: 12.0.0
-      ws: 8.18.3
+      ws: 8.18.3(bufferutil@4.0.9)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -6417,6 +6428,10 @@ snapshots:
     dependencies:
       base64-js: 1.5.1
       ieee754: 1.2.1
+
+  bufferutil@4.0.9:
+    dependencies:
+      node-gyp-build: 4.8.4
 
   bundle-require@5.1.0(esbuild@0.25.5):
     dependencies:
@@ -7143,7 +7158,7 @@ snapshots:
 
   mimic-response@3.1.0: {}
 
-  miniflare@4.20250617.4:
+  miniflare@4.20250617.4(bufferutil@4.0.9):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       acorn: 8.14.0
@@ -7154,7 +7169,7 @@ snapshots:
       stoppable: 1.1.0
       undici: 5.29.0
       workerd: 1.20250617.0
-      ws: 8.18.0
+      ws: 8.18.0(bufferutil@4.0.9)
       youch: 3.3.4
       zod: 3.25.76
     transitivePeerDependencies:
@@ -7240,6 +7255,8 @@ snapshots:
     dependencies:
       detect-libc: 2.0.4
     optional: true
+
+  node-gyp-build@4.8.4: {}
 
   node-releases@2.0.19: {}
 
@@ -8426,13 +8443,13 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20250617.0
       '@cloudflare/workerd-windows-64': 1.20250617.0
 
-  wrangler@4.22.0(@cloudflare/workers-types@4.20250619.0):
+  wrangler@4.22.0(@cloudflare/workers-types@4.20250619.0)(bufferutil@4.0.9):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.4.0
       '@cloudflare/unenv-preset': 2.3.3(unenv@2.0.0-rc.17)(workerd@1.20250617.0)
       blake3-wasm: 2.1.5
       esbuild: 0.25.4
-      miniflare: 4.20250617.4
+      miniflare: 4.20250617.4(bufferutil@4.0.9)
       path-to-regexp: 6.3.0
       unenv: 2.0.0-rc.17
       workerd: 1.20250617.0
@@ -8457,11 +8474,17 @@ snapshots:
 
   wrappy@1.0.2: {}
 
-  ws@8.18.0: {}
+  ws@8.18.0(bufferutil@4.0.9):
+    optionalDependencies:
+      bufferutil: 4.0.9
 
-  ws@8.18.2: {}
+  ws@8.18.2(bufferutil@4.0.9):
+    optionalDependencies:
+      bufferutil: 4.0.9
 
-  ws@8.18.3: {}
+  ws@8.18.3(bufferutil@4.0.9):
+    optionalDependencies:
+      bufferutil: 4.0.9
 
   y18n@5.0.8: {}
 
