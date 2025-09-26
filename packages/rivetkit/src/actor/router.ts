@@ -23,7 +23,9 @@ import {
 	HEADER_ENCODING,
 	PATH_CONNECT_WEBSOCKET,
 	PATH_RAW_WEBSOCKET_PREFIX,
+	WS_PROTOCOL_CONN_ID,
 	WS_PROTOCOL_CONN_PARAMS,
+	WS_PROTOCOL_CONN_TOKEN,
 	WS_PROTOCOL_ENCODING,
 	WS_PROTOCOL_TOKEN,
 } from "@/common/actor-router-consts";
@@ -88,6 +90,8 @@ export function createActorRouter(
 				const protocols = c.req.header("sec-websocket-protocol");
 				let encodingRaw: string | undefined;
 				let connParamsRaw: string | undefined;
+				let connIdRaw: string | undefined;
+				let connTokenRaw: string | undefined;
 
 				if (protocols) {
 					const protocolList = protocols.split(",").map((p) => p.trim());
@@ -98,6 +102,10 @@ export function createActorRouter(
 							connParamsRaw = decodeURIComponent(
 								protocol.substring(WS_PROTOCOL_CONN_PARAMS.length),
 							);
+						} else if (protocol.startsWith(WS_PROTOCOL_CONN_ID)) {
+							connIdRaw = protocol.substring(WS_PROTOCOL_CONN_ID.length);
+						} else if (protocol.startsWith(WS_PROTOCOL_CONN_TOKEN)) {
+							connTokenRaw = protocol.substring(WS_PROTOCOL_CONN_TOKEN.length);
 						}
 					}
 				}
@@ -114,6 +122,8 @@ export function createActorRouter(
 					c.env.actorId,
 					encoding,
 					connParams,
+					connIdRaw,
+					connTokenRaw,
 				);
 			})(c, noopNext());
 		} else {

@@ -322,6 +322,9 @@ export class EngineActorDriver implements ActorDriver {
 				actorId,
 				encoding,
 				connParams,
+				// Extract connId and connToken from protocols if needed
+				undefined,
+				undefined,
 			);
 		} else if (url.pathname.startsWith(PATH_RAW_WEBSOCKET_PREFIX)) {
 			wsHandlerPromise = handleRawWebSocketHandler(

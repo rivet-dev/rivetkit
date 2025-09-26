@@ -206,6 +206,8 @@ export class RemoteManagerDriver implements ManagerDriver {
 		actorId: string,
 		encoding: Encoding,
 		params: unknown,
+		connId?: string,
+		connToken?: string,
 	): Promise<UniversalWebSocket> {
 		return await openWebSocketToActor(
 			this.#config,
@@ -213,6 +215,8 @@ export class RemoteManagerDriver implements ManagerDriver {
 			actorId,
 			encoding,
 			params,
+			connId,
+			connToken,
 		);
 	}
 

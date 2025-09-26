@@ -99,7 +99,7 @@ export class ActorConnRaw {
 	/** If attempting to connect. Helpful for knowing if in a retry loop when reconnecting. */
 	#connecting = false;
 
-	// These will only be set on SSE driver
+	// Connection info, used for reconnection and HTTP requests
 	#actorId?: string;
 	#connectionId?: string;
 	#connectionToken?: string;
@@ -282,11 +282,24 @@ enc
 			this.#actorQuery,
 			this.#driver,
 		);
+
+		// Check if we have connection info for reconnection
+		const isReconnection = this.#connectionId && this.#connectionToken;
+		if (isReconnection) {
+			logger().debug({
+				msg: "attempting websocket reconnection",
+				connectionId: this.#connectionId,
+			});
+		}
+
 		const ws = await this.#driver.openWebSocket(
 			PATH_CONNECT_WEBSOCKET,
 			actorId,
 			this.#encoding,
 			this.#params,
+			// Pass connection ID and token for reconnection if available
+			isReconnection ? this.#connectionId : undefined,
+			isReconnection ? this.#connectionToken : undefined,
 		);
 		this.#transport = { websocket: ws };
 		ws.addEventListener("open", () => {
@@ -321,6 +334,8 @@ enc
 			encoding: this.#encoding,
 		});
 
+		const isReconnection = this.#connectionId && this.#connectionToken;
+
 		const eventSource = new EventSource("http://actor/connect/sse", {
 			fetch: (input, init) => {
 				return this.#driver.sendRequest(
@@ -333,6 +348,12 @@ enc
 							[HEADER_ENCODING]: this.#encoding,
 							...(this.#params !== undefined
 								? { [HEADER_CONN_PARAMS]: JSON.stringify(this.#params) }
+								: {}),
+							...(isReconnection
+								? {
+										[HEADER_CONN_ID]: this.#connectionId,
+										[HEADER_CONN_TOKEN]: this.#connectionToken,
+									}
 								: {}),
 						},
 					}),
@@ -403,7 +424,7 @@ enc
 		);
 
 		if (response.body.tag === "Init") {
-			// This is only called for SSE
+			// Store connection info for reconnection
 			this.#actorId = response.body.val.actorId;
 			this.#connectionId = response.body.val.connectionId;
 			this.#connectionToken = response.body.val.connectionToken;

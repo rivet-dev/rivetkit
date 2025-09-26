@@ -9,7 +9,9 @@ import {
 	type ManagerDisplayInformation,
 	type ManagerDriver,
 	WS_PROTOCOL_ACTOR,
+	WS_PROTOCOL_CONN_ID,
 	WS_PROTOCOL_CONN_PARAMS,
+	WS_PROTOCOL_CONN_TOKEN,
 	WS_PROTOCOL_ENCODING,
 	WS_PROTOCOL_STANDARD,
 	WS_PROTOCOL_TARGET,
@@ -70,6 +72,8 @@ export class CloudflareActorsManagerDriver implements ManagerDriver {
 		actorId: string,
 		encoding: Encoding,
 		params: unknown,
+		connId?: string,
+		connToken?: string,
 	): Promise<UniversalWebSocket> {
 		const env = getCloudflareAmbientEnv();
 
@@ -92,6 +96,12 @@ export class CloudflareActorsManagerDriver implements ManagerDriver {
 			protocols.push(
 				`${WS_PROTOCOL_CONN_PARAMS}${encodeURIComponent(JSON.stringify(params))}`,
 			);
+		}
+		if (connId) {
+			protocols.push(`${WS_PROTOCOL_CONN_ID}${connId}`);
+		}
+		if (connToken) {
+			protocols.push(`${WS_PROTOCOL_CONN_TOKEN}${connToken}`);
 		}
 
 		const headers: Record<string, string> = {

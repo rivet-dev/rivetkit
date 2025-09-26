@@ -31,6 +31,8 @@ export const WS_PROTOCOL_TARGET = "rivet_target.";
 export const WS_PROTOCOL_ACTOR = "rivet_actor.";
 export const WS_PROTOCOL_ENCODING = "rivet_encoding.";
 export const WS_PROTOCOL_CONN_PARAMS = "rivet_conn_params.";
+export const WS_PROTOCOL_CONN_ID = "rivet_conn.";
+export const WS_PROTOCOL_CONN_TOKEN = "rivet_conn_token.";
 export const WS_PROTOCOL_TOKEN = "rivet_token.";
 
 // MARK: WebSocket Inline Test Protocol Prefixes

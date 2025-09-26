@@ -3,7 +3,9 @@ import {
 	HEADER_CONN_PARAMS,
 	HEADER_ENCODING,
 	WS_PROTOCOL_ACTOR,
+	WS_PROTOCOL_CONN_ID,
 	WS_PROTOCOL_CONN_PARAMS,
+	WS_PROTOCOL_CONN_TOKEN,
 	WS_PROTOCOL_ENCODING,
 	WS_PROTOCOL_STANDARD as WS_PROTOCOL_RIVETKIT,
 	WS_PROTOCOL_TARGET,
@@ -21,6 +23,8 @@ export async function openWebSocketToActor(
 	actorId: string,
 	encoding: Encoding,
 	params: unknown,
+	connId?: string,
+	connToken?: string,
 ): Promise<UniversalWebSocket> {
 	const WebSocket = await importWebSocket();
 
@@ -38,7 +42,14 @@ export async function openWebSocketToActor(
 	// Create WebSocket connection
 	const ws = new WebSocket(
 		guardUrl,
-		buildWebSocketProtocols(runConfig, actorId, encoding, params),
+		buildWebSocketProtocols(
+			runConfig,
+			actorId,
+			encoding,
+			params,
+			connId,
+			connToken,
+		),
 	);
 
 	// Set binary type to arraybuffer for proper encoding support
@@ -54,6 +65,8 @@ export function buildWebSocketProtocols(
 	actorId: string,
 	encoding: Encoding,
 	params?: unknown,
+	connId?: string,
+	connToken?: string,
 ): string[] {
 	const protocols: string[] = [];
 	protocols.push(WS_PROTOCOL_RIVETKIT);
@@ -67,6 +80,12 @@ export function buildWebSocketProtocols(
 		protocols.push(
 			`${WS_PROTOCOL_CONN_PARAMS}${encodeURIComponent(JSON.stringify(params))}`,
 		);
+	}
+	if (connId) {
+		protocols.push(`${WS_PROTOCOL_CONN_ID}${connId}`);
+	}
+	if (connToken) {
+		protocols.push(`${WS_PROTOCOL_CONN_TOKEN}${connToken}`);
 	}
 	return protocols;
 }
