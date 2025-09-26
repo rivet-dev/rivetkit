@@ -76,16 +76,10 @@ export type { ActionContext } from "./action";
 export type * from "./config";
 export type {
 	Conn,
-	ConnectionDriver,
 	ConnectionStatus,
 	generateConnId,
 	generateConnToken,
-} from "./connection";
-export {
-	CONNECTION_DRIVER_HTTP,
-	CONNECTION_DRIVER_SSE,
-	CONNECTION_DRIVER_WEBSOCKET,
-} from "./connection";
+} from "./conn";
 export type { ActorContext } from "./context";
 export type {
 	ActionContextOf,
@@ -95,10 +89,6 @@ export type {
 } from "./definition";
 export { lookupInRegistry } from "./definition";
 export { UserError, type UserErrorOptions } from "./errors";
-export {
-	createGenericConnDrivers,
-	GenericConnGlobalState,
-} from "./generic-conn-driver";
 export type { AnyActorInstance } from "./instance";
 export {
 	type ActorRouter,

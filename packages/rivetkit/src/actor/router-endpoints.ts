@@ -2,15 +2,10 @@ import * as cbor from "cbor-x";
 import type { Context as HonoContext, HonoRequest } from "hono";
 import { type SSEStreamingApi, streamSSE } from "hono/streaming";
 import type { WSContext } from "hono/ws";
+import invariant from "invariant";
 import { ActionContext } from "@/actor/action";
-import type { AnyConn } from "@/actor/connection";
-import {
-	CONNECTION_DRIVER_HTTP,
-	CONNECTION_DRIVER_SSE,
-	CONNECTION_DRIVER_WEBSOCKET,
-	generateConnId,
-	generateConnToken,
-} from "@/actor/connection";
+import type { AnyConn } from "@/actor/conn";
+import { generateConnId, generateConnToken } from "@/actor/conn";
 import * as errors from "@/actor/errors";
 import type { AnyActorInstance } from "@/actor/instance";
 import type { InputData } from "@/actor/protocol/serde";
@@ -37,12 +32,8 @@ import {
 	serializeWithEncoding,
 } from "@/serde";
 import { bufferToArrayBuffer, promiseWithResolvers } from "@/utils";
+import { ConnDriverKind } from "./conn-drivers";
 import type { ActorDriver } from "./driver";
-import type {
-	GenericHttpDriverState,
-	GenericSseDriverState,
-	GenericWebSocketDriverState,
-} from "./generic-conn-driver";
 import { loggerWithoutContext } from "./log";
 import { parseMessage } from "./protocol/old";
 
@@ -154,6 +145,9 @@ export async function handleWebSocketConnect(
 		};
 	}
 
+	// Promise used to wait for the websocket close in `disconnect`
+	const closePromise = promiseWithResolvers<void>();
+
 	return {
 		onOpen: (_evt: any, ws: WSContext) => {
 			actor.rLog.debug("actor websocket open");
@@ -166,13 +160,9 @@ export async function handleWebSocketConnect(
 					const connState = await actor.prepareConn(parameters, req);
 
 					// Save socket
-					const connGlobalState =
-						actorDriver.getGenericConnGlobalState(actorId);
-					connGlobalState.websockets.set(connId, ws);
 					actor.rLog.debug({
 						msg: "registered websocket for conn",
 						actorId,
-						totalCount: connGlobalState.websockets.size,
 					});
 
 					// Create connection
@@ -181,8 +171,13 @@ export async function handleWebSocketConnect(
 						connToken,
 						parameters,
 						connState,
-						CONNECTION_DRIVER_WEBSOCKET,
-						{ encoding } satisfies GenericWebSocketDriverState,
+						{
+							[ConnDriverKind.WEBSOCKET]: {
+								encoding,
+								websocket: ws,
+								closePromise,
+							},
+						},
 					);
 
 					// Unblock other handlers
@@ -258,6 +253,10 @@ export async function handleWebSocketConnect(
 			},
 			ws: WSContext,
 		) => {
+			handlersReject(`WebSocket closed (${event.code}): ${event.reason}`);
+
+			closePromise.resolve();
+
 			if (event.wasClean) {
 				actor.rLog.info({
 					msg: "websocket closed",
@@ -280,24 +279,8 @@ export async function handleWebSocketConnect(
 
 			// Handle cleanup asynchronously
 			handlersPromise
-				.then(({ conn, actor, connId }) => {
-					const connGlobalState =
-						actorDriver.getGenericConnGlobalState(actorId);
-					const didDelete = connGlobalState.websockets.delete(connId);
-					if (didDelete) {
-						actor.rLog.info({
-							msg: "removing websocket for conn",
-							totalCount: connGlobalState.websockets.size,
-						});
-					} else {
-						actor.rLog.warn({
-							msg: "websocket does not exist for conn",
-							actorId,
-							totalCount: connGlobalState.websockets.size,
-						});
-					}
-
-					actor.__removeConn(conn);
+				.then(({ conn, actor }) => {
+					actor.__connDisconnected(conn, event.wasClean);
 				})
 				.catch((error) => {
 					deconstructError(
@@ -355,20 +338,13 @@ export async function handleSseConnect(
 
 			actor.rLog.debug("sse open");
 
-			// Save stream
-			actorDriver
-				.getGenericConnGlobalState(actorId)
-				.sseStreams.set(connId, stream);
-
 			// Create connection
-			conn = await actor.createConn(
-				connId,
-				connToken,
-				parameters,
-				connState,
-				CONNECTION_DRIVER_SSE,
-				{ encoding } satisfies GenericSseDriverState,
-			);
+			conn = await actor.createConn(connId, connToken, parameters, connState, {
+				[ConnDriverKind.SSE]: {
+					encoding,
+					stream: stream,
+				},
+			});
 
 			// Wait for close
 			const abortResolver = promiseWithResolvers();
@@ -380,18 +356,14 @@ export async function handleSseConnect(
 
 			// Handle stream abort (when client closes the connection)
 			c.req.raw.signal.addEventListener("abort", async () => {
-				const rLog = actor?.rLog ?? loggerWithoutContext();
+				invariant(actor, "actor should exist");
+				const rLog = actor.rLog ?? loggerWithoutContext();
 				try {
 					rLog.debug("sse stream aborted");
 
 					// Cleanup
-					if (connId) {
-						actorDriver
-							.getGenericConnGlobalState(actorId)
-							.sseStreams.delete(connId);
-					}
-					if (conn && actor) {
-						actor.__removeConn(conn);
+					if (conn) {
+						actor.__connDisconnected(conn, false);
 					}
 
 					abortResolver.resolve(undefined);
@@ -426,13 +398,8 @@ export async function handleSseConnect(
 			loggerWithoutContext().error({ msg: "error in sse connection", error });
 
 			// Cleanup on error
-			if (connId !== undefined) {
-				actorDriver
-					.getGenericConnGlobalState(actorId)
-					.sseStreams.delete(connId);
-			}
 			if (conn && actor !== undefined) {
-				actor.__removeConn(conn);
+				actor.__connDisconnected(conn, false);
 			}
 
 			// Close the stream on error
@@ -479,8 +446,7 @@ export async function handleAction(
 			generateConnToken(),
 			parameters,
 			connState,
-			CONNECTION_DRIVER_HTTP,
-			{} satisfies GenericHttpDriverState,
+			{ [ConnDriverKind.HTTP]: {} },
 		);
 
 		// Call action
@@ -488,7 +454,7 @@ export async function handleAction(
 		output = await actor.executeAction(ctx, actionName, actionArgs);
 	} finally {
 		if (conn) {
-			actor?.__removeConn(conn);
+			actor?.__connDisconnected(conn, true);
 		}
 	}
 

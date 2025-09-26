@@ -1,7 +1,9 @@
 import * as cbor from "cbor-x";
+import type { SSEStreamingApi } from "hono/streaming";
+import type { WSContext } from "hono/ws";
 import invariant from "invariant";
 import onChange from "on-change";
-import type { ActorKey } from "@/actor/mod";
+import type { ActorKey, Encoding } from "@/actor/mod";
 import type { Client } from "@/client/client";
 import { getBaseLogger, getIncludeTarget, type Logger } from "@/common/log";
 import { isCborSerializable, stringifyError } from "@/common/utils";
@@ -20,18 +22,13 @@ import {
 } from "@/utils";
 import type { ActionContext } from "./action";
 import type { ActorConfig, OnConnectOptions } from "./config";
-import {
-	CONNECTION_CHECK_LIVENESS_SYMBOL,
-	Conn,
-	type ConnectionDriver,
-	type ConnId,
-} from "./connection";
+import { CONNECTION_CHECK_LIVENESS_SYMBOL, Conn, type ConnId } from "./conn";
+import type { ConnDriver, ConnDriverState } from "./conn-drivers";
 import { ActorContext } from "./context";
 import type { AnyDatabaseProvider, InferDatabaseClient } from "./database";
-import type { ActorDriver, ConnDriver, ConnectionDriversMap } from "./driver";
+import type { ActorDriver } from "./driver";
 import * as errors from "./errors";
 import { serializeActorKey } from "./keys";
-import { loggerWithoutContext } from "./log";
 import type {
 	PersistedActor,
 	PersistedConn,
@@ -162,7 +159,6 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 	#backgroundPromises: Promise<void>[] = [];
 	#abortController = new AbortController();
 	#config: ActorConfig<S, CP, CS, V, I, DB>;
-	#connectionDrivers!: ConnectionDriversMap;
 	#actorDriver!: ActorDriver;
 	#inlineClient!: Client<Registry<any>>;
 	#actorId!: string;
@@ -207,9 +203,9 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 			getConnections: async () => {
 				return Array.from(this.#connections.entries()).map(([id, conn]) => ({
 					id,
-					stateEnabled: conn._stateEnabled,
-					params: conn.params as {},
-					state: conn._stateEnabled ? conn.state : undefined,
+					stateEnabled: conn.__stateEnabled,
+					params: conn.params as any,
+					state: conn.__stateEnabled ? conn.state : undefined,
 				}));
 			},
 			setState: async (state: unknown) => {
@@ -255,7 +251,6 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 	}
 
 	async start(
-		connectionDrivers: ConnectionDriversMap,
 		actorDriver: ActorDriver,
 		inlineClient: Client<Registry<any>>,
 		actorId: string,
@@ -279,7 +274,6 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 			),
 		);
 
-		this.#connectionDrivers = connectionDrivers;
 		this.#actorDriver = actorDriver;
 		this.#inlineClient = inlineClient;
 		this.#actorId = actorId;
@@ -529,7 +523,7 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 		}
 	}
 
-	get #connStateEnabled() {
+	get connStateEnabled() {
 		return "createConnState" in this.#config || "connState" in this.#config;
 	}
 
@@ -720,13 +714,7 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 			// Load connections
 			for (const connPersist of this.#persist.connections) {
 				// Create connections
-				const driver = this.__getConnDriver(connPersist.connDriver);
-				const conn = new Conn<S, CP, CS, V, I, DB>(
-					this,
-					connPersist,
-					driver,
-					this.#connStateEnabled,
-				);
+				const conn = new Conn<S, CP, CS, V, I, DB>(this, connPersist);
 				this.#connections.set(conn.id, conn);
 
 				// Register event subscriptions
@@ -792,14 +780,32 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 	}
 
 	/**
+	 * Connection disconnected.
+	 *
+	 * If a clean diconnect, will be removed immediately.
+	 *
+	 * If not a clean disconnect, will keep the connection alive for a given interval to wait for reconnect.
+	 */
+	__connDisconnected(conn: Conn<S, CP, CS, V, I, DB>, wasClean: boolean) {
+		if (wasClean) {
+			// Disconnected cleanly, remove the conn
+
+			this.#removeConn(conn);
+		} else {
+			// Disconnected uncleanly, allow reconnection
+
+			if (conn.__driverState) {
+				this.rLog.warn("called conn disconnected without driver state");
+			}
+
+			conn.__driverState = undefined;
+		}
+	}
+
+	/**
 	 * Removes a connection and cleans up its resources.
 	 */
-	__removeConn(conn: Conn<S, CP, CS, V, I, DB> | undefined) {
-		if (!conn) {
-			this.#rLog.warn({ msg: "`conn` does not exist" });
-			return;
-		}
-
+	#removeConn(conn: Conn<S, CP, CS, V, I, DB>) {
 		// Remove from persist & save immediately
 		const connIdx = this.#persist.connections.findIndex(
 			(c) => c.connId === conn.id,
@@ -867,7 +873,7 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 			);
 		}
 
-		if (this.#connStateEnabled) {
+		if (this.connStateEnabled) {
 			if ("createConnState" in this.#config) {
 				const dataOrPromise = this.#config.createConnState(
 					this.actorContext as unknown as ActorContext<
@@ -901,13 +907,6 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 		return connState as CS;
 	}
 
-	__getConnDriver(driverId: ConnectionDriver): ConnDriver {
-		// Get driver
-		const driver = this.#connectionDrivers[driverId];
-		if (!driver) throw new Error(`No connection driver: ${driverId}`);
-		return driver;
-	}
-
 	/**
 	 * Called after establishing a connection handshake.
 	 */
@@ -916,8 +915,7 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 		connectionToken: string,
 		params: CP,
 		state: CS,
-		driverId: ConnectionDriver,
-		driverState: unknown,
+		driverState: ConnDriverState,
 	): Promise<Conn<S, CP, CS, V, I, DB>> {
 		this.#assertReady();
 
@@ -926,23 +924,16 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 		}
 
 		// Create connection
-		const driver = this.__getConnDriver(driverId);
 		const persist: PersistedConn<CP, CS> = {
 			connId: connectionId,
 			token: connectionToken,
-			connDriver: driverId,
-			connDriverState: driverState,
 			params: params,
 			state: state,
 			lastSeen: Date.now(),
 			subscriptions: [],
 		};
-		const conn = new Conn<S, CP, CS, V, I, DB>(
-			this,
-			persist,
-			driver,
-			this.#connStateEnabled,
-		);
+		const conn = new Conn<S, CP, CS, V, I, DB>(this, persist);
+		conn.__driverState = driverState;
 		this.#connections.set(conn.id, conn);
 
 		// Update sleep
@@ -1151,9 +1142,8 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 					lastSeen,
 				});
 
-				// TODO: Do we need to force disconnect the connection here?
-
-				this.__removeConn(conn);
+				// Assume that the connection is dead here, no need to disconnect anything
+				this.#removeConn(conn);
 			}
 		}
 	}
@@ -1308,7 +1298,10 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 	/**
 	 * Handles raw HTTP requests to the actor.
 	 */
-	async handleFetch(request: Request, opts: {}): Promise<Response> {
+	async handleFetch(
+		request: Request,
+		opts: Record<never, never>,
+	): Promise<Response> {
 		this.#assertReady();
 
 		if (!this.#config.onFetch) {
@@ -1782,10 +1775,6 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 			connections: persist.connections.map((conn) => ({
 				id: conn.connId,
 				token: conn.token,
-				driver: conn.connDriver as string,
-				driverState: bufferToArrayBuffer(
-					cbor.encode(conn.connDriverState || {}),
-				),
 				parameters: bufferToArrayBuffer(cbor.encode(conn.params || {})),
 				state: bufferToArrayBuffer(cbor.encode(conn.state || {})),
 				subscriptions: conn.subscriptions.map((sub) => ({
@@ -1819,8 +1808,6 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 			connections: bareData.connections.map((conn) => ({
 				connId: conn.id,
 				token: conn.token,
-				connDriver: conn.driver as ConnectionDriver,
-				connDriverState: cbor.decode(new Uint8Array(conn.driverState)),
 				params: cbor.decode(new Uint8Array(conn.parameters)),
 				state: cbor.decode(new Uint8Array(conn.state)),
 				subscriptions: conn.subscriptions.map((sub) => ({

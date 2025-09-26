@@ -2,7 +2,7 @@ import type { ActorKey } from "@/actor/mod";
 import type { Client } from "@/client/client";
 import type { Logger } from "@/common/log";
 import type { Registry } from "@/registry/mod";
-import type { Conn, ConnId } from "./connection";
+import type { Conn, ConnId } from "./conn";
 import type { AnyDatabaseProvider, InferDatabaseClient } from "./database";
 import type { ActorInstance, SaveStateOptions } from "./instance";
 import type { Schedule } from "./schedule";
