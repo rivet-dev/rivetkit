@@ -11,6 +11,7 @@ import {
 	type ConnectWebSocketOutput,
 	type ConnsMessageOpts,
 	handleAction,
+	handleConnectionClose,
 	handleConnectionMessage,
 	handleRawWebSocketHandler,
 	handleSseConnect,
@@ -23,7 +24,9 @@ import {
 	HEADER_ENCODING,
 	PATH_CONNECT_WEBSOCKET,
 	PATH_RAW_WEBSOCKET_PREFIX,
+	WS_PROTOCOL_CONN_ID,
 	WS_PROTOCOL_CONN_PARAMS,
+	WS_PROTOCOL_CONN_TOKEN,
 	WS_PROTOCOL_ENCODING,
 	WS_PROTOCOL_TOKEN,
 } from "@/common/actor-router-consts";
@@ -39,6 +42,7 @@ import {
 } from "@/inspector/actor";
 import { isInspectorEnabled, secureInspector } from "@/inspector/utils";
 import type { RunConfig } from "@/registry/run-config";
+import { ConnDriverKind } from "./conn-drivers";
 import type { ActorDriver } from "./driver";
 import { InternalError } from "./errors";
 import { loggerWithoutContext } from "./log";
@@ -80,6 +84,38 @@ export function createActorRouter(
 		return c.text("ok");
 	});
 
+	// Test endpoint to force disconnect a connection non-cleanly
+	router.post("/.test/force-disconnect", async (c) => {
+		const connId = c.req.query("conn");
+
+		if (!connId) {
+			return c.text("Missing conn query parameter", 400);
+		}
+
+		const actor = await actorDriver.loadActor(c.env.actorId);
+		const conn = actor.__getConnForId(connId);
+
+		if (!conn) {
+			return c.text(`Connection not found: ${connId}`, 404);
+		}
+
+		// Force close the websocket/SSE connection without clean shutdown
+		const driverState = conn.__driverState;
+		if (driverState && ConnDriverKind.WEBSOCKET in driverState) {
+			const ws = driverState[ConnDriverKind.WEBSOCKET].websocket;
+
+			// Force close without sending close frame
+			(ws.raw as any).terminate();
+		} else if (driverState && ConnDriverKind.SSE in driverState) {
+			const stream = driverState[ConnDriverKind.SSE].stream;
+
+			// Force close the SSE stream
+			stream.abort();
+		}
+
+		return c.json({ success: true });
+	});
+
 	router.get(PATH_CONNECT_WEBSOCKET, async (c) => {
 		const upgradeWebSocket = runConfig.getUpgradeWebSocket?.();
 		if (upgradeWebSocket) {
@@ -88,6 +124,8 @@ export function createActorRouter(
 				const protocols = c.req.header("sec-websocket-protocol");
 				let encodingRaw: string | undefined;
 				let connParamsRaw: string | undefined;
+				let connIdRaw: string | undefined;
+				let connTokenRaw: string | undefined;
 
 				if (protocols) {
 					const protocolList = protocols.split(",").map((p) => p.trim());
@@ -98,6 +136,10 @@ export function createActorRouter(
 							connParamsRaw = decodeURIComponent(
 								protocol.substring(WS_PROTOCOL_CONN_PARAMS.length),
 							);
+						} else if (protocol.startsWith(WS_PROTOCOL_CONN_ID)) {
+							connIdRaw = protocol.substring(WS_PROTOCOL_CONN_ID.length);
+						} else if (protocol.startsWith(WS_PROTOCOL_CONN_TOKEN)) {
+							connTokenRaw = protocol.substring(WS_PROTOCOL_CONN_TOKEN.length);
 						}
 					}
 				}
@@ -114,6 +156,8 @@ export function createActorRouter(
 					c.env.actorId,
 					encoding,
 					connParams,
+					connIdRaw,
+					connTokenRaw,
 				);
 			})(c, noopNext());
 		} else {
@@ -141,6 +185,22 @@ export function createActorRouter(
 			throw new Error("Missing required parameters");
 		}
 		return handleConnectionMessage(
+			c,
+			runConfig,
+			actorDriver,
+			connId,
+			connToken,
+			c.env.actorId,
+		);
+	});
+
+	router.post("/connections/close", async (c) => {
+		const connId = c.req.header(HEADER_CONN_ID);
+		const connToken = c.req.header(HEADER_CONN_TOKEN);
+		if (!connId || !connToken) {
+			throw new Error("Missing required parameters");
+		}
+		return handleConnectionClose(
 			c,
 			runConfig,
 			actorDriver,

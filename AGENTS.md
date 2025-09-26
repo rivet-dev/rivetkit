@@ -101,7 +101,7 @@ This ensures imports resolve correctly across different build environments and p
 - Write log messages in lowercase
 - Use `logger()` to log messages
     - Do not store `logger()` as a variable, always call it using `logger().info("...")`
-    - Use structured logging where it makes sense, for example: `logger().info("foo", { bar: 5, baz: 10 })`
+    - Use structured logging where it makes sense, for example: `logger().info({ msg: "foo", bar: 5, baz: 10 })`
     - Supported logging methods are: trace, debug, info, warn, error, critical
 - Instead of returning errors as raw HTTP responses with c.json, use or write an error in packages/rivetkit/src/actor/errors.ts and throw that instead. The middleware will automatically serialize the response for you.
 

@@ -5,14 +5,21 @@ import type { WSContext } from "hono/ws";
 import invariant from "invariant";
 import { ActionContext } from "@/actor/action";
 import type { AnyConn } from "@/actor/conn";
-import { generateConnId, generateConnToken } from "@/actor/conn";
+import {
+	generateConnId,
+	generateConnSocketId,
+	generateConnToken,
+} from "@/actor/conn";
+import { ConnDriverKind } from "@/actor/conn-drivers";
 import * as errors from "@/actor/errors";
 import type { AnyActorInstance } from "@/actor/instance";
 import type { InputData } from "@/actor/protocol/serde";
 import { type Encoding, EncodingSchema } from "@/actor/protocol/serde";
 import {
 	HEADER_ACTOR_QUERY,
+	HEADER_CONN_ID,
 	HEADER_CONN_PARAMS,
+	HEADER_CONN_TOKEN,
 	HEADER_ENCODING,
 } from "@/common/actor-router-consts";
 import type { UpgradeWebSocketArgs } from "@/common/inline-websocket-adapter2";
@@ -32,7 +39,6 @@ import {
 	serializeWithEncoding,
 } from "@/serde";
 import { bufferToArrayBuffer, promiseWithResolvers } from "@/utils";
-import { ConnDriverKind } from "./conn-drivers";
 import type { ActorDriver } from "./driver";
 import { loggerWithoutContext } from "./log";
 import { parseMessage } from "./protocol/old";
@@ -105,6 +111,8 @@ export async function handleWebSocketConnect(
 	actorId: string,
 	encoding: Encoding,
 	parameters: unknown,
+	connId?: string,
+	connToken?: string,
 ): Promise<UpgradeWebSocketArgs> {
 	const exposeInternalError = req ? getRequestExposeInternalError(req) : false;
 
@@ -147,6 +155,7 @@ export async function handleWebSocketConnect(
 
 	// Promise used to wait for the websocket close in `disconnect`
 	const closePromise = promiseWithResolvers<void>();
+	const socketId = generateConnSocketId();
 
 	return {
 		onOpen: (_evt: any, ws: WSContext) => {
@@ -155,33 +164,36 @@ export async function handleWebSocketConnect(
 			// Run async operations in background
 			(async () => {
 				try {
-					const connId = generateConnId();
-					const connToken = generateConnToken();
-					const connState = await actor.prepareConn(parameters, req);
+					let conn: AnyConn;
 
-					// Save socket
+					// Create or reconnect connection
 					actor.rLog.debug({
-						msg: "registered websocket for conn",
+						msg: connId
+							? "websocket reconnection attempt"
+							: "new websocket connection",
+						connId,
 						actorId,
 					});
 
-					// Create connection
-					const conn = await actor.createConn(
-						connId,
-						connToken,
-						parameters,
-						connState,
+					conn = await actor.createConn(
 						{
-							[ConnDriverKind.WEBSOCKET]: {
-								encoding,
-								websocket: ws,
-								closePromise,
+							socketId,
+							driverState: {
+								[ConnDriverKind.WEBSOCKET]: {
+									encoding,
+									websocket: ws,
+									closePromise,
+								},
 							},
 						},
+						parameters,
+						req,
+						connId,
+						connToken,
 					);
 
 					// Unblock other handlers
-					handlersResolve({ conn, actor, connId });
+					handlersResolve({ conn, actor, connId: conn.id });
 				} catch (error) {
 					handlersReject(error);
 
@@ -280,7 +292,7 @@ export async function handleWebSocketConnect(
 			// Handle cleanup asynchronously
 			handlersPromise
 				.then(({ conn, actor }) => {
-					actor.__connDisconnected(conn, event.wasClean);
+					actor.__connDisconnected(conn, event.wasClean, socketId);
 				})
 				.catch((error) => {
 					deconstructError(
@@ -320,31 +332,42 @@ export async function handleSseConnect(
 
 	const encoding = getRequestEncoding(c.req);
 	const parameters = getRequestConnParams(c.req);
+	const socketId = generateConnSocketId();
+
+	// Check for reconnection parameters
+	const connId = c.req.header(HEADER_CONN_ID);
+	const connToken = c.req.header(HEADER_CONN_TOKEN);
 
 	// Return the main handler with all async work inside
 	return streamSSE(c, async (stream) => {
 		let actor: AnyActorInstance | undefined;
-		let connId: string | undefined;
-		let connToken: string | undefined;
-		let connState: unknown;
 		let conn: AnyConn | undefined;
 
 		try {
 			// Do all async work inside the handler
 			actor = await actorDriver.loadActor(actorId);
-			connId = generateConnId();
-			connToken = generateConnToken();
-			connState = await actor.prepareConn(parameters, c.req.raw);
 
-			actor.rLog.debug("sse open");
-
-			// Create connection
-			conn = await actor.createConn(connId, connToken, parameters, connState, {
-				[ConnDriverKind.SSE]: {
-					encoding,
-					stream: stream,
-				},
+			// Create or reconnect connection
+			actor.rLog.debug({
+				msg: connId ? "sse reconnection attempt" : "sse open",
+				connId,
 			});
+
+			conn = await actor.createConn(
+				{
+					socketId,
+					driverState: {
+						[ConnDriverKind.SSE]: {
+							encoding,
+							stream: stream,
+						},
+					},
+				},
+				parameters,
+				c.req.raw,
+				connId,
+				connToken,
+			);
 
 			// Wait for close
 			const abortResolver = promiseWithResolvers();
@@ -363,7 +386,7 @@ export async function handleSseConnect(
 
 					// Cleanup
 					if (conn) {
-						actor.__connDisconnected(conn, false);
+						actor.__connDisconnected(conn, false, socketId);
 					}
 
 					abortResolver.resolve(undefined);
@@ -399,7 +422,7 @@ export async function handleSseConnect(
 
 			// Cleanup on error
 			if (conn && actor !== undefined) {
-				actor.__connDisconnected(conn, false);
+				actor.__connDisconnected(conn, false, socketId);
 			}
 
 			// Close the stream on error
@@ -429,6 +452,7 @@ export async function handleAction(
 		HTTP_ACTION_REQUEST_VERSIONED,
 	);
 	const actionArgs = cbor.decode(new Uint8Array(request.args));
+	const socketId = generateConnSocketId();
 
 	// Invoke the action
 	let actor: AnyActorInstance | undefined;
@@ -440,13 +464,13 @@ export async function handleAction(
 		actor.rLog.debug({ msg: "handling action", actionName, encoding });
 
 		// Create conn
-		const connState = await actor.prepareConn(parameters, c.req.raw);
 		conn = await actor.createConn(
-			generateConnId(),
-			generateConnToken(),
+			{
+				socketId,
+				driverState: { [ConnDriverKind.HTTP]: {} },
+			},
 			parameters,
-			connState,
-			{ [ConnDriverKind.HTTP]: {} },
+			c.req.raw,
 		);
 
 		// Call action
@@ -454,7 +478,8 @@ export async function handleAction(
 		output = await actor.executeAction(ctx, actionName, actionArgs);
 	} finally {
 		if (conn) {
-			actor?.__connDisconnected(conn, true);
+			// HTTP connections don't have persistent sockets, so no socket ID needed
+			actor?.__connDisconnected(conn, true, socketId);
 		}
 	}
 
@@ -510,6 +535,43 @@ export async function handleConnectionMessage(
 
 	// Process message
 	await actor.processMessage(message, conn);
+
+	return c.json({});
+}
+
+export async function handleConnectionClose(
+	c: HonoContext,
+	_runConfig: RunConfig,
+	actorDriver: ActorDriver,
+	connId: string,
+	connToken: string,
+	actorId: string,
+) {
+	const actor = await actorDriver.loadActor(actorId);
+
+	// Find connection
+	const conn = actor.conns.get(connId);
+	if (!conn) {
+		throw new errors.ConnNotFound(connId);
+	}
+
+	// Authenticate connection
+	if (conn._token !== connToken) {
+		throw new errors.IncorrectConnToken();
+	}
+
+	// Check if this is an SSE connection
+	if (
+		!conn.__socket?.driverState ||
+		!(ConnDriverKind.SSE in conn.__socket.driverState)
+	) {
+		throw new errors.UserError(
+			"Connection close is only supported for SSE connections",
+		);
+	}
+
+	// Close the SSE connection
+	await conn.disconnect("Connection closed by client request");
 
 	return c.json({});
 }

@@ -14,6 +14,8 @@ export interface PersistedConn<CP, CS> {
 	params: CP;
 	state: CS;
 	subscriptions: PersistedSubscription[];
+
+	/** Last time the socket was seen. This is set when disconencted so we can determine when we need to clean this up. */
 	lastSeen: number;
 }
 

@@ -23,6 +23,7 @@ import { runActorInlineClientTests } from "./tests/actor-inline-client";
 import { runActorInspectorTests } from "./tests/actor-inspector";
 import { runActorMetadataTests } from "./tests/actor-metadata";
 import { runActorOnStateChangeTests } from "./tests/actor-onstatechange";
+import { runActorReconnectTests } from "./tests/actor-reconnect";
 import { runActorVarsTests } from "./tests/actor-vars";
 import { runManagerDriverTests } from "./tests/manager-driver";
 import { runRawHttpTests } from "./tests/raw-http";
@@ -99,6 +100,8 @@ export function runDriverTests(
 					});
 
 					runActorConnStateTests({ ...driverTestConfig, transport });
+
+					runActorReconnectTests({ ...driverTestConfig, transport });
 
 					runRequestAccessTests({ ...driverTestConfig, transport });
 

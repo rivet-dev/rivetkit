@@ -22,8 +22,14 @@ import {
 } from "@/utils";
 import type { ActionContext } from "./action";
 import type { ActorConfig, OnConnectOptions } from "./config";
-import { CONNECTION_CHECK_LIVENESS_SYMBOL, Conn, type ConnId } from "./conn";
-import type { ConnDriver, ConnDriverState } from "./conn-drivers";
+import { Conn, type ConnId, generateConnId, generateConnToken } from "./conn";
+import {
+	CONN_DRIVERS,
+	type ConnDriver,
+	type ConnDriverState,
+	getConnDriverKindFromState,
+} from "./conn-drivers";
+import type { ConnSocket } from "./conn-socket";
 import { ActorContext } from "./context";
 import type { AnyDatabaseProvider, InferDatabaseClient } from "./database";
 import type { ActorDriver } from "./driver";
@@ -786,7 +792,23 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 	 *
 	 * If not a clean disconnect, will keep the connection alive for a given interval to wait for reconnect.
 	 */
-	__connDisconnected(conn: Conn<S, CP, CS, V, I, DB>, wasClean: boolean) {
+	__connDisconnected(
+		conn: Conn<S, CP, CS, V, I, DB>,
+		wasClean: boolean,
+		socketId: string,
+	) {
+		// If socket ID is provided, check if it matches the current socket ID
+		// If it doesn't match, this is a stale disconnect event from an old socket
+		if (socketId && conn.__socket && socketId !== conn.__socket.socketId) {
+			this.rLog.debug({
+				msg: "ignoring stale disconnect event",
+				connId: conn.id,
+				eventSocketId: socketId,
+				currentSocketId: conn.__socket.socketId,
+			});
+			return;
+		}
+
 		if (wasClean) {
 			// Disconnected cleanly, remove the conn
 
@@ -794,11 +816,15 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 		} else {
 			// Disconnected uncleanly, allow reconnection
 
-			if (conn.__driverState) {
+			if (!conn.__driverState) {
 				this.rLog.warn("called conn disconnected without driver state");
 			}
 
-			conn.__driverState = undefined;
+			// Update last seen so we know when to clean it up
+			conn.__persist.lastSeen = Date.now();
+
+			// Remove socket
+			conn.__socket = undefined;
 		}
 	}
 
@@ -853,12 +879,96 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 		this.#resetSleepTimer();
 	}
 
-	async prepareConn(
+	/**
+	 * Called to create a new connection or reconnect an existing one.
+	 */
+	async createConn(
+		socket: ConnSocket,
 		// biome-ignore lint/suspicious/noExplicitAny: TypeScript bug with ExtractActorConnParams<this>,
 		params: any,
 		request?: Request,
-	): Promise<CS> {
-		// Authenticate connection
+		connectionId?: string,
+		connectionToken?: string,
+	): Promise<Conn<S, CP, CS, V, I, DB>> {
+		this.#assertReady();
+
+		// If connection ID and token are provided, try to reconnect
+		if (connectionId && connectionToken) {
+			this.rLog.debug({
+				msg: "checking for existing connection",
+				connectionId,
+			});
+			const existingConn = this.#connections.get(connectionId);
+			if (existingConn && existingConn._token === connectionToken) {
+				// This is a valid reconnection
+				this.rLog.debug({
+					msg: "reconnecting existing connection",
+					connectionId,
+				});
+
+				// If there's an existing driver state, clean it up without marking as clean disconnect
+				if (existingConn.__driverState) {
+					const driverKind = getConnDriverKindFromState(
+						existingConn.__driverState,
+					);
+					const driver = CONN_DRIVERS[driverKind];
+					if (driver.disconnect) {
+						// Call driver disconnect to clean up directly. Don't use Conn.disconnect since that will remove the connection entirely.
+						driver.disconnect(
+							this,
+							existingConn,
+							(existingConn.__driverState as any)[driverKind],
+							"Reconnecting with new driver state",
+						);
+					}
+				}
+
+				// Update with new driver state
+				existingConn.__socket = socket;
+				existingConn.__persist.lastSeen = Date.now();
+
+				// Update sleep timer since connection is now active
+				this.#resetSleepTimer();
+
+				this.inspector.emitter.emit("connectionUpdated");
+
+				// Send init message for reconnection
+				existingConn._sendMessage(
+					new CachedSerializer<protocol.ToClient>(
+						{
+							body: {
+								tag: "Init",
+								val: {
+									actorId: this.id,
+									connectionId: existingConn.id,
+									connectionToken: existingConn._token,
+								},
+							},
+						},
+						TO_CLIENT_VERSIONED,
+					),
+				);
+
+				return existingConn;
+			}
+
+			// If we get here, either connection doesn't exist or token doesn't match
+			// Fall through to create new connection with new IDs
+			this.rLog.debug({
+				msg: "connection not found or token mismatch, creating new connection",
+				connectionId,
+			});
+		}
+
+		// Generate new connection ID and token if not provided or if reconnection failed
+		const newConnId = generateConnId();
+		const newConnToken = generateConnToken();
+
+		if (this.#connections.has(newConnId)) {
+			throw new Error(`Connection already exists: ${newConnId}`);
+		}
+
+		// Prepare connection state
 		let connState: CS | undefined;
 
 		const onBeforeConnectOpts = {
@@ -904,36 +1014,17 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 			}
 		}
 
-		return connState as CS;
-	}
-
-	/**
-	 * Called after establishing a connection handshake.
-	 */
-	async createConn(
-		connectionId: string,
-		connectionToken: string,
-		params: CP,
-		state: CS,
-		driverState: ConnDriverState,
-	): Promise<Conn<S, CP, CS, V, I, DB>> {
-		this.#assertReady();
-
-		if (this.#connections.has(connectionId)) {
-			throw new Error(`Connection already exists: ${connectionId}`);
-		}
-
 		// Create connection
 		const persist: PersistedConn<CP, CS> = {
-			connId: connectionId,
-			token: connectionToken,
+			connId: newConnId,
+			token: newConnToken,
 			params: params,
-			state: state,
+			state: connState as CS,
 			lastSeen: Date.now(),
 			subscriptions: [],
 		};
 		const conn = new Conn<S, CP, CS, V, I, DB>(this, persist);
-		conn.__driverState = driverState;
+		conn.__socket = socket;
 		this.#connections.set(conn.id, conn);
 
 		// Update sleep
@@ -1119,11 +1210,10 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 		this.#rLog.debug({ msg: "checking connections liveness" });
 
 		for (const conn of this.#connections.values()) {
-			const liveness = conn[CONNECTION_CHECK_LIVENESS_SYMBOL]();
-			if (liveness.status === "connected") {
+			if (conn.__status === "connected") {
 				this.#rLog.debug({ msg: "connection is alive", connId: conn.id });
 			} else {
-				const lastSeen = liveness.lastSeen;
+				const lastSeen = conn.__persist.lastSeen;
 				const sinceLastSeen = Date.now() - lastSeen;
 				if (sinceLastSeen < this.#config.options.connectionLivenessTimeout) {
 					this.#rLog.debug({

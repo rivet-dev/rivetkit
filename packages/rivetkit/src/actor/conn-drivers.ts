@@ -195,11 +195,11 @@ export const CONN_DRIVERS: Record<ConnDriverKind, ConnDriver<unknown>> = {
 	[ConnDriverKind.HTTP]: HTTP_DRIVER,
 };
 
-export function getConnDriverFromState(
+export function getConnDriverKindFromState(
 	state: ConnDriverState,
-): ConnDriver<unknown> {
-	if (ConnDriverKind.WEBSOCKET in state) return WEBSOCKET_DRIVER;
-	else if (ConnDriverKind.SSE in state) return SSE_DRIVER;
-	else if (ConnDriverKind.HTTP in state) return SSE_DRIVER;
+): ConnDriverKind {
+	if (ConnDriverKind.WEBSOCKET in state) return ConnDriverKind.WEBSOCKET;
+	else if (ConnDriverKind.SSE in state) return ConnDriverKind.SSE;
+	else if (ConnDriverKind.HTTP in state) return ConnDriverKind.HTTP;
 	else assertUnreachable(state);
 }

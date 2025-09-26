@@ -160,6 +160,8 @@ export function createTestInlineClientDriver(
 			actorId: string,
 			encoding: Encoding,
 			params: unknown,
+			connId?: string,
+			connToken?: string,
 		): Promise<UniversalWebSocket> {
 			const WebSocket = await importWebSocket();
 

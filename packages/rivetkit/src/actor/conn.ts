@@ -1,4 +1,5 @@
 import * as cbor from "cbor-x";
+import invariant from "invariant";
 import type * as protocol from "@/schemas/client-protocol/mod";
 import { TO_CLIENT_VERSIONED } from "@/schemas/client-protocol/versioned";
 import { bufferToArrayBuffer } from "@/utils";
@@ -7,8 +8,9 @@ import {
 	ConnDriverKind,
 	type ConnDriverState,
 	ConnReadyState,
-	getConnDriverFromState,
+	getConnDriverKindFromState,
 } from "./conn-drivers";
+import type { ConnSocket } from "./conn-socket";
 import type { AnyDatabaseProvider } from "./database";
 import * as errors from "./errors";
 import type { ActorInstance } from "./instance";
@@ -24,13 +26,15 @@ export function generateConnToken(): string {
 	return generateSecureToken(32);
 }
 
+export function generateConnSocketId(): string {
+	return crypto.randomUUID();
+}
+
 export type ConnId = string;
 
 export type AnyConn = Conn<any, any, any, any, any, any>;
 
 export type ConnectionStatus = "connected" | "reconnecting";
-
-export const CONNECTION_CHECK_LIVENESS_SYMBOL = Symbol("checkLiveness");
 
 /**
  * Represents a client connection to a actor.
@@ -45,8 +49,6 @@ export class Conn<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 	// TODO: Remove this cyclical reference
 	#actor: ActorInstance<S, CP, CS, V, I, DB>;
 
-	#status: ConnectionStatus = "connected";
-
 	/**
 	 * The proxied state that notifies of changes automatically.
 	 *
@@ -54,10 +56,24 @@ export class Conn<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 	 */
 	__persist: PersistedConn<CP, CS>;
 
+	get __driverState(): ConnDriverState | undefined {
+		return this.__socket?.driverState;
+	}
+
 	/**
-	 * Driver used to manage connection. If undefined, there is no connection connected.
+	 * Socket connected to this connection.
+	 *
+	 * If undefined, then nothing is connected to this.
 	 */
-	__driverState?: ConnDriverState;
+	__socket?: ConnSocket;
+
+	get __status(): ConnectionStatus {
+		if (this.__socket) {
+			return "connected";
+		} else {
+			return "reconnecting";
+		}
+	}
 
 	public get params(): CP {
 		return this.__persist.params;
@@ -106,7 +122,7 @@ export class Conn<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 	 * Status of the connection.
 	 */
 	public get status(): ConnectionStatus {
-		return this.#status;
+		return this.__status;
 	}
 
 	/**
@@ -146,9 +162,15 @@ export class Conn<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 	 */
 	public _sendMessage(message: CachedSerializer<protocol.ToClient>) {
 		if (this.__driverState) {
-			const driver = getConnDriverFromState(this.__driverState);
+			const driverKind = getConnDriverKindFromState(this.__driverState);
+			const driver = CONN_DRIVERS[driverKind];
 			if (driver.sendMessage) {
-				driver.sendMessage(this.#actor, this, this.__driverState, message);
+				driver.sendMessage(
+					this.#actor,
+					this,
+					(this.__driverState as any)[driverKind],
+					message,
+				);
 			} else {
 				this.#actor.rLog.debug({
 					msg: "conn driver does not support sending messages",
@@ -199,73 +221,31 @@ export class Conn<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 	 * @param reason - The reason for disconnection.
 	 */
 	public async disconnect(reason?: string) {
-		this.#status = "reconnecting";
-
-		if (this.__driverState) {
-			const driver = getConnDriverFromState(this.__driverState);
+		if (this.__socket && this.__driverState) {
+			const driverKind = getConnDriverKindFromState(this.__driverState);
+			const driver = CONN_DRIVERS[driverKind];
 			if (driver.disconnect) {
-				driver.disconnect(this.#actor, this, this.__driverState, reason);
+				driver.disconnect(
+					this.#actor,
+					this,
+					(this.__driverState as any)[driverKind],
+					reason,
+				);
 			} else {
 				this.#actor.rLog.debug({
 					msg: "no disconnect handler for conn driver",
 					conn: this.id,
 				});
 			}
+
+			this.#actor.__connDisconnected(this, true, this.__socket.socketId);
 		} else {
 			this.#actor.rLog.warn({
 				msg: "missing connection driver state for disconnect",
 				conn: this.id,
 			});
 		}
-	}
 
-	/**
-	 * This method checks the connection's liveness by querying the driver for its ready state.
-	 * If the connection is not closed, it updates the last liveness timestamp and returns `true`.
-	 * Otherwise, it returns `false`.
-	 * @internal
-	 */
-	[CONNECTION_CHECK_LIVENESS_SYMBOL]() {
-		let readyState: ConnReadyState | undefined;
-
-		if (this.__driverState) {
-			const driver = getConnDriverFromState(this.__driverState);
-			readyState = driver.getConnectionReadyState(
-				this.#actor,
-				this,
-				this.__driverState,
-			);
-		}
-
-		const isConnectionClosed =
-			readyState === ConnReadyState.CLOSED ||
-			readyState === ConnReadyState.CLOSING ||
-			readyState === undefined;
-
-		const newLastSeen = Date.now();
-		const newStatus = isConnectionClosed ? "reconnecting" : "connected";
-
-		this.#actor.rLog.debug({
-			msg: "liveness probe for connection",
-			connId: this.id,
-			actorId: this.#actor.id,
-			readyState,
-
-			status: this.#status,
-			newStatus,
-
-			lastSeen: this.__persist.lastSeen,
-			currentTs: newLastSeen,
-		});
-
-		if (!isConnectionClosed) {
-			this.__persist.lastSeen = newLastSeen;
-		}
-
-		this.#status = newStatus;
-		return {
-			status: this.#status,
-			lastSeen: this.__persist.lastSeen,
-		};
+		this.__socket = undefined;
 	}
 }

@@ -6,7 +6,9 @@ import {
 	HEADER_RIVET_ACTOR,
 	HEADER_RIVET_TARGET,
 	WS_PROTOCOL_ACTOR,
+	WS_PROTOCOL_CONN_ID,
 	WS_PROTOCOL_CONN_PARAMS,
+	WS_PROTOCOL_CONN_TOKEN,
 	WS_PROTOCOL_ENCODING,
 	WS_PROTOCOL_TARGET,
 } from "@/common/actor-router-consts";
@@ -63,6 +65,8 @@ async function handleWebSocketGateway(
 	let actorId: string | undefined;
 	let encodingRaw: string | undefined;
 	let connParamsRaw: string | undefined;
+	let connIdRaw: string | undefined;
+	let connTokenRaw: string | undefined;
 
 	if (protocols) {
 		const protocolList = protocols.split(",").map((p) => p.trim());
@@ -77,6 +81,10 @@ async function handleWebSocketGateway(
 				connParamsRaw = decodeURIComponent(
 					protocol.substring(WS_PROTOCOL_CONN_PARAMS.length),
 				);
+			} else if (protocol.startsWith(WS_PROTOCOL_CONN_ID)) {
+				connIdRaw = protocol.substring(WS_PROTOCOL_CONN_ID.length);
+			} else if (protocol.startsWith(WS_PROTOCOL_CONN_TOKEN)) {
+				connTokenRaw = protocol.substring(WS_PROTOCOL_CONN_TOKEN.length);
 			}
 		}
 	}
@@ -110,6 +118,8 @@ async function handleWebSocketGateway(
 		actorId,
 		encoding as any, // Will be validated by driver
 		connParams,
+		connIdRaw,
+		connTokenRaw,
 	);
 }
 
