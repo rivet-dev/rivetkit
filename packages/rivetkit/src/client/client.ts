@@ -491,7 +491,7 @@ function createActorProxy<AD extends AnyActorDefinition>(
 
 			// Handle built-in Promise methods and existing properties
 			if (prop === "constructor" || prop in target) {
-				const value = Reflect.get(target, prop, receiver);
+				const value = Reflect.get(target, prop, target);
 				// Preserve method binding
 				if (typeof value === "function") {
 					return value.bind(target);
