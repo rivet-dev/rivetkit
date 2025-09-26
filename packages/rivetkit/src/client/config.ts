@@ -14,6 +14,13 @@ export const ClientConfigSchema = z.object({
 		})
 		.default({}),
 
+	token: z
+		.string()
+		.nullable()
+		.default(() => getEnvUniversal("RIVET_TOKEN") ?? null),
+
+	headers: z.record(z.string()).optional().default({}),
+
 	/** Endpoint to connect to the Rivet engine. Can be configured via RIVET_ENGINE env var. */
 	endpoint: z
 		.string()

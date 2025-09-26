@@ -33,10 +33,19 @@ export async function apiCall<TInput = unknown, TOutput = unknown>(
 
 	logger().debug({ msg: "making api call", method, url });
 
+	const headers: Record<string, string> = {
+		...config.headers,
+	};
+
+	// Add Authorization header if token is provided
+	if (config.token) {
+		headers.Authorization = `Bearer ${config.token}`;
+	}
+
 	return await sendHttpRequest<TInput, TOutput>({
 		method,
 		url,
-		headers: {},
+		headers,
 		body,
 		encoding: "json",
 		skipParseResponse: false,

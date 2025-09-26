@@ -7,6 +7,7 @@ import {
 	WS_PROTOCOL_ENCODING,
 	WS_PROTOCOL_STANDARD as WS_PROTOCOL_RIVETKIT,
 	WS_PROTOCOL_TARGET,
+	WS_PROTOCOL_TOKEN,
 } from "@/common/actor-router-consts";
 import { importWebSocket } from "@/common/websocket";
 import type { Encoding, UniversalWebSocket } from "@/mod";
@@ -37,7 +38,7 @@ export async function openWebSocketToActor(
 	// Create WebSocket connection
 	const ws = new WebSocket(
 		guardUrl,
-		buildWebSocketProtocols(actorId, encoding, params),
+		buildWebSocketProtocols(runConfig, actorId, encoding, params),
 	);
 
 	// Set binary type to arraybuffer for proper encoding support
@@ -49,6 +50,7 @@ export async function openWebSocketToActor(
 }
 
 export function buildWebSocketProtocols(
+	runConfig: ClientConfig,
 	actorId: string,
 	encoding: Encoding,
 	params?: unknown,
@@ -58,6 +60,9 @@ export function buildWebSocketProtocols(
 	protocols.push(`${WS_PROTOCOL_TARGET}actor`);
 	protocols.push(`${WS_PROTOCOL_ACTOR}${actorId}`);
 	protocols.push(`${WS_PROTOCOL_ENCODING}${encoding}`);
+	if (runConfig.token) {
+		protocols.push(`${WS_PROTOCOL_TOKEN}${runConfig.token}`);
+	}
 	if (params) {
 		protocols.push(
 			`${WS_PROTOCOL_CONN_PARAMS}${encodeURIComponent(JSON.stringify(params))}`,
