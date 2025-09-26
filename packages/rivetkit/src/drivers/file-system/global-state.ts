@@ -5,10 +5,6 @@ import * as path from "node:path";
 import invariant from "invariant";
 import { lookupInRegistry } from "@/actor/definition";
 import { ActorAlreadyExists } from "@/actor/errors";
-import {
-	createGenericConnDrivers,
-	GenericConnGlobalState,
-} from "@/actor/generic-conn-driver";
 import type { AnyActorInstance } from "@/actor/instance";
 import type { ActorKey } from "@/actor/mod";
 import { generateRandomString } from "@/actor/utils";
@@ -28,7 +24,6 @@ import {
 	bufferToArrayBuffer,
 	type LongTimeoutHandle,
 	promiseWithResolvers,
-	SinglePromiseQueue,
 	setLongTimeout,
 	stringifyError,
 } from "@/utils";
@@ -51,8 +46,6 @@ interface ActorEntry {
 	actor?: AnyActorInstance;
 	/** Promise for starting the actor. */
 	startPromise?: ReturnType<typeof promiseWithResolvers<void>>;
-
-	genericConnGlobalState: GenericConnGlobalState;
 
 	alarmTimeout?: LongTimeoutHandle;
 	/** The timestamp currently scheduled for this actor's alarm (ms since epoch). */
@@ -189,7 +182,6 @@ export class FileSystemGlobalState {
 
 		entry = {
 			id: actorId,
-			genericConnGlobalState: new GenericConnGlobalState(),
 			removed: false,
 		};
 		this.#actors.set(actorId, entry);
@@ -478,11 +470,7 @@ export class FileSystemGlobalState {
 			entry.actor = definition.instantiate();
 
 			// Start actor
-			const connDrivers = createGenericConnDrivers(
-				entry.genericConnGlobalState,
-			);
 			await entry.actor.start(
-				connDrivers,
 				actorDriver,
 				inlineClient,
 				actorId,

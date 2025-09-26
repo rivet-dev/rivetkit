@@ -2,11 +2,16 @@ import * as cbor from "cbor-x";
 import type * as protocol from "@/schemas/client-protocol/mod";
 import { TO_CLIENT_VERSIONED } from "@/schemas/client-protocol/versioned";
 import { bufferToArrayBuffer } from "@/utils";
+import {
+	CONN_DRIVERS,
+	ConnDriverKind,
+	type ConnDriverState,
+	ConnReadyState,
+	getConnDriverFromState,
+} from "./conn-drivers";
 import type { AnyDatabaseProvider } from "./database";
-import { type ConnDriver, ConnectionReadyState } from "./driver";
 import * as errors from "./errors";
 import type { ActorInstance } from "./instance";
-import { loggerWithoutContext } from "./log";
 import type { PersistedConn } from "./persisted";
 import { CachedSerializer } from "./protocol/serde";
 import { generateSecureToken } from "./utils";
@@ -23,15 +28,6 @@ export type ConnId = string;
 
 export type AnyConn = Conn<any, any, any, any, any, any>;
 
-export const CONNECTION_DRIVER_WEBSOCKET = "webSocket";
-export const CONNECTION_DRIVER_SSE = "sse";
-export const CONNECTION_DRIVER_HTTP = "http";
-
-export type ConnectionDriver =
-	| typeof CONNECTION_DRIVER_WEBSOCKET
-	| typeof CONNECTION_DRIVER_SSE
-	| typeof CONNECTION_DRIVER_HTTP;
-
 export type ConnectionStatus = "connected" | "reconnecting";
 
 export const CONNECTION_CHECK_LIVENESS_SYMBOL = Symbol("checkLiveness");
@@ -46,8 +42,6 @@ export const CONNECTION_CHECK_LIVENESS_SYMBOL = Symbol("checkLiveness");
 export class Conn<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 	subscriptions: Set<string> = new Set<string>();
 
-	#stateEnabled: boolean;
-
 	// TODO: Remove this cyclical reference
 	#actor: ActorInstance<S, CP, CS, V, I, DB>;
 
@@ -61,22 +55,16 @@ export class Conn<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 	__persist: PersistedConn<CP, CS>;
 
 	/**
-	 * Driver used to manage realtime connection communication.
-	 *
-	 * @protected
+	 * Driver used to manage connection. If undefined, there is no connection connected.
 	 */
-	#driver: ConnDriver;
+	__driverState?: ConnDriverState;
 
 	public get params(): CP {
 		return this.__persist.params;
 	}
 
-	public get driver(): ConnectionDriver {
-		return this.__persist.connDriver as ConnectionDriver;
-	}
-
-	public get _stateEnabled() {
-		return this.#stateEnabled;
+	public get __stateEnabled() {
+		return this.#actor.connStateEnabled;
 	}
 
 	/**
@@ -138,17 +126,13 @@ export class Conn<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 	public constructor(
 		actor: ActorInstance<S, CP, CS, V, I, DB>,
 		persist: PersistedConn<CP, CS>,
-		driver: ConnDriver,
-		stateEnabled: boolean,
 	) {
 		this.#actor = actor;
 		this.__persist = persist;
-		this.#driver = driver;
-		this.#stateEnabled = stateEnabled;
 	}
 
 	#validateStateEnabled() {
-		if (!this.#stateEnabled) {
+		if (!this.__stateEnabled) {
 			throw new errors.ConnStateNotEnabled();
 		}
 	}
@@ -161,12 +145,22 @@ export class Conn<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 	 * @protected
 	 */
 	public _sendMessage(message: CachedSerializer<protocol.ToClient>) {
-		this.#driver.sendMessage?.(
-			this.#actor,
-			this,
-			this.__persist.connDriverState,
-			message,
-		);
+		if (this.__driverState) {
+			const driver = getConnDriverFromState(this.__driverState);
+			if (driver.sendMessage) {
+				driver.sendMessage(this.#actor, this, this.__driverState, message);
+			} else {
+				this.#actor.rLog.debug({
+					msg: "conn driver does not support sending messages",
+					conn: this.id,
+				});
+			}
+		} else {
+			this.#actor.rLog.warn({
+				msg: "missing connection driver state for send message",
+				conn: this.id,
+			});
+		}
 	}
 
 	/**
@@ -206,12 +200,23 @@ export class Conn<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 	 */
 	public async disconnect(reason?: string) {
 		this.#status = "reconnecting";
-		await this.#driver.disconnect(
-			this.#actor,
-			this,
-			this.__persist.connDriverState,
-			reason,
-		);
+
+		if (this.__driverState) {
+			const driver = getConnDriverFromState(this.__driverState);
+			if (driver.disconnect) {
+				driver.disconnect(this.#actor, this, this.__driverState, reason);
+			} else {
+				this.#actor.rLog.debug({
+					msg: "no disconnect handler for conn driver",
+					conn: this.id,
+				});
+			}
+		} else {
+			this.#actor.rLog.warn({
+				msg: "missing connection driver state for disconnect",
+				conn: this.id,
+			});
+		}
 	}
 
 	/**
@@ -221,11 +226,20 @@ export class Conn<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 	 * @internal
 	 */
 	[CONNECTION_CHECK_LIVENESS_SYMBOL]() {
-		const readyState = this.#driver.getConnectionReadyState(this.#actor, this);
+		let readyState: ConnReadyState | undefined;
+
+		if (this.__driverState) {
+			const driver = getConnDriverFromState(this.__driverState);
+			readyState = driver.getConnectionReadyState(
+				this.#actor,
+				this,
+				this.__driverState,
+			);
+		}
 
 		const isConnectionClosed =
-			readyState === ConnectionReadyState.CLOSED ||
-			readyState === ConnectionReadyState.CLOSING ||
+			readyState === ConnReadyState.CLOSED ||
+			readyState === ConnReadyState.CLOSING ||
 			readyState === undefined;
 
 		const newLastSeen = Date.now();

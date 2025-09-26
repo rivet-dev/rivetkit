@@ -9,10 +9,6 @@ import { streamSSE } from "hono/streaming";
 import { WSContext } from "hono/ws";
 import invariant from "invariant";
 import { lookupInRegistry } from "@/actor/definition";
-import {
-	createGenericConnDrivers,
-	GenericConnGlobalState,
-} from "@/actor/generic-conn-driver";
 import { deserializeActorKey } from "@/actor/keys";
 import { EncodingSchema } from "@/actor/protocol/serde";
 import { type ActorRouter, createActorRouter } from "@/actor/router";
@@ -47,7 +43,6 @@ import { logger } from "./log";
 interface ActorHandler {
 	actor?: AnyActorInstance;
 	actorStartPromise?: ReturnType<typeof promiseWithResolvers<void>>;
-	genericConnGlobalState: GenericConnGlobalState;
 	persistedData?: Uint8Array;
 }
 
@@ -162,14 +157,6 @@ export class EngineActorDriver implements ActorDriver {
 		return handler.actor;
 	}
 
-	getGenericConnGlobalState(actorId: string): GenericConnGlobalState {
-		const handler = this.#actors.get(actorId);
-		if (!handler) {
-			throw new Error(`Actor ${actorId} not loaded`);
-		}
-		return handler.genericConnGlobalState;
-	}
-
 	getContext(actorId: string): DriverContext {
 		return {};
 	}
@@ -232,7 +219,6 @@ export class EngineActorDriver implements ActorDriver {
 		let handler = this.#actors.get(actorId);
 		if (!handler) {
 			handler = {
-				genericConnGlobalState: new GenericConnGlobalState(),
 				actorStartPromise: promiseWithResolvers(),
 				persistedData: serializeEmptyPersistData(input),
 			};
@@ -251,11 +237,7 @@ export class EngineActorDriver implements ActorDriver {
 		handler.actor = definition.instantiate();
 
 		// Start actor
-		const connDrivers = createGenericConnDrivers(
-			handler.genericConnGlobalState,
-		);
 		await handler.actor.start(
-			connDrivers,
 			this,
 			this.#inlineClient,
 			actorId,

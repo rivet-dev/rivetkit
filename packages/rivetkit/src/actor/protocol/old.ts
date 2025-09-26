@@ -16,7 +16,7 @@ import {
 import { deserializeWithEncoding } from "@/serde";
 import { assertUnreachable, bufferToArrayBuffer } from "../../utils";
 import { ActionContext } from "../action";
-import type { Conn } from "../connection";
+import type { Conn } from "../conn";
 import type { ActorInstance } from "../instance";
 
 export const TransportSchema = z.enum(["websocket", "sse"]);

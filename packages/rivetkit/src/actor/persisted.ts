@@ -1,5 +1,3 @@
-import type { ConnectionDriver } from "./connection";
-
 /** State object that gets automatically persisted to storage. */
 export interface PersistedActor<S, CP, CS, I> {
 	input?: I;
@@ -13,8 +11,6 @@ export interface PersistedActor<S, CP, CS, I> {
 export interface PersistedConn<CP, CS> {
 	connId: string;
 	token: string;
-	connDriver: ConnectionDriver;
-	connDriverState: unknown;
 	params: CP;
 	state: CS;
 	subscriptions: PersistedSubscription[];

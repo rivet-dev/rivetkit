@@ -11,10 +11,6 @@ type PersistedConnection struct {
 	id: str
 	# Connection token
 	token: str
-	# Connection driver type
-	driver: str
-	# Connection driver state
-	driverState: data
 	# Connection parameters
 	parameters: data
 	# Connection state

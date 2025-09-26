@@ -4,11 +4,7 @@ import type {
 	RegistryConfig,
 	RunConfig,
 } from "rivetkit";
-import {
-	createGenericConnDrivers,
-	GenericConnGlobalState,
-	lookupInRegistry,
-} from "rivetkit";
+import { lookupInRegistry } from "rivetkit";
 import type { Client } from "rivetkit/client";
 import type {
 	ActorDriver,
@@ -52,7 +48,6 @@ class ActorHandler {
 	actor?: AnyActorInstance;
 	actorPromise?: ReturnType<typeof promiseWithResolvers<void>> =
 		promiseWithResolvers();
-	genericConnGlobalState = new GenericConnGlobalState();
 }
 
 export class CloudflareActorsActorDriver implements ActorDriver {
@@ -116,11 +111,7 @@ export class CloudflareActorsActorDriver implements ActorDriver {
 		handler.actor = definition.instantiate();
 
 		// Start actor
-		const connDrivers = createGenericConnDrivers(
-			handler.genericConnGlobalState,
-		);
 		await handler.actor.start(
-			connDrivers,
 			this,
 			this.#inlineClient,
 			actorId,
@@ -134,14 +125,6 @@ export class CloudflareActorsActorDriver implements ActorDriver {
 		handler.actorPromise = undefined;
 
 		return handler.actor;
-	}
-
-	getGenericConnGlobalState(actorId: string): GenericConnGlobalState {
-		const handler = this.#actors.get(actorId);
-		if (!handler) {
-			throw new Error(`Actor ${actorId} not loaded`);
-		}
-		return handler.genericConnGlobalState;
 	}
 
 	getContext(actorId: string): DriverContext {

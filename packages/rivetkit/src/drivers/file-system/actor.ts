@@ -1,7 +1,3 @@
-import { Hono, MiddlewareHandler } from "hono";
-import { streamSSE } from "hono/streaming";
-import type { GenericConnGlobalState } from "@/actor/generic-conn-driver";
-import { loggerWithoutContext } from "@/actor/log";
 import type { AnyClient } from "@/client/client";
 import type {
 	ActorDriver,
@@ -46,10 +42,6 @@ export class FileSystemActorDriver implements ActorDriver {
 			this,
 			actorId,
 		);
-	}
-
-	getGenericConnGlobalState(actorId: string): GenericConnGlobalState {
-		return this.#state.getActorOrError(actorId).genericConnGlobalState;
 	}
 
 	/**

@@ -23,6 +23,4 @@
 - Client & inline client
 - ManagerDriver
 - ActorDriver
-- GenericConnGlobalState & other generic drivers: tracks actual connections separately from the actual conn state
-    - TODO: Can we remove the "generic" prefix?
 
