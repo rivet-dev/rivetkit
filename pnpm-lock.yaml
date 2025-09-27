@@ -1131,8 +1131,8 @@ importers:
         specifier: ^0.19.10
         version: 0.19.10(hono@4.9.8)(zod@3.25.76)
       '@rivetkit/engine-runner':
-        specifier: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@3002
-        version: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@3002(bufferutil@4.0.9)
+        specifier: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@f594631
+        version: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@f594631(bufferutil@4.0.9)
       '@rivetkit/fast-json-patch':
         specifier: ^3.1.2
         version: 3.1.2
@@ -2499,12 +2499,12 @@ packages:
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
 
-  '@rivetkit/engine-runner-protocol@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@f0701041420d626c85c98628fd496e4b3d082eb2':
-    resolution: {tarball: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@f0701041420d626c85c98628fd496e4b3d082eb2}
+  '@rivetkit/engine-runner-protocol@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@f5946317869fd2a1f81694074e867cffbb94c178':
+    resolution: {tarball: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@f5946317869fd2a1f81694074e867cffbb94c178}
     version: 25.7.1
 
-  '@rivetkit/engine-runner@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@3002':
-    resolution: {tarball: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@3002}
+  '@rivetkit/engine-runner@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@f594631':
+    resolution: {tarball: https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@f594631}
     version: 25.7.1
 
   '@rivetkit/fast-json-patch@3.1.2':
@@ -5780,13 +5780,13 @@ snapshots:
 
   '@polka/url@1.0.0-next.29': {}
 
-  '@rivetkit/engine-runner-protocol@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@f0701041420d626c85c98628fd496e4b3d082eb2':
+  '@rivetkit/engine-runner-protocol@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@f5946317869fd2a1f81694074e867cffbb94c178':
     dependencies:
       '@bare-ts/lib': 0.4.0
 
-  '@rivetkit/engine-runner@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@3002(bufferutil@4.0.9)':
+  '@rivetkit/engine-runner@https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner@f594631(bufferutil@4.0.9)':
     dependencies:
-      '@rivetkit/engine-runner-protocol': https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@f0701041420d626c85c98628fd496e4b3d082eb2
+      '@rivetkit/engine-runner-protocol': https://pkg.pr.new/rivet-dev/engine/@rivetkit/engine-runner-protocol@f5946317869fd2a1f81694074e867cffbb94c178
       pino: 9.9.5
       uuid: 12.0.0
       ws: 8.18.3(bufferutil@4.0.9)
