@@ -1,6 +1,6 @@
 {
   "name": "example-react",
-  "version": "2.0.7-rc.1",
+  "version": "2.0.7",
   "private": true,
   "type": "module",
   "scripts": {
