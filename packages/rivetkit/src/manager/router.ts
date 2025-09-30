@@ -105,7 +105,7 @@ export function createManagerRouter(
 }
 
 function addServerlessRoutes(
-	serverlessActorDriverBuilder: (token: string | undefined) => ActorDriver,
+	serverlessActorDriverBuilder: (token: string | undefined, totalSlots: number | undefined) => ActorDriver,
 	router: OpenAPIHono,
 	cors: MiddlewareHandler,
 ) {
@@ -118,9 +118,11 @@ function addServerlessRoutes(
 
 	// Serverless start endpoint
 	router.get("/start", cors, async (c) => {
-		const actorDriver = serverlessActorDriverBuilder(
-			c.req.header("x-rivet-token"),
-		);
+		let token = c.req.header("x-rivet-token");
+		let totalSlots: number | undefined = parseInt(c.req.header("x-rivetkit-total-slots") as any);
+		if (isNaN(totalSlots)) totalSlots = undefined;
+
+		const actorDriver = serverlessActorDriverBuilder(token, totalSlots);
 		invariant(
 			actorDriver.serverlessHandleStart,
 			"missing serverlessHandleStart on ActorDriver",

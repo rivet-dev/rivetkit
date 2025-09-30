@@ -90,10 +90,10 @@ export class EngineActorDriver implements ActorDriver {
 		const runnerConfig: RunnerConfig = {
 			version: this.#version,
 			endpoint: config.endpoint,
-			token: config.token,
+			token: runConfig.token ?? config.token,
 			pegboardEndpoint: config.pegboardEndpoint,
 			namespace: config.namespace,
-			totalSlots: config.totalSlots,
+			totalSlots: runConfig.totalSlots ?? config.totalSlots,
 			runnerName: config.runnerName,
 			runnerKey: config.runnerKey,
 			metadata: {

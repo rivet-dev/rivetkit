@@ -216,10 +216,14 @@ export class Registry<A extends RegistryActors> {
 		}
 
 		let serverlessActorDriverBuilder:
-			| ((token?: string) => ActorDriver)
-			| undefined = (token: string | undefined) => {
-			// Override config token if one was set
+			| ((token?: string, totalSlots?: number) => ActorDriver)
+			| undefined = (
+			token: string | undefined,
+			totalSlots: number | undefined,
+		) => {
+			// Override config
 			if (token) config.token = token;
+			if (totalSlots) config.totalSlots = totalSlots;
 
 			return driver.actor(this.#config, config, managerDriver, client);
 		};
