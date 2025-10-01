@@ -6,6 +6,7 @@ import {
 	type GetForIdInput,
 	type GetOrCreateWithKeyInput,
 	type GetWithKeyInput,
+	generateRandomString,
 	type ManagerDisplayInformation,
 	type ManagerDriver,
 	WS_PROTOCOL_ACTOR,
@@ -371,5 +372,9 @@ export class CloudflareActorsManagerDriver implements ManagerDriver {
 			name: "Cloudflare Workers",
 			properties: {},
 		};
+	}
+
+	getOrCreateInspectorAccessToken() {
+		return generateRandomString();
 	}
 }

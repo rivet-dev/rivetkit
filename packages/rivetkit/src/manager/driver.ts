@@ -52,7 +52,7 @@ export interface ManagerDriver {
 
 	/**
 	 * Get or create the inspector access token.
-	 * @internal
+	 * @experimental
 	 * @returns creates or returns existing inspector access token
 	 */
 	getOrCreateInspectorAccessToken: () => string;
