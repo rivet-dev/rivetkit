@@ -108,7 +108,7 @@ export class Registry<A extends RegistryActors> {
 				console.log(`  - ${k}:${padding}${v}`);
 			}
 			if (isInspectorEnabled(config, "manager") && managerDriver.inspector) {
-				console.log(`  - Inspector:     ${getInspectorUrl(config)}`);
+				console.log(`  - Inspector:    ${getInspectorUrl(config)}`);
 			}
 			console.log();
 		}
