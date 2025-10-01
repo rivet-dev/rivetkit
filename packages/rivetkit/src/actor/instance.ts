@@ -373,6 +373,9 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 			this.#config.options.connectionLivenessInterval,
 		);
 		this.#checkConnectionsLiveness();
+
+		// Trigger any pending alarms
+		await this._onAlarm();
 	}
 
 	async #scheduleEventInner(newEvent: PersistedScheduleEvent) {
@@ -401,6 +404,12 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 		}
 	}
 
+	/**
+	 * Triggers any pending alarms.
+	 *
+	 * This method is idempotent. It's called automatically when the actor wakes
+	 * in order to trigger any pending alarms.
+	 */
 	async _onAlarm() {
 		const now = Date.now();
 		this.actorContext.log.debug({
@@ -424,7 +433,7 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 			this.#rLog.warn({ msg: "no events are due yet, time may have broken" });
 			if (this.#persist.scheduledEvents.length > 0) {
 				const nextTs = this.#persist.scheduledEvents[0].timestamp;
-				this.actorContext.log.warn({
+				this.actorContext.log.debug({
 					msg: "alarm fired early, rescheduling for next event",
 					now,
 					nextTs,
@@ -786,7 +795,7 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 	}
 
 	/**
-	 * Connection disconnected.
+	 * Call when conn is disconnected. Used by transports.
 	 *
 	 * If a clean diconnect, will be removed immediately.
 	 *
@@ -800,7 +809,7 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 		// If socket ID is provided, check if it matches the current socket ID
 		// If it doesn't match, this is a stale disconnect event from an old socket
 		if (socketId && conn.__socket && socketId !== conn.__socket.socketId) {
-			this.rLog.debug({
+			this.#rLog.debug({
 				msg: "ignoring stale disconnect event",
 				connId: conn.id,
 				eventSocketId: socketId,
@@ -825,6 +834,9 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 
 			// Remove socket
 			conn.__socket = undefined;
+
+			// Update sleep
+			this.#resetSleepTimer();
 		}
 	}
 
@@ -848,6 +860,7 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 
 		// Remove from state
 		this.#connections.delete(conn.id);
+		this.#rLog.debug({ msg: "removed conn", connId: conn.id });
 
 		// Remove subscriptions
 		for (const eventName of [...conn.subscriptions.values()]) {

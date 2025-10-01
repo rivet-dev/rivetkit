@@ -215,7 +215,9 @@ export class Registry<A extends RegistryActors> {
 			console.log();
 		}
 
-		let serverlessActorDriverBuilder: ((token?: string) => ActorDriver) | undefined = (token: string | undefined) => {
+		let serverlessActorDriverBuilder:
+			| ((token?: string) => ActorDriver)
+			| undefined = (token: string | undefined) => {
 			// Override config token if one was set
 			if (token) config.token = token;
 

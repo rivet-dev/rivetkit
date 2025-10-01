@@ -123,7 +123,11 @@ export class FileSystemManagerDriver implements ManagerDriver {
 			this,
 			inlineClient,
 		);
-		this.#actorRouter = createActorRouter(this.#runConfig, this.#actorDriver);
+		this.#actorRouter = createActorRouter(
+			this.#runConfig,
+			this.#actorDriver,
+			registryConfig.test.enabled,
+		);
 	}
 
 	async sendRequest(actorId: string, actorRequest: Request): Promise<Response> {

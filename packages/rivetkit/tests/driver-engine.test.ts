@@ -3,15 +3,15 @@ import { createClientWithDriver } from "@/client/client";
 import { createTestRuntime, runDriverTests } from "@/driver-test-suite/mod";
 import { createEngineDriver } from "@/drivers/engine/mod";
 import { RunConfigSchema } from "@/registry/run-config";
-import { getPort } from "@/test/mod";
 
 runDriverTests({
 	// Use real timers for engine-runner tests
 	useRealTimers: true,
 	skip: {
-		// Skip tests that aren't applicable for engine-runner
-		schedule: true, // Scheduling handled by engine
+		// SSE is not implemented on Rivet Guard yet
 		sse: true,
+		// The inline client is the same as the remote client driver on Rivet
+		inline: true,
 	},
 	async start() {
 		return await createTestRuntime(
@@ -27,6 +27,7 @@ runDriverTests({
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",
+						Authorization: "Bearer dev",
 					},
 					body: JSON.stringify({
 						name: namespace,
@@ -42,6 +43,7 @@ runDriverTests({
 					endpoint,
 					namespace,
 					runnerName,
+					token: "dev",
 					totalSlots: 1000,
 				});
 
@@ -64,6 +66,7 @@ runDriverTests({
 						endpoint: "http://127.0.0.1:6420",
 						namespace: namespace,
 						runnerName: runnerName,
+						token: "dev",
 					},
 					driver: driverConfig,
 					cleanup: async () => {
