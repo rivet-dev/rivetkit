@@ -138,7 +138,7 @@ export function createActorDurableObject(
 			);
 
 			// Create actor router
-			const actorRouter = createActorRouter(runConfig, actorDriver);
+			const actorRouter = createActorRouter(runConfig, actorDriver, false);
 
 			// Save actor
 			this.#actor = {
