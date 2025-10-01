@@ -411,9 +411,9 @@ export class EngineActorDriver implements ActorDriver {
 
 		return streamSSE(c, async (stream) => {
 			// Runner id should be set if the runner started
-			const runnerId = this.#runner.runnerId;
-			invariant(runnerId, "runnerId not set");
-			stream.writeSSE({ data: runnerId });
+			const payload = this.#runner.getServerlessInitPacket();
+			invariant(payload, "runnerId not set");
+			stream.writeSSE({ data: payload });
 
 			return this.#runnerStopped.promise;
 		});
