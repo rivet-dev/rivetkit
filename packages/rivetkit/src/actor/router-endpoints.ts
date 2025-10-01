@@ -292,7 +292,8 @@ export async function handleWebSocketConnect(
 			// Handle cleanup asynchronously
 			handlersPromise
 				.then(({ conn, actor }) => {
-					actor.__connDisconnected(conn, event.wasClean, socketId);
+					const wasClean = event.wasClean || event.code === 1000;
+					actor.__connDisconnected(conn, wasClean, socketId);
 				})
 				.catch((error) => {
 					deconstructError(

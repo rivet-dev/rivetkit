@@ -914,6 +914,8 @@ enc
 		if (!this.#transport) {
 			// Nothing to do
 		} else if ("websocket" in this.#transport) {
+			logger().debug("closing ws");
+
 			const ws = this.#transport.websocket;
 			// Check if WebSocket is already closed or closing
 			if (
@@ -927,10 +929,12 @@ enc
 					logger().debug({ msg: "ws closed" });
 					resolve(undefined);
 				});
-				ws.close();
+				ws.close(1000, "Normal closure");
 				await promise;
 			}
 		} else if ("sse" in this.#transport) {
+			logger().debug("closing sse");
+
 			// Send close request to server for SSE connections
 			if (this.#connectionId && this.#connectionToken) {
 				try {

@@ -29,7 +29,7 @@ export function runActorSleepTests(driverTestConfig: DriverTestConfig) {
 			await sleepActor.triggerSleep();
 
 			// HACK: Wait for sleep to finish in background
-			await waitFor(driverTestConfig, 100);
+			await waitFor(driverTestConfig, 250);
 
 			// Get sleep count after restore
 			{
@@ -59,7 +59,7 @@ export function runActorSleepTests(driverTestConfig: DriverTestConfig) {
 			await sleepActor.dispose();
 
 			// HACK: Wait for sleep to finish in background
-			await waitFor(driverTestConfig, 100);
+			await waitFor(driverTestConfig, SLEEP_TIMEOUT + 250);
 
 			// Reconnect to get sleep count after restore
 			const sleepActor2 = client.sleep.getOrCreate();
@@ -84,7 +84,7 @@ export function runActorSleepTests(driverTestConfig: DriverTestConfig) {
 			}
 
 			// Wait for sleep
-			await waitFor(driverTestConfig, SLEEP_TIMEOUT + 100);
+			await waitFor(driverTestConfig, SLEEP_TIMEOUT + 250);
 
 			// Get sleep count after restore
 			{
@@ -111,7 +111,7 @@ export function runActorSleepTests(driverTestConfig: DriverTestConfig) {
 			await sleepActor.dispose();
 
 			// Wait for sleep
-			await waitFor(driverTestConfig, SLEEP_TIMEOUT + 100);
+			await waitFor(driverTestConfig, SLEEP_TIMEOUT + 250);
 
 			// Reconnect to get sleep count after restore
 			const sleepActor2 = client.sleep.getOrCreate();
@@ -136,7 +136,7 @@ export function runActorSleepTests(driverTestConfig: DriverTestConfig) {
 			}
 
 			// Wait almost until sleep timeout, then make RPC call
-			await waitFor(driverTestConfig, SLEEP_TIMEOUT - 100);
+			await waitFor(driverTestConfig, SLEEP_TIMEOUT - 250);
 
 			// RPC call should reset the sleep timer
 			{
@@ -146,7 +146,7 @@ export function runActorSleepTests(driverTestConfig: DriverTestConfig) {
 			}
 
 			// Wait another partial timeout period - actor should still be awake
-			await waitFor(driverTestConfig, SLEEP_TIMEOUT - 100);
+			await waitFor(driverTestConfig, SLEEP_TIMEOUT - 250);
 
 			// Actor should still be awake
 			{
@@ -156,7 +156,7 @@ export function runActorSleepTests(driverTestConfig: DriverTestConfig) {
 			}
 
 			// Now wait for full timeout without any RPC calls
-			await waitFor(driverTestConfig, SLEEP_TIMEOUT + 100);
+			await waitFor(driverTestConfig, SLEEP_TIMEOUT + 250);
 
 			// Actor should have slept and restarted
 			{
@@ -180,10 +180,10 @@ export function runActorSleepTests(driverTestConfig: DriverTestConfig) {
 			}
 
 			// Set an alarm to keep the actor awake
-			await sleepActor.setAlarm(SLEEP_TIMEOUT - 100);
+			await sleepActor.setAlarm(SLEEP_TIMEOUT - 250);
 
 			// Wait until after SLEEPT_IMEOUT to validate the actor did not sleep
-			await waitFor(driverTestConfig, SLEEP_TIMEOUT + 100);
+			await waitFor(driverTestConfig, SLEEP_TIMEOUT + 250);
 
 			// Actor should not have slept
 			{
@@ -207,7 +207,7 @@ export function runActorSleepTests(driverTestConfig: DriverTestConfig) {
 			}
 
 			// Set an alarm to keep the actor awake
-			await sleepActor.setAlarm(SLEEP_TIMEOUT + 100);
+			await sleepActor.setAlarm(SLEEP_TIMEOUT + 250);
 
 			// Wait until after SLEEPT_IMEOUT to validate the actor did not sleep
 			await waitFor(driverTestConfig, SLEEP_TIMEOUT + 200);
@@ -239,7 +239,7 @@ export function runActorSleepTests(driverTestConfig: DriverTestConfig) {
 			);
 			const longRunningPromise = sleepActor.longRunningRpc();
 			await waitPromise;
-			await waitFor(driverTestConfig, SLEEP_TIMEOUT + 100);
+			await waitFor(driverTestConfig, SLEEP_TIMEOUT + 250);
 			await sleepActor.finishLongRunningRpc();
 			await longRunningPromise;
 
@@ -252,7 +252,7 @@ export function runActorSleepTests(driverTestConfig: DriverTestConfig) {
 			await sleepActor.dispose();
 
 			// Now wait for the sleep timeout
-			await waitFor(driverTestConfig, SLEEP_TIMEOUT + 100);
+			await waitFor(driverTestConfig, SLEEP_TIMEOUT + 250);
 
 			// Actor should have slept after the timeout
 			const sleepActor2 = client.sleepWithLongRpc.getOrCreate();
@@ -298,7 +298,7 @@ export function runActorSleepTests(driverTestConfig: DriverTestConfig) {
 			});
 
 			// Wait longer than sleep timeout while keeping WebSocket connected
-			await waitFor(driverTestConfig, SLEEP_TIMEOUT + 100);
+			await waitFor(driverTestConfig, SLEEP_TIMEOUT + 250);
 
 			// Send a message to check if actor is still alive
 			ws.send(JSON.stringify({ type: "getCounts" }));
@@ -320,7 +320,7 @@ export function runActorSleepTests(driverTestConfig: DriverTestConfig) {
 			ws.close();
 
 			// Wait for sleep timeout after WebSocket closed
-			await waitFor(driverTestConfig, SLEEP_TIMEOUT + 100);
+			await waitFor(driverTestConfig, SLEEP_TIMEOUT + 250);
 
 			// Actor should have slept after WebSocket closed
 			{
@@ -347,7 +347,7 @@ export function runActorSleepTests(driverTestConfig: DriverTestConfig) {
 			}
 
 			// Start a long-running fetch request
-			const fetchDuration = SLEEP_TIMEOUT + 100;
+			const fetchDuration = SLEEP_TIMEOUT + 250;
 			const fetchPromise = sleepActor.fetch(
 				`long-request?duration=${fetchDuration}`,
 			);
@@ -365,7 +365,7 @@ export function runActorSleepTests(driverTestConfig: DriverTestConfig) {
 			}
 
 			// Wait for sleep timeout
-			await waitFor(driverTestConfig, SLEEP_TIMEOUT + 100);
+			await waitFor(driverTestConfig, SLEEP_TIMEOUT + 250);
 
 			// Actor should have slept after timeout
 			{
@@ -389,7 +389,7 @@ export function runActorSleepTests(driverTestConfig: DriverTestConfig) {
 			}
 
 			// Wait longer than sleep timeout
-			await waitFor(driverTestConfig, SLEEP_TIMEOUT + 100);
+			await waitFor(driverTestConfig, SLEEP_TIMEOUT + 250);
 
 			// Actor should NOT have slept due to noSleep option
 			{
@@ -399,7 +399,7 @@ export function runActorSleepTests(driverTestConfig: DriverTestConfig) {
 			}
 
 			// Wait even longer to be sure
-			await waitFor(driverTestConfig, SLEEP_TIMEOUT + 100);
+			await waitFor(driverTestConfig, SLEEP_TIMEOUT + 250);
 
 			// Actor should still not have slept
 			{

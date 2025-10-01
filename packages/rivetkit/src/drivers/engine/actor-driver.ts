@@ -35,7 +35,11 @@ import {
 } from "@/driver-helpers/mod";
 import type { RegistryConfig } from "@/registry/config";
 import type { RunConfig } from "@/registry/run-config";
-import { promiseWithResolvers } from "@/utils";
+import {
+	type LongTimeoutHandle,
+	promiseWithResolvers,
+	setLongTimeout,
+} from "@/utils";
 import type { Config } from "./config";
 import { KEYS } from "./kv";
 import { logger } from "./log";
@@ -58,6 +62,7 @@ export class EngineActorDriver implements ActorDriver {
 	#actors: Map<string, ActorHandler> = new Map();
 	#actorRouter: ActorRouter;
 	#version: number = 1; // Version for the runner protocol
+	#alarmTimeout?: LongTimeoutHandle;
 
 	#runnerStarted: PromiseWithResolvers<undefined> = Promise.withResolvers();
 	#runnerStopped: PromiseWithResolvers<undefined> = Promise.withResolvers();
@@ -74,7 +79,11 @@ export class EngineActorDriver implements ActorDriver {
 		this.#managerDriver = managerDriver;
 		this.#inlineClient = inlineClient;
 		this.#config = config;
-		this.#actorRouter = createActorRouter(runConfig, this);
+		this.#actorRouter = createActorRouter(
+			runConfig,
+			this,
+			registryConfig.test.enabled,
+		);
 
 		// Create runner configuration
 		let hasDisconnected = false;
@@ -186,9 +195,29 @@ export class EngineActorDriver implements ActorDriver {
 	}
 
 	async setAlarm(actor: AnyActorInstance, timestamp: number): Promise<void> {
-		// TODO: Set timeout
-		// TODO: Use alarm on sleep
-		// TODO: Send alarm to runner
+		// Clear prev timeout
+		if (this.#alarmTimeout) {
+			this.#alarmTimeout.abort();
+			this.#alarmTimeout = undefined;
+		}
+
+		// Set alarm
+		const delay = Math.max(0, timestamp - Date.now());
+		this.#alarmTimeout = setLongTimeout(() => {
+			actor._onAlarm();
+			this.#alarmTimeout = undefined;
+		}, delay);
+
+		// TODO: This call may not be needed on ActorInstance.start, but it does help ensure that the local state is synced with the alarm state
+		// Set alarm on Rivet
+		//
+		// This does not call an "alarm" event like Durable Objects.
+		// Instead, it just wakes the actor on the alarm (if not
+		// already awake).
+		//
+		// _onAlarm is automatically called on `ActorInstance.start` when waking
+		// again.
+		this.#runner.setAlarm(actor.id, timestamp);
 	}
 
 	async getDatabase(_actorId: string): Promise<unknown | undefined> {

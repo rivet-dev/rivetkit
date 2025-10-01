@@ -69,6 +69,7 @@ export type ActorRouter = Hono<{ Bindings: ActorRouterBindings }>;
 export function createActorRouter(
 	runConfig: RunConfig,
 	actorDriver: ActorDriver,
+	isTest: boolean,
 ): ActorRouter {
 	const router = new Hono<{ Bindings: ActorRouterBindings }>({ strict: false });
 
@@ -84,37 +85,39 @@ export function createActorRouter(
 		return c.text("ok");
 	});
 
-	// Test endpoint to force disconnect a connection non-cleanly
-	router.post("/.test/force-disconnect", async (c) => {
-		const connId = c.req.query("conn");
+	if (isTest) {
+		// Test endpoint to force disconnect a connection non-cleanly
+		router.post("/.test/force-disconnect", async (c) => {
+			const connId = c.req.query("conn");
 
-		if (!connId) {
-			return c.text("Missing conn query parameter", 400);
-		}
+			if (!connId) {
+				return c.text("Missing conn query parameter", 400);
+			}
 
-		const actor = await actorDriver.loadActor(c.env.actorId);
-		const conn = actor.__getConnForId(connId);
+			const actor = await actorDriver.loadActor(c.env.actorId);
+			const conn = actor.__getConnForId(connId);
 
-		if (!conn) {
-			return c.text(`Connection not found: ${connId}`, 404);
-		}
+			if (!conn) {
+				return c.text(`Connection not found: ${connId}`, 404);
+			}
 
-		// Force close the websocket/SSE connection without clean shutdown
-		const driverState = conn.__driverState;
-		if (driverState && ConnDriverKind.WEBSOCKET in driverState) {
-			const ws = driverState[ConnDriverKind.WEBSOCKET].websocket;
+			// Force close the websocket/SSE connection without clean shutdown
+			const driverState = conn.__driverState;
+			if (driverState && ConnDriverKind.WEBSOCKET in driverState) {
+				const ws = driverState[ConnDriverKind.WEBSOCKET].websocket;
 
-			// Force close without sending close frame
-			(ws.raw as any).terminate();
-		} else if (driverState && ConnDriverKind.SSE in driverState) {
-			const stream = driverState[ConnDriverKind.SSE].stream;
+				// Force close without sending close frame
+				(ws.raw as any).terminate();
+			} else if (driverState && ConnDriverKind.SSE in driverState) {
+				const stream = driverState[ConnDriverKind.SSE].stream;
 
-			// Force close the SSE stream
-			stream.abort();
-		}
+				// Force close the SSE stream
+				stream.abort();
+			}
 
-		return c.json({ success: true });
-	});
+			return c.json({ success: true });
+		});
+	}
 
 	router.get(PATH_CONNECT_WEBSOCKET, async (c) => {
 		const upgradeWebSocket = runConfig.getUpgradeWebSocket?.();

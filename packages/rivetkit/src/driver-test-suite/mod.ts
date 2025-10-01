@@ -35,6 +35,7 @@ export interface SkipTests {
 	schedule?: boolean;
 	sleep?: boolean;
 	sse?: boolean;
+	inline?: boolean;
 }
 
 export interface DriverTestConfig {
@@ -79,7 +80,10 @@ export interface DriverDeployOutput {
 export function runDriverTests(
 	driverTestConfigPartial: Omit<DriverTestConfig, "clientType" | "transport">,
 ) {
-	for (const clientType of ["http", "inline"] as ClientType[]) {
+	const clientTypes: ClientType[] = driverTestConfigPartial.skip?.inline
+		? ["http"]
+		: ["http", "inline"];
+	for (const clientType of clientTypes) {
 		const driverTestConfig: DriverTestConfig = {
 			...driverTestConfigPartial,
 			clientType,
@@ -148,7 +152,12 @@ export function runDriverTests(
 export async function createTestRuntime(
 	registryPath: string,
 	driverFactory: (registry: Registry<any>) => Promise<{
-		rivetEngine?: { endpoint: string; namespace: string; runnerName: string };
+		rivetEngine?: {
+			endpoint: string;
+			namespace: string;
+			runnerName: string;
+			token: string;
+		};
 		driver: DriverConfig;
 		cleanup?: () => Promise<void>;
 	}>,
