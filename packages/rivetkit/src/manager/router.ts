@@ -2,9 +2,9 @@ import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import * as cbor from "cbor-x";
 import {
 	Hono,
-	Context as HonoContext,
+	type Context as HonoContext,
 	type MiddlewareHandler,
-	Next,
+	type Next,
 } from "hono";
 import { cors as corsMiddleware } from "hono/cors";
 import { createMiddleware } from "hono/factory";
@@ -80,47 +80,46 @@ export function createManagerRouter(
 	runConfig: RunConfig,
 	managerDriver: ManagerDriver,
 	serverlessActorDriverBuilder: (() => ActorDriver) | undefined,
-): { router: Hono; openapi: OpenAPIHono; cors: MiddlewareHandler } {
+): { router: Hono; openapi: OpenAPIHono } {
 	const router = new OpenAPIHono({ strict: false }).basePath(
 		runConfig.basePath,
 	);
 
 	router.use("*", loggerMiddleware(logger()));
 
-	const cors = runConfig.cors
-		? corsMiddleware(runConfig.cors)
-		: createMiddleware((_c, next) => next());
-
 	if (serverlessActorDriverBuilder) {
-		addServerlessRoutes(serverlessActorDriverBuilder, router, cors);
+		addServerlessRoutes(runConfig, serverlessActorDriverBuilder, router);
 	} else {
-		addManagerRoutes(registryConfig, runConfig, managerDriver, router, cors);
+		addManagerRoutes(registryConfig, runConfig, managerDriver, router);
 	}
 
 	// Error handling
 	router.notFound(handleRouteNotFound);
 	router.onError(handleRouteError);
 
-	return { router: router as Hono, openapi: router, cors };
+	return { router: router as Hono, openapi: router };
 }
 
 function addServerlessRoutes(
+	runConfig: RunConfig,
 	serverlessActorDriverBuilder: (
 		token: string | undefined,
 		totalSlots: number | undefined,
 	) => ActorDriver,
 	router: OpenAPIHono,
-	cors: MiddlewareHandler,
 ) {
+	// Apply CORS
+	if (runConfig.cors) router.use("*", corsMiddleware(runConfig.cors));
+
 	// GET /
-	router.get("/", cors, (c) => {
+	router.get("/", (c) => {
 		return c.text(
 			"This is a RivetKit server.\n\nLearn more at https://rivetkit.org",
 		);
 	});
 
 	// Serverless start endpoint
-	router.get("/start", cors, async (c) => {
+	router.get("/start", async (c) => {
 		const token = c.req.header("x-rivet-token");
 		let totalSlots: number | undefined = parseInt(
 			c.req.header("x-rivetkit-total-slots") as any,
@@ -135,7 +134,7 @@ function addServerlessRoutes(
 		return await actorDriver.serverlessHandleStart(c);
 	});
 
-	router.get("/health", cors, (c) => {
+	router.get("/health", (c) => {
 		return c.text("ok");
 	});
 }
@@ -145,13 +144,34 @@ function addManagerRoutes(
 	runConfig: RunConfig,
 	managerDriver: ManagerDriver,
 	router: OpenAPIHono,
-	cors: MiddlewareHandler,
 ) {
+	// Serve inspector BEFORE the rest of the routes, since this has a special
+	// CORS config that should take precedence for the `/inspector` path
+	if (isInspectorEnabled(runConfig, "manager")) {
+		if (!managerDriver.inspector) {
+			throw new Unsupported("inspector");
+		}
+		router.route(
+			"/inspect",
+			new Hono<{ Variables: { inspector: any } }>()
+				.use(corsMiddleware(runConfig.inspector.cors))
+				.use(secureInspector(runConfig))
+				.use((c, next) => {
+					c.set("inspector", managerDriver.inspector!);
+					return next();
+				})
+				.route("/", createManagerInspectorRouter()),
+		);
+	}
+
+	// Apply CORS
+	if (runConfig.cors) router.use("*", corsMiddleware(runConfig.cors));
+
 	// Actor gateway
-	router.use("*", cors, actorGateway.bind(undefined, runConfig, managerDriver));
+	router.use("*", actorGateway.bind(undefined, runConfig, managerDriver));
 
 	// GET /
-	router.get("/", cors, (c) => {
+	router.get("/", (c) => {
 		return c.text(
 			"This is a RivetKit server.\n\nLearn more at https://rivetkit.org",
 		);
@@ -160,7 +180,6 @@ function addManagerRoutes(
 	// GET /actors
 	{
 		const route = createRoute({
-			middleware: [cors],
 			method: "get",
 			path: "/actors",
 			request: {
@@ -233,7 +252,6 @@ function addManagerRoutes(
 	// PUT /actors
 	{
 		const route = createRoute({
-			middleware: [cors],
 			method: "put",
 			path: "/actors",
 			request: {
@@ -286,7 +304,6 @@ function addManagerRoutes(
 	// POST /actors
 	{
 		const route = createRoute({
-			middleware: [cors],
 			method: "post",
 			path: "/actors",
 			request: {
@@ -326,7 +343,6 @@ function addManagerRoutes(
 	// // DELETE /actors/{actor_id}
 	// {
 	// 	const route = createRoute({
-	// 		middleware: [cors],
 	// 		method: "delete",
 	// 		path: "/actors/{actor_id}",
 	// 		request: {
@@ -547,7 +563,7 @@ function addManagerRoutes(
 		});
 	}
 
-	router.get("/health", cors, (c) => {
+	router.get("/health", (c) => {
 		return c.text("ok");
 	});
 
@@ -555,23 +571,6 @@ function addManagerRoutes(
 		registryConfig,
 		router as unknown as Hono,
 	);
-
-	if (isInspectorEnabled(runConfig, "manager")) {
-		if (!managerDriver.inspector) {
-			throw new Unsupported("inspector");
-		}
-		router.route(
-			"/inspect",
-			new Hono<{ Variables: { inspector: any } }>()
-				.use(corsMiddleware(runConfig.inspector.cors))
-				.use(secureInspector(runConfig))
-				.use((c, next) => {
-					c.set("inspector", managerDriver.inspector!);
-					return next();
-				})
-				.route("/", createManagerInspectorRouter()),
-		);
-	}
 }
 
 function createApiActor(actor: ActorOutput): ApiActor {
