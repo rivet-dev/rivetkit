@@ -50,6 +50,7 @@ import {
 	type Actor as ApiActor,
 } from "@/manager-api/actors";
 import { RivetIdSchema } from "@/manager-api/common";
+import type { ServerlessActorDriverBuilder } from "@/mod";
 import type { RegistryConfig } from "@/registry/config";
 import type { RunConfig } from "@/registry/run-config";
 import type { ActorOutput, ManagerDriver } from "./driver";
@@ -79,7 +80,7 @@ export function createManagerRouter(
 	registryConfig: RegistryConfig,
 	runConfig: RunConfig,
 	managerDriver: ManagerDriver,
-	serverlessActorDriverBuilder: (() => ActorDriver) | undefined,
+	serverlessActorDriverBuilder: ServerlessActorDriverBuilder | undefined,
 ): { router: Hono; openapi: OpenAPIHono } {
 	const router = new OpenAPIHono({ strict: false }).basePath(
 		runConfig.basePath,
@@ -121,10 +122,7 @@ export function createManagerRouter(
 
 function addServerlessRoutes(
 	runConfig: RunConfig,
-	serverlessActorDriverBuilder: (
-		token: string | undefined,
-		totalSlots: number | undefined,
-	) => ActorDriver,
+	serverlessActorDriverBuilder: ServerlessActorDriverBuilder,
 	router: OpenAPIHono,
 ) {
 	// Apply CORS
@@ -141,11 +139,18 @@ function addServerlessRoutes(
 	router.get("/start", async (c) => {
 		const token = c.req.header("x-rivet-token");
 		let totalSlots: number | undefined = parseInt(
-			c.req.header("x-rivetkit-total-slots") as any,
+			c.req.header("x-rivet-total-slots") as any,
 		);
-		if (isNaN(totalSlots)) totalSlots = undefined;
+		if (!Number.isFinite(totalSlots)) totalSlots = undefined;
+		const runnerName = c.req.header("x-rivet-runner-name");
+		const namespace = c.req.header("x-rivet-namespace-id");
 
-		const actorDriver = serverlessActorDriverBuilder(token, totalSlots);
+		const actorDriver = serverlessActorDriverBuilder(
+			token,
+			totalSlots,
+			runnerName,
+			namespace,
+		);
 		invariant(
 			actorDriver.serverlessHandleStart,
 			"missing serverlessHandleStart on ActorDriver",
