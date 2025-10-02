@@ -428,9 +428,9 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 			(x) => x.timestamp <= now,
 		);
 		if (runIndex === -1) {
-			// No events are due yet. This will happen if timers fire slightly early.
-			// Ensure we reschedule the alarm for the next upcoming event to avoid losing it.
-			this.#rLog.warn({ msg: "no events are due yet, time may have broken" });
+			// This method is idempotent, so this will happen in scenarios like `start` and
+			// no events are pending.
+			this.#rLog.debug({ msg: "no events are due yet" });
 			if (this.#persist.scheduledEvents.length > 0) {
 				const nextTs = this.#persist.scheduledEvents[0].timestamp;
 				this.actorContext.log.debug({
@@ -1239,7 +1239,7 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 				}
 
 				// Connection is dead, remove it
-				this.#rLog.warn({
+				this.#rLog.info({
 					msg: "connection is dead, removing",
 					connId: conn.id,
 					lastSeen,
