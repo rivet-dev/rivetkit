@@ -15,6 +15,7 @@ import type {
 	ManagerDriver,
 } from "@/driver-helpers/mod";
 import type { Encoding, UniversalWebSocket } from "@/mod";
+import { uint8ArrayToBase64 } from "@/serde";
 import { combineUrlPath } from "@/utils";
 import { sendHttpRequestToActor } from "./actor-http-client";
 import {
@@ -140,7 +141,7 @@ export class RemoteManagerDriver implements ManagerDriver {
 			key: serializeActorKey(key),
 			runner_name_selector: this.#config.runnerName,
 			input: actorInput
-				? cbor.encode(actorInput).toString("base64")
+				? uint8ArrayToBase64(cbor.encode(actorInput))
 				: undefined,
 			crash_policy: "sleep",
 		});
@@ -175,7 +176,7 @@ export class RemoteManagerDriver implements ManagerDriver {
 			name,
 			runner_name_selector: this.#config.runnerName,
 			key: serializeActorKey(key),
-			input: input ? cbor.encode(input).toString("base64") : null,
+			input: input ? uint8ArrayToBase64(cbor.encode(input)) : undefined,
 			crash_policy: "sleep",
 		});
 		const actorId = result.actor.actor_id;
