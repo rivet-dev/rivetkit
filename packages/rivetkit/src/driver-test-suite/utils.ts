@@ -36,17 +36,20 @@ export async function setupDriverTest(
 			namespace,
 			runnerName,
 			transport: driverTestConfig.transport,
+			encoding: driverTestConfig.encoding,
 		});
 	} else if (driverTestConfig.clientType === "inline") {
 		// Use inline client from driver
 		const transport = driverTestConfig.transport ?? "websocket";
+		const encoding = driverTestConfig.encoding ?? "bare";
 		const managerDriver = createTestInlineClientDriver(
 			endpoint,
-			"bare",
+			encoding,
 			transport,
 		);
 		const runConfig = RunConfigSchema.parse({
 			transport: transport,
+			encoding: encoding,
 		});
 		client = createClientWithDriver(managerDriver, runConfig);
 	} else {
