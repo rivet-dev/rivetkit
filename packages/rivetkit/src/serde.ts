@@ -5,6 +5,21 @@ import type { VersionedDataHandler } from "@/common/versioned-data";
 import type { Encoding } from "@/mod";
 import { jsonStringifyCompat } from "./actor/protocol/serde";
 
+export function uint8ArrayToBase64(uint8Array: Uint8Array): string {
+	// Check if Buffer is available (Node.js)
+	if (typeof Buffer !== "undefined") {
+		return Buffer.from(uint8Array).toString("base64");
+	}
+
+	// Browser environment - use btoa
+	let binary = "";
+	const len = uint8Array.byteLength;
+	for (let i = 0; i < len; i++) {
+		binary += String.fromCharCode(uint8Array[i]);
+	}
+	return btoa(binary);
+}
+
 export function encodingIsBinary(encoding: Encoding): boolean {
 	if (encoding === "json") {
 		return false;
