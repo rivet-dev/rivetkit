@@ -102,7 +102,11 @@ export class Registry<A extends RegistryActors> {
 			const displayInfo = managerDriver.displayInformation();
 			console.log();
 			console.log(`  RivetKit ${pkg.version} (${displayInfo.name})`);
-			console.log(`  - Endpoint:     http://127.0.0.1:6420`);
+			if (config.disableServer) {
+				console.log(`  - Endpoint:     (default server disabled)`);
+			} else {
+				console.log(`  - Endpoint:     http://127.0.0.1:6420`);
+			}
 			for (const [k, v] of Object.entries(displayInfo.properties)) {
 				const padding = " ".repeat(Math.max(0, 13 - k.length));
 				console.log(`  - ${k}:${padding}${v}`);
