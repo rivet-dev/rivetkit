@@ -1219,9 +1219,6 @@ importers:
       '@vitest/ui':
         specifier: 3.1.1
         version: 3.1.1(vitest@3.2.4)
-      bufferutil:
-        specifier: ^4.0.9
-        version: 4.0.9
       bundle-require:
         specifier: ^5.1.0
         version: 5.1.0(esbuild@0.25.5)
@@ -6481,6 +6478,7 @@ snapshots:
   bufferutil@4.0.9:
     dependencies:
       node-gyp-build: 4.8.4
+    optional: true
 
   bundle-require@5.1.0(esbuild@0.25.5):
     dependencies:
@@ -7305,7 +7303,8 @@ snapshots:
       detect-libc: 2.0.4
     optional: true
 
-  node-gyp-build@4.8.4: {}
+  node-gyp-build@4.8.4:
+    optional: true
 
   node-releases@2.0.19: {}
 
