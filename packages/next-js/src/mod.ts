@@ -7,8 +7,9 @@ export const toNextHandler = (
 	// Don't run server locally since we're using the fetch handler directly
 	inputConfig.disableServer = true;
 	inputConfig.disableActorDriver = true;
+	// inputConfig.runnerKind = "serverless";
 
-	const { fetch } = registry.startServerless(inputConfig);
+	const { fetch } = registry.start(inputConfig);
 
 	const fetchWrapper = async (
 		request: Request,

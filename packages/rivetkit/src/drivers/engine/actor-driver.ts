@@ -92,9 +92,9 @@ export class EngineActorDriver implements ActorDriver {
 			endpoint: config.endpoint,
 			token: runConfig.token ?? config.token,
 			pegboardEndpoint: config.pegboardEndpoint,
-			namespace: config.namespace,
+			namespace: runConfig.namespace ?? config.namespace,
 			totalSlots: runConfig.totalSlots ?? config.totalSlots,
-			runnerName: config.runnerName,
+			runnerName: runConfig.runnerName ?? config.runnerName,
 			runnerKey: config.runnerKey,
 			metadata: {
 				inspectorToken: this.#runConfig.inspector.token(),
