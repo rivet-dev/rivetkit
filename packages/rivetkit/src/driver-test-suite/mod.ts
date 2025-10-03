@@ -7,7 +7,7 @@ import type { Transport } from "@/client/mod";
 import { configureInspectorAccessToken } from "@/inspector/utils";
 import { createManagerRouter } from "@/manager/router";
 import type { DriverConfig, Registry, RunConfig } from "@/mod";
-import { RunConfigSchema } from "@/registry/run-config";
+import { RunnerConfigSchema } from "@/registry/run-config";
 import { getPort } from "@/test/mod";
 import { logger } from "./log";
 import { runActionFeaturesTests } from "./tests/action-features";
@@ -199,7 +199,7 @@ export async function createTestRuntime(
 		// Build driver config
 		// biome-ignore lint/style/useConst: Assigned later
 		let upgradeWebSocket: any;
-		const config: RunConfig = RunConfigSchema.parse({
+		const config: RunConfig = RunnerConfigSchema.parse({
 			driver,
 			getUpgradeWebSocket: () => upgradeWebSocket!,
 			inspector: {

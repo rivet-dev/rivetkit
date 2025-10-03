@@ -1,6 +1,6 @@
 import type {
+	RunnerConfig as EngineRunnerConfig,
 	ActorConfig as RunnerActorConfig,
-	RunnerConfig,
 } from "@rivetkit/engine-runner";
 import { Runner } from "@rivetkit/engine-runner";
 import * as cbor from "cbor-x";
@@ -34,13 +34,14 @@ import {
 	serializeEmptyPersistData,
 } from "@/driver-helpers/mod";
 import type { RegistryConfig } from "@/registry/config";
-import type { RunConfig } from "@/registry/run-config";
+import type { RunnerConfig } from "@/registry/run-config";
+import { getEndpoint } from "@/remote-manager-driver/api-utils";
 import {
 	type LongTimeoutHandle,
 	promiseWithResolvers,
 	setLongTimeout,
 } from "@/utils";
-import type { Config } from "./config";
+import type { EngineConfig } from "./config";
 import { KEYS } from "./kv";
 import { logger } from "./log";
 
@@ -54,10 +55,10 @@ export type DriverContext = {};
 
 export class EngineActorDriver implements ActorDriver {
 	#registryConfig: RegistryConfig;
-	#runConfig: RunConfig;
+	#runConfig: RunnerConfig;
 	#managerDriver: ManagerDriver;
 	#inlineClient: Client<any>;
-	#config: Config;
+	#config: EngineConfig;
 	#runner: Runner;
 	#actors: Map<string, ActorHandler> = new Map();
 	#actorRouter: ActorRouter;
@@ -69,10 +70,10 @@ export class EngineActorDriver implements ActorDriver {
 
 	constructor(
 		registryConfig: RegistryConfig,
-		runConfig: RunConfig,
+		runConfig: RunnerConfig,
 		managerDriver: ManagerDriver,
 		inlineClient: Client<any>,
-		config: Config,
+		config: EngineConfig,
 	) {
 		this.#registryConfig = registryConfig;
 		this.#runConfig = runConfig;
@@ -95,11 +96,10 @@ export class EngineActorDriver implements ActorDriver {
 
 		// Create runner configuration
 		let hasDisconnected = false;
-		const runnerConfig: RunnerConfig = {
+		const engineRunnerConfig: EngineRunnerConfig = {
 			version: this.#version,
-			endpoint: config.endpoint,
+			endpoint: getEndpoint(config),
 			token,
-			pegboardEndpoint: config.pegboardEndpoint,
 			namespace: runConfig.namespace ?? config.namespace,
 			totalSlots: runConfig.totalSlots ?? config.totalSlots,
 			runnerName: runConfig.runnerName ?? config.runnerName,
@@ -149,7 +149,7 @@ export class EngineActorDriver implements ActorDriver {
 		};
 
 		// Create and start runner
-		this.#runner = new Runner(runnerConfig);
+		this.#runner = new Runner(engineRunnerConfig);
 		this.#runner.start();
 		logger().debug({
 			msg: "engine runner started",

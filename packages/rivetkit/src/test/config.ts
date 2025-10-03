@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { RunConfigSchema } from "@/registry/run-config";
+import { RunnerConfigSchema } from "@/registry/run-config";
 
-export const ConfigSchema = RunConfigSchema.removeDefault()
+export const ConfigSchema = RunnerConfigSchema.removeDefault()
 	.extend({
 		hostname: z
 			.string()

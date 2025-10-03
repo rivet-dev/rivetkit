@@ -1,41 +1,32 @@
 import z from "zod";
 import { TransportSchema } from "@/actor/protocol/old";
 import { EncodingSchema } from "@/actor/protocol/serde";
-import { getEnvUniversal, type UpgradeWebSocket } from "@/utils";
-
-export type GetUpgradeWebSocket = () => UpgradeWebSocket;
+import { type GetUpgradeWebSocket, getEnvUniversal } from "@/utils";
 
 export const ClientConfigSchema = z.object({
-	/** Configure serving the API */
-	api: z
-		.object({
-			host: z.string().default("127.0.0.1"),
-			port: z.number().default(6420),
-		})
-		.default({}),
+	/** Endpoint to connect to for Rivet Engine or RivetKit manager API. */
+	endpoint: z
+		.string()
+		.optional()
+		.transform(
+			(x) =>
+				x ??
+				getEnvUniversal("RIVET_ENGINE") ??
+				getEnvUniversal("RIVET_ENDPOINT"),
+		),
 
+	/** Token to use to authenticate with the API. */
 	token: z
 		.string()
 		.optional()
 		.transform((x) => x ?? getEnvUniversal("RIVET_TOKEN")),
 
-	headers: z.record(z.string()).optional().default({}),
-
-	/** Endpoint to connect to the Rivet engine. Can be configured via RIVET_ENGINE env var. */
-	endpoint: z
-		.string()
-		.nullable()
-		.default(
-			() =>
-				getEnvUniversal("RIVET_ENGINE") ??
-				getEnvUniversal("RIVET_ENDPOINT") ??
-				null,
-		),
-
+	/** Namespace to connect to. */
 	namespace: z
 		.string()
 		.default(() => getEnvUniversal("RIVET_NAMESPACE") ?? "default"),
 
+	/** Name of the runner. This is used to group together runners in to different pools. */
 	runnerName: z
 		.string()
 		.default(() => getEnvUniversal("RIVET_RUNNER") ?? "rivetkit"),
@@ -44,10 +35,9 @@ export const ClientConfigSchema = z.object({
 
 	transport: TransportSchema.default("websocket"),
 
-	// This is a function to allow for lazy configuration of upgradeWebSocket on the
-	// fly. This is required since the dependencies that upgradeWebSocket
-	// (specifically Node.js) can sometimes only be specified after the router is
-	// created or must be imported async using `await import(...)`
+	headers: z.record(z.string()).optional().default({}),
+
+	// See RunConfig.getUpgradeWebSocket
 	getUpgradeWebSocket: z.custom<GetUpgradeWebSocket>().optional(),
 });
 

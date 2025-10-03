@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import { createMiddleware } from "hono/factory";
 import type { ManagerDriver } from "@/driver-helpers/mod";
 import type { RunConfig } from "@/mod";
-import type { RunConfigInput } from "@/registry/run-config";
+import type { RunnerConfigInput } from "@/registry/run-config";
 import { inspectorLogger } from "./log";
 
 export function compareSecrets(providedSecret: string, validSecret: string) {
@@ -47,7 +47,7 @@ export const secureInspector = (runConfig: RunConfig) =>
 		await next();
 	});
 
-export function getInspectorUrl(runConfig: RunConfigInput | undefined) {
+export function getInspectorUrl(runConfig: RunnerConfigInput | undefined) {
 	if (!runConfig?.inspector?.enabled) {
 		return "disabled";
 	}

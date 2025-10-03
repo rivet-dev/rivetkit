@@ -18,9 +18,9 @@ import {
 import { logger } from "./log";
 import {
 	type DriverConfig,
-	type RunConfig,
-	type RunConfigInput,
-	RunConfigSchema,
+	type RunnerConfig,
+	type RunnerConfigInput,
+	RunnerConfigSchema,
 } from "./run-config";
 import { crossPlatformServe } from "./serve";
 
@@ -52,8 +52,8 @@ export class Registry<A extends RegistryActors> {
 	/**
 	 * Runs the registry for a server.
 	 */
-	public start(inputConfig?: RunConfigInput): ServerOutput<this> {
-		const config = RunConfigSchema.parse(inputConfig);
+	public start(inputConfig?: RunnerConfigInput): ServerOutput<this> {
+		const config = RunnerConfigSchema.parse(inputConfig);
 
 		// Configure logger
 		if (config.logging?.baseLogger) {
@@ -189,8 +189,8 @@ export function setup<A extends RegistryActors>(
 export type {
 	RegistryConfig,
 	RegistryActors,
-	RunConfig,
-	RunConfigInput,
+	RunnerConfig as RunConfig,
+	RunnerConfigInput as RunConfigInput,
 	DriverConfig,
 };
 export { RegistryConfigSchema };

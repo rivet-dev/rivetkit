@@ -41,7 +41,7 @@ import {
 	createActorInspectorRouter,
 } from "@/inspector/actor";
 import { isInspectorEnabled, secureInspector } from "@/inspector/utils";
-import type { RunConfig } from "@/registry/run-config";
+import type { RunnerConfig } from "@/registry/run-config";
 import { ConnDriverKind } from "./conn-drivers";
 import type { ActorDriver } from "./driver";
 import { InternalError } from "./errors";
@@ -67,7 +67,7 @@ export type ActorRouter = Hono<{ Bindings: ActorRouterBindings }>;
  * Creates a router that runs on the partitioned instance.
  */
 export function createActorRouter(
-	runConfig: RunConfig,
+	runConfig: RunnerConfig,
 	actorDriver: ActorDriver,
 	isTest: boolean,
 ): ActorRouter {

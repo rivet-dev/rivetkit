@@ -1,16 +1,22 @@
 import type { Client } from "@/client/client";
 import type { ManagerDriver } from "@/manager/driver";
 import type { RegistryConfig } from "@/registry/config";
-import type { DriverConfig, RunConfig } from "@/registry/run-config";
+import type { DriverConfig, RunnerConfig } from "@/registry/run-config";
 import { RemoteManagerDriver } from "@/remote-manager-driver/mod";
 import { EngineActorDriver } from "./actor-driver";
-import { ConfigSchema, type InputConfig } from "./config";
+import { type EngineConfigInput, EngingConfigSchema } from "./config";
 
 export { EngineActorDriver } from "./actor-driver";
-export { type Config, ConfigSchema, type InputConfig } from "./config";
+export {
+	type EngineConfig as Config,
+	type EngineConfigInput as InputConfig,
+	EngingConfigSchema as ConfigSchema,
+} from "./config";
 
-export function createEngineDriver(inputConfig?: InputConfig): DriverConfig {
-	const config = ConfigSchema.parse(inputConfig);
+export function createEngineDriver(
+	inputConfig?: EngineConfigInput,
+): DriverConfig {
+	const config = EngingConfigSchema.parse(inputConfig);
 
 	return {
 		name: "engine",
@@ -19,7 +25,7 @@ export function createEngineDriver(inputConfig?: InputConfig): DriverConfig {
 		},
 		actor: (
 			registryConfig: RegistryConfig,
-			runConfig: RunConfig,
+			runConfig: RunnerConfig,
 			managerDriver: ManagerDriver,
 			inlineClient: Client<any>,
 		) => {

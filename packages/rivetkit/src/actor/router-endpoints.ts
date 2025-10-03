@@ -26,7 +26,7 @@ import type { UpgradeWebSocketArgs } from "@/common/inline-websocket-adapter2";
 import { deconstructError, stringifyError } from "@/common/utils";
 import type { UniversalWebSocket } from "@/common/websocket-interface";
 import { HonoWebSocketAdapter } from "@/manager/hono-websocket-adapter";
-import type { RunConfig } from "@/registry/run-config";
+import type { RunnerConfig } from "@/registry/run-config";
 import type * as protocol from "@/schemas/client-protocol/mod";
 import {
 	HTTP_ACTION_REQUEST_VERSIONED,
@@ -106,7 +106,7 @@ export interface WebSocketOpts {
  */
 export async function handleWebSocketConnect(
 	req: Request | undefined,
-	runConfig: RunConfig,
+	runConfig: RunnerConfig,
 	actorDriver: ActorDriver,
 	actorId: string,
 	encoding: Encoding,
@@ -325,7 +325,7 @@ export async function handleWebSocketConnect(
  */
 export async function handleSseConnect(
 	c: HonoContext,
-	_runConfig: RunConfig,
+	_runConfig: RunnerConfig,
 	actorDriver: ActorDriver,
 	actorId: string,
 ) {
@@ -437,7 +437,7 @@ export async function handleSseConnect(
  */
 export async function handleAction(
 	c: HonoContext,
-	_runConfig: RunConfig,
+	_runConfig: RunnerConfig,
 	actorDriver: ActorDriver,
 	actionName: string,
 	actorId: string,
@@ -505,7 +505,7 @@ export async function handleAction(
  */
 export async function handleConnectionMessage(
 	c: HonoContext,
-	_runConfig: RunConfig,
+	_runConfig: RunnerConfig,
 	actorDriver: ActorDriver,
 	connId: string,
 	connToken: string,
@@ -542,7 +542,7 @@ export async function handleConnectionMessage(
 
 export async function handleConnectionClose(
 	c: HonoContext,
-	_runConfig: RunConfig,
+	_runConfig: RunnerConfig,
 	actorDriver: ActorDriver,
 	connId: string,
 	connToken: string,

@@ -1,38 +1,22 @@
-import type { Hono } from "hono";
 import { z } from "zod";
+import { ClientConfigSchema } from "@/client/config";
 import { getEnvUniversal } from "@/utils";
 
-export const ConfigSchema = z
+export const EngingConfigSchema = z
 	.object({
-		app: z.custom<Hono>().optional(),
-		endpoint: z
-			.string()
-			.default(
-				() =>
-					getEnvUniversal("RIVET_ENGINE") ??
-					getEnvUniversal("RIVET_ENDPOINT") ??
-					"http://localhost:6420",
-			),
-		token: z
-			.string()
-			.optional()
-			.transform((val) => val ?? getEnvUniversal("RIVET_TOKEN")),
-		pegboardEndpoint: z.string().optional(),
-		namespace: z
-			.string()
-			.default(() => getEnvUniversal("RIVET_NAMESPACE") ?? "default"),
-		runnerName: z
-			.string()
-			.default(() => getEnvUniversal("RIVET_RUNNER") ?? "rivetkit"),
-		// TODO: Automatically attempt to determine key by common env vars (e.g. k8s pod name)
+		/** Unique key for this runner. Runners connecting a given key will replace any other runner connected with the same key. */
 		runnerKey: z
 			.string()
 			.default(
 				() => getEnvUniversal("RIVET_RUNNER_KEY") ?? crypto.randomUUID(),
 			),
+
+		/** How many actors this runner can run. */
 		totalSlots: z.number().default(100_000),
 	})
+	// We include the client config since this includes the common properties like endpoint, namespace, etc.
+	.merge(ClientConfigSchema)
 	.default({});
 
-export type InputConfig = z.input<typeof ConfigSchema>;
-export type Config = z.infer<typeof ConfigSchema>;
+export type EngineConfig = z.infer<typeof EngingConfigSchema>;
+export type EngineConfigInput = z.input<typeof EngingConfigSchema>;

@@ -31,6 +31,8 @@ export type UpgradeWebSocket = (
 	createEvents: (c: HonoContext) => any,
 ) => HonoHandler;
 
+export type GetUpgradeWebSocket = () => UpgradeWebSocket;
+
 export function getEnvUniversal(key: string): string | undefined {
 	if (typeof Deno !== "undefined") {
 		return Deno.env.get(key);
