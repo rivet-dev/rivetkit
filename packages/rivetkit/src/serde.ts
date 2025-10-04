@@ -3,7 +3,7 @@ import invariant from "invariant";
 import { assertUnreachable } from "@/common/utils";
 import type { VersionedDataHandler } from "@/common/versioned-data";
 import type { Encoding } from "@/mod";
-import { jsonStringifyCompat } from "./actor/protocol/serde";
+import { jsonParseCompat, jsonStringifyCompat } from "./actor/protocol/serde";
 
 export function uint8ArrayToBase64(uint8Array: Uint8Array): string {
 	// Check if Buffer is available (Node.js)
@@ -78,11 +78,11 @@ export function deserializeWithEncoding<T>(
 ): T {
 	if (encoding === "json") {
 		if (typeof buffer === "string") {
-			return JSON.parse(buffer);
+			return jsonParseCompat(buffer);
 		} else {
 			const decoder = new TextDecoder("utf-8");
 			const jsonString = decoder.decode(buffer);
-			return JSON.parse(jsonString);
+			return jsonParseCompat(jsonString);
 		}
 	} else if (encoding === "cbor") {
 		invariant(

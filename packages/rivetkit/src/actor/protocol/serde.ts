@@ -123,9 +123,81 @@ export function encodeDataToString(message: OutputData): string {
 	}
 }
 
+function base64DecodeToUint8Array(base64: string): Uint8Array {
+	// Check if Buffer is available (Node.js)
+	if (typeof Buffer !== "undefined") {
+		return new Uint8Array(Buffer.from(base64, "base64"));
+	}
+
+	// Browser environment - use atob
+	const binary = atob(base64);
+	const len = binary.length;
+	const bytes = new Uint8Array(len);
+	for (let i = 0; i < len; i++) {
+		bytes[i] = binary.charCodeAt(i);
+	}
+	return bytes;
+}
+
+function base64DecodeToArrayBuffer(base64: string): ArrayBuffer {
+	return base64DecodeToUint8Array(base64).buffer as ArrayBuffer;
+}
+
 /** Stringifies with compat for values that BARE & CBOR supports. */
 export function jsonStringifyCompat(input: any): string {
-	return JSON.stringify(input, (_key, value) =>
-		typeof value === "bigint" ? value.toString() : value,
-	);
+	return JSON.stringify(input, (_key, value) => {
+		if (typeof value === "bigint") {
+			return ["$BigInt", value.toString()];
+		} else if (value instanceof ArrayBuffer) {
+			return ["$ArrayBuffer", base64EncodeArrayBuffer(value)];
+		} else if (value instanceof Uint8Array) {
+			return ["$Uint8Array", base64EncodeUint8Array(value)];
+		}
+
+		// Escape user arrays that start with $ by prepending another $
+		if (
+			Array.isArray(value) &&
+			value.length === 2 &&
+			typeof value[0] === "string" &&
+			value[0].startsWith("$")
+		) {
+			return ["$" + value[0], value[1]];
+		}
+
+		return value;
+	});
+}
+
+/** Parses JSON with compat for values that BARE & CBOR supports. */
+export function jsonParseCompat(input: string): any {
+	return JSON.parse(input, (_key, value) => {
+		// Handle arrays with $ prefix
+		if (
+			Array.isArray(value) &&
+			value.length === 2 &&
+			typeof value[0] === "string" &&
+			value[0].startsWith("$")
+		) {
+			// Known special types
+			if (value[0] === "$BigInt") {
+				return BigInt(value[1]);
+			} else if (value[0] === "$ArrayBuffer") {
+				return base64DecodeToArrayBuffer(value[1]);
+			} else if (value[0] === "$Uint8Array") {
+				return base64DecodeToUint8Array(value[1]);
+			}
+
+			// Unescape user arrays that started with $ ($$foo -> $foo)
+			if (value[0].startsWith("$$")) {
+				return [value[0].substring(1), value[1]];
+			}
+
+			// Unknown type starting with $ - this is an error
+			throw new Error(
+				`Unknown JSON encoding type: ${value[0]}. This may indicate corrupted data or a version mismatch.`,
+			);
+		}
+
+		return value;
+	});
 }
