@@ -105,7 +105,7 @@ export class Registry<A extends RegistryActors> {
 			if (config.disableServer) {
 				console.log(`  - Endpoint:     (default server disabled)`);
 			} else {
-				console.log(`  - Endpoint:     http://127.0.0.1:6420`);
+				console.log(`  - Endpoint:     ${config.endpoint}`);
 			}
 			for (const [k, v] of Object.entries(displayInfo.properties)) {
 				const padding = " ".repeat(Math.max(0, 13 - k.length));
