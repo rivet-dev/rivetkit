@@ -14,7 +14,8 @@
     "build": {
       "dependsOn": ["^build", "dump-openapi", "build:schema"],
       "inputs": ["src/**", "tsconfig.json", "tsup.config.ts", "package.json"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**"],
+      "env": ["FAST_BUILD"]
     },
     "test": {
       "dependsOn": ["^test", "build"],
