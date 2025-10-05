@@ -37,13 +37,28 @@ export async function actorGateway(
 		return next();
 	}
 
+	// Strip basePath from the request path
+	let strippedPath = c.req.path;
+	if (runConfig.basePath && strippedPath.startsWith(runConfig.basePath)) {
+		strippedPath = strippedPath.slice(runConfig.basePath.length);
+		// Ensure the path starts with /
+		if (!strippedPath.startsWith("/")) {
+			strippedPath = "/" + strippedPath;
+		}
+	}
+
 	// Check if this is a WebSocket upgrade request
 	if (c.req.header("upgrade") === "websocket") {
-		return await handleWebSocketGateway(runConfig, managerDriver, c);
+		return await handleWebSocketGateway(
+			runConfig,
+			managerDriver,
+			c,
+			strippedPath,
+		);
 	}
 
 	// Handle regular HTTP requests
-	return await handleHttpGateway(managerDriver, c, next);
+	return await handleHttpGateway(managerDriver, c, next, strippedPath);
 }
 
 /**
@@ -53,6 +68,7 @@ async function handleWebSocketGateway(
 	runConfig: RunConfig,
 	managerDriver: ManagerDriver,
 	c: HonoContext,
+	strippedPath: string,
 ) {
 	const upgradeWebSocket = runConfig.getUpgradeWebSocket?.();
 	if (!upgradeWebSocket) {
@@ -100,7 +116,7 @@ async function handleWebSocketGateway(
 	logger().debug({
 		msg: "proxying websocket to actor",
 		actorId,
-		path: c.req.path,
+		path: strippedPath,
 		encoding: encodingRaw,
 	});
 
@@ -109,8 +125,8 @@ async function handleWebSocketGateway(
 
 	// Include query string if present
 	const pathWithQuery = c.req.url.includes("?")
-		? c.req.path + c.req.url.substring(c.req.url.indexOf("?"))
-		: c.req.path;
+		? strippedPath + c.req.url.substring(c.req.url.indexOf("?"))
+		: strippedPath;
 
 	return await managerDriver.proxyWebSocket(
 		c,
@@ -130,6 +146,7 @@ async function handleHttpGateway(
 	managerDriver: ManagerDriver,
 	c: HonoContext,
 	next: Next,
+	strippedPath: string,
 ) {
 	const target = c.req.header(HEADER_RIVET_TARGET);
 	const actorId = c.req.header(HEADER_RIVET_ACTOR);
@@ -145,7 +162,7 @@ async function handleHttpGateway(
 	logger().debug({
 		msg: "proxying request to actor",
 		actorId,
-		path: c.req.path,
+		path: strippedPath,
 		method: c.req.method,
 	});
 
@@ -156,7 +173,7 @@ async function handleHttpGateway(
 
 	// Build the proxy request with the actor URL format
 	const url = new URL(c.req.url);
-	const proxyUrl = new URL(`http://actor${url.pathname}${url.search}`);
+	const proxyUrl = new URL(`http://actor${strippedPath}${url.search}`);
 
 	const proxyRequest = new Request(proxyUrl, {
 		method: c.req.raw.method,
