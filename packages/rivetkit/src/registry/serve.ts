@@ -1,7 +1,9 @@
 import { Hono } from "hono";
 import { logger } from "./log";
+import type { RunnerConfig } from "./run-config";
 
 export async function crossPlatformServe(
+	runConfig: RunnerConfig,
 	rivetKitRouter: Hono<any>,
 	userRouter: Hono | undefined,
 ) {
@@ -47,7 +49,7 @@ export async function crossPlatformServe(
 	});
 
 	// Start server
-	const port = 6420;
+	const port = runConfig.defaultServerPort;
 	const server = serve({ fetch: app.fetch, port }, () =>
 		logger().info({ msg: "server listening", port }),
 	);
