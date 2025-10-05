@@ -71,11 +71,11 @@ export class Registry<A extends RegistryActors> {
 		// TODO: Find cleaner way of disabling by default
 		if (driver.name === "engine") {
 			config.inspector.enabled = { manager: false, actor: true };
-			config.disableServer = true;
+			config.disableDefaultServer = true;
 		}
 		if (driver.name === "cloudflare-workers") {
 			config.inspector.enabled = { manager: false, actor: true };
-			config.disableServer = true;
+			config.disableDefaultServer = true;
 			config.disableActorDriver = true;
 			config.noWelcome = true;
 		}
@@ -112,10 +112,10 @@ export class Registry<A extends RegistryActors> {
 			const displayInfo = managerDriver.displayInformation();
 			console.log();
 			console.log(`  RivetKit ${pkg.version} (${displayInfo.name})`);
-			if (config.disableServer) {
-				console.log(`  - Endpoint:     (default server disabled)`);
-			} else {
+			if (!config.disableDefaultServer) {
 				console.log(`  - Endpoint:     ${config.endpoint}`);
+			} else if (config.overrideServerAddress) {
+				console.log(`  - Endpoint:     ${config.overrideServerAddress}`);
 			}
 			for (const [k, v] of Object.entries(displayInfo.properties)) {
 				const padding = " ".repeat(Math.max(0, 13 - k.length));
@@ -165,7 +165,7 @@ export class Registry<A extends RegistryActors> {
 		);
 
 		// Start server
-		if (!config.disableServer) {
+		if (!config.disableDefaultServer) {
 			(async () => {
 				const out = await crossPlatformServe(hono, undefined);
 				upgradeWebSocket = out.upgradeWebSocket;

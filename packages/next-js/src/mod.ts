@@ -5,7 +5,7 @@ export const toNextHandler = (
 	inputConfig: RunConfigInput = {},
 ) => {
 	// Don't run server locally since we're using the fetch handler directly
-	inputConfig.disableServer = true;
+	inputConfig.disableDefaultServer = true;
 	inputConfig.disableActorDriver = true;
 
 	const { fetch } = registry.start(inputConfig);
