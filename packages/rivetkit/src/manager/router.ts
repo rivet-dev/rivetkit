@@ -87,6 +87,25 @@ export function createManagerRouter(
 
 	router.use("*", loggerMiddleware(logger()));
 
+	// HACK: Add Sec-WebSocket-Protocol header to fix KIT-339
+	//
+	// Some Deno WebSocket providers do not auto-set the protocol, which
+	// will cause some WebSocket clients to fail
+	router.use(
+		"*",
+		createMiddleware(async (c, next) => {
+			const upgrade = c.req.header("upgrade");
+			const isWebSocket = upgrade?.toLowerCase() === "websocket";
+			const isGet = c.req.method === "GET";
+
+			if (isGet && isWebSocket) {
+				c.header("Sec-WebSocket-Protocol", "rivet");
+			}
+
+			await next();
+		}),
+	);
+
 	if (serverlessActorDriverBuilder) {
 		addServerlessRoutes(runConfig, serverlessActorDriverBuilder, router);
 	} else {
