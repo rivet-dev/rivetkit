@@ -25,7 +25,12 @@ export const ClientConfigSchema = z.object({
 	endpoint: z
 		.string()
 		.nullable()
-		.default(() => getEnvUniversal("RIVET_ENGINE") ?? null),
+		.default(
+			() =>
+				getEnvUniversal("RIVET_ENGINE") ??
+				getEnvUniversal("RIVET_ENDPOINT") ??
+				null,
+		),
 
 	namespace: z
 		.string()
