@@ -16,7 +16,7 @@ export function chooseDefaultDriver(runConfig: RunConfig): DriverConfig {
 
 	if (runConfig.runnerKind === "serverless" && !runConfig.endpoint) {
 		throw new UserError(
-			"Cannot use 'serverless' runnerKind without the 'endpoint' config set. This condition should not happen, since the endpoint should be configured by default by Rivet when using serverless runners.",
+			"Cannot use 'serverless' runnerKind without the 'endpoint' config set.",
 		);
 	}
 
