@@ -1,4 +1,3 @@
-import { toNextHandler } from "@rivetkit/next-js";
-import { registry } from "@/rivet/registry";
+import { handlers } from "@/lib/rivet-server";
 
-export const { GET, POST, PUT, PATCH, HEAD, OPTIONS } = toNextHandler(registry);
+export const { GET, POST, PUT, PATCH, HEAD, OPTIONS } = handlers.value;
