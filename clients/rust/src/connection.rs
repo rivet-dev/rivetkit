@@ -3,7 +3,7 @@ use futures_util::FutureExt;
 use serde_json::Value;
 use std::fmt::Debug;
 use std::ops::Deref;
-use std::sync::atomic::{AtomicI64, Ordering};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{broadcast, oneshot, watch, Mutex};
@@ -12,6 +12,7 @@ use crate::{
     backoff::Backoff,
     protocol::{query::ActorQuery, *},
     drivers::*,
+    remote_manager::RemoteManager,
     EncodingKind,
     TransportKind
 };
@@ -45,7 +46,7 @@ struct ConnectionAttempt {
 }
 
 pub struct ActorConnectionInner {
-    endpoint: String,
+    remote_manager: RemoteManager,
     transport_kind: TransportKind,
     encoding_kind: EncodingKind,
     query: ActorQuery,
@@ -54,10 +55,15 @@ pub struct ActorConnectionInner {
     driver: Mutex<Option<DriverHandle>>,
     msg_queue: Mutex<Vec<Arc<to_server::ToServer>>>,
 
-    rpc_counter: AtomicI64,
-    in_flight_rpcs: Mutex<HashMap<i64, oneshot::Sender<RpcResponse>>>,
+    rpc_counter: AtomicU64,
+    in_flight_rpcs: Mutex<HashMap<u64, oneshot::Sender<RpcResponse>>>,
 
     event_subscriptions: Mutex<HashMap<String, Vec<Box<EventCallback>>>>,
+
+    // Connection info for reconnection
+    actor_id: Mutex<Option<String>>,
+    connection_id: Mutex<Option<String>>,
+    connection_token: Mutex<Option<String>>,
 
     dc_watch: WatchPair,
     disconnection_rx: Mutex<Option<oneshot::Receiver<()>>>,
@@ -65,23 +71,26 @@ pub struct ActorConnectionInner {
 
 impl ActorConnectionInner {
     pub(crate) fn new(
-        endpoint: String,
+        remote_manager: RemoteManager,
         query: ActorQuery,
         transport_kind: TransportKind,
         encoding_kind: EncodingKind,
         parameters: Option<Value>,
     ) -> ActorConnection {
         Arc::new(Self {
-            endpoint: endpoint.clone(),
+            remote_manager,
             transport_kind,
             encoding_kind,
             query,
             parameters,
             driver: Mutex::new(None),
             msg_queue: Mutex::new(Vec::new()),
-            rpc_counter: AtomicI64::new(0),
+            rpc_counter: AtomicU64::new(0),
             in_flight_rpcs: Mutex::new(HashMap::new()),
             event_subscriptions: Mutex::new(HashMap::new()),
+            actor_id: Mutex::new(None),
+            connection_id: Mutex::new(None),
+            connection_token: Mutex::new(None),
             dc_watch: watch::channel(false),
             disconnection_rx: Mutex::new(None),
         })
@@ -92,13 +101,19 @@ impl ActorConnectionInner {
     }
 
     async fn try_connect(self: &Arc<Self>) -> ConnectionAttempt {
+        // Get connection info for reconnection
+        let conn_id = self.connection_id.lock().await.clone();
+        let conn_token = self.connection_token.lock().await.clone();
+
         let Ok((driver, mut recver, task)) = connect_driver(
             self.transport_kind,
             DriverConnectArgs {
-                endpoint: self.endpoint.clone(),
+                remote_manager: self.remote_manager.clone(),
                 query: self.query.clone(),
                 encoding_kind: self.encoding_kind,
                 parameters: self.parameters.clone(),
+                conn_id,
+                conn_token,
             }
         ).await else {
             // Either from immediate disconnect (local device connection refused)
@@ -143,7 +158,7 @@ impl ActorConnectionInner {
                         continue;
                     };
 
-                    if let to_client::ToClientBody::Init { i: _ } = &msg.b {
+                    if let to_client::ToClientBody::Init(_) = &msg.body {
                         did_connection_open = true;
                     }
 
@@ -173,6 +188,11 @@ impl ActorConnectionInner {
     async fn on_open(self: &Arc<Self>, init: &to_client::Init) {
         debug!("Connected to server: {:?}", init);
 
+        // Store connection info for reconnection
+        *self.actor_id.lock().await = Some(init.actor_id.clone());
+        *self.connection_id.lock().await = Some(init.connection_id.clone());
+        *self.connection_token.lock().await = Some(init.connection_token.clone());
+
         for (event_name, _) in self.event_subscriptions.lock().await.iter() {
             self.send_subscription(event_name.clone(), true).await;
         }
@@ -186,14 +206,14 @@ impl ActorConnectionInner {
     }
 
     async fn on_message(self: &Arc<Self>, msg: Arc<to_client::ToClient>) {
-        let body = &msg.b;
+        let body = &msg.body;
 
         match body {
-            to_client::ToClientBody::Init { i: init } => {
+            to_client::ToClientBody::Init(init) => {
                 self.on_open(init).await;
             }
-            to_client::ToClientBody::ActionResponse { ar } => {
-                let id = ar.i;
+            to_client::ToClientBody::ActionResponse(ar) => {
+                let id = ar.id;
                 let mut in_flight_rpcs = self.in_flight_rpcs.lock().await;
                 let Some(tx) = in_flight_rpcs.remove(&id) else {
                     debug!("Unexpected response: rpc id not found");
@@ -204,16 +224,25 @@ impl ActorConnectionInner {
                     return;
                 }
             }
-            to_client::ToClientBody::EventMessage { ev } => {
+            to_client::ToClientBody::Event(ev) => {
+                // Decode CBOR args
+                let args: Vec<Value> = match serde_cbor::from_slice(&ev.args) {
+                    Ok(a) => a,
+                    Err(e) => {
+                        debug!("Failed to decode event args: {:?}", e);
+                        return;
+                    }
+                };
+
                 let listeners = self.event_subscriptions.lock().await;
-                if let Some(callbacks) = listeners.get(&ev.n) {
+                if let Some(callbacks) = listeners.get(&ev.name) {
                     for cb in callbacks {
-                        cb(&ev.a);
+                        cb(&args);
                     }
                 }
             }
-            to_client::ToClientBody::Error { e } => {
-                if let Some(action_id) = e.ai {
+            to_client::ToClientBody::Error(e) => {
+                if let Some(action_id) = e.action_id {
                     let mut in_flight_rpcs = self.in_flight_rpcs.lock().await;
                     let Some(tx) = in_flight_rpcs.remove(&action_id) else {
                         debug!("Unexpected response: rpc id not found");
@@ -227,7 +256,7 @@ impl ActorConnectionInner {
                     return;
                 }
 
-                
+                debug!("Connection error: {} - {}", e.code, e.message);
             }
         }
     }
@@ -256,39 +285,53 @@ impl ActorConnectionInner {
     }
 
     pub async fn action(self: &Arc<Self>, method: &str, params: Vec<Value>) -> Result<Value> {
-        let id: i64 = self.rpc_counter.fetch_add(1, Ordering::SeqCst);
+        let id: u64 = self.rpc_counter.fetch_add(1, Ordering::SeqCst);
 
         let (tx, rx) = oneshot::channel();
         self.in_flight_rpcs.lock().await.insert(id, tx);
 
+        // Encode params as CBOR
+        let args_cbor = serde_cbor::to_vec(&params)?;
+
         self.send_msg(
             Arc::new(to_server::ToServer {
-                b: to_server::ToServerBody::ActionRequest {
-                    ar: to_server::ActionRequest {
-                        i: id,
-                        n: method.to_string(),
-                        a: params,
+                body: to_server::ToServerBody::ActionRequest(
+                    to_server::ActionRequest {
+                        id,
+                        name: method.to_string(),
+                        args: args_cbor,
                     },
-                },
+                ),
             }),
             SendMsgOpts::default(),
         )
         .await;
 
         let Ok(res) = rx.await else {
-            // Verbosity
             return Err(anyhow::anyhow!("Socket closed during rpc"));
         };
 
         match res {
-            Ok(ok) => Ok(ok.o),
+            Ok(ok) => {
+                // Decode CBOR output
+                let output: Value = serde_cbor::from_slice(&ok.output)?;
+                Ok(output)
+            }
             Err(err) => {
-                let metadata = err.md.unwrap_or(Value::Null);
+                let metadata = if let Some(md) = &err.metadata {
+                    match serde_cbor::from_slice::<Value>(md) {
+                        Ok(v) => v,
+                        Err(_) => Value::Null,
+                    }
+                } else {
+                    Value::Null
+                };
 
                 Err(anyhow::anyhow!(
-                    "RPC Error({}): {:?}, {:#}",
-                    err.c,
-                    err.m,
+                    "RPC Error({}/{}): {}, {:#}",
+                    err.group,
+                    err.code,
+                    err.message,
                     metadata
                 ))
             }
@@ -298,12 +341,12 @@ impl ActorConnectionInner {
     async fn send_subscription(self: &Arc<Self>, event_name: String, subscribe: bool) {
         self.send_msg(
             Arc::new(to_server::ToServer {
-                b: to_server::ToServerBody::SubscriptionRequest {
-                    sr: to_server::SubscriptionRequest {
-                        e: event_name,
-                        s: subscribe,
+                body: to_server::ToServerBody::SubscriptionRequest(
+                    to_server::SubscriptionRequest {
+                        event_name,
+                        subscribe,
                     },
-                },
+                ),
             }),
             SendMsgOpts { ephemeral: true },
         )
@@ -426,7 +469,6 @@ pub fn start_connection(
 impl Debug for ActorConnectionInner {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ActorConnection")
-            .field("endpoint", &self.endpoint)
             .field("transport_kind", &self.transport_kind)
             .field("encoding_kind", &self.encoding_kind)
             .finish()

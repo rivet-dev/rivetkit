@@ -1,17 +1,16 @@
 use std::{cell::RefCell, ops::Deref, sync::Arc};
 use serde_json::Value as JsonValue;
 use anyhow::{anyhow, Result};
-use urlencoding::encode as url_encode;
+use serde_cbor;
 use crate::{
-    common::{resolve_actor_id, send_http_request, HttpRequestOptions, HEADER_ACTOR_QUERY, HEADER_CONN_PARAMS, HEADER_ENCODING},
+    common::{EncodingKind, TransportKind, HEADER_ENCODING, HEADER_CONN_PARAMS},
     connection::{start_connection, ActorConnection, ActorConnectionInner},
     protocol::query::*,
-    EncodingKind,
-    TransportKind
+    remote_manager::RemoteManager,
 };
 
 pub struct ActorHandleStateless {
-    endpoint: String,
+    remote_manager: RemoteManager,
     params: Option<JsonValue>,
     encoding_kind: EncodingKind,
     query: RefCell<ActorQuery>,
@@ -19,13 +18,13 @@ pub struct ActorHandleStateless {
 
 impl ActorHandleStateless {
     pub fn new(
-        endpoint: &str,
+        remote_manager: RemoteManager,
         params: Option<JsonValue>,
         encoding_kind: EncodingKind,
         query: ActorQuery
     ) -> Self {
         Self {
-            endpoint: endpoint.to_string(),
+            remote_manager,
             params,
             encoding_kind,
             query: RefCell::new(query)
@@ -33,78 +32,76 @@ impl ActorHandleStateless {
     }
 
     pub async fn action(&self, name: &str, args: Vec<JsonValue>) -> Result<JsonValue> {
-        #[derive(serde::Serialize)]
-        struct ActionRequest {
-            a: Vec<JsonValue>,
-        }
-        #[derive(serde::Deserialize)]
-        struct ActionResponse {
-            o: JsonValue,
-        }
+        // Resolve actor ID
+        let query = self.query.borrow().clone();
+        let actor_id = self.remote_manager.resolve_actor_id(&query).await?;
 
-        let actor_query = serde_json::to_string(&self.query)?;
+        // Encode args as CBOR
+        let args_cbor = serde_cbor::to_vec(&args)?;
 
         // Build headers
         let mut headers = vec![
             (HEADER_ENCODING, self.encoding_kind.to_string()),
-            (HEADER_ACTOR_QUERY, actor_query),
         ];
 
         if let Some(params) = &self.params {
             headers.push((HEADER_CONN_PARAMS, serde_json::to_string(params)?));
         }
 
-        let res = send_http_request::<ActionRequest, ActionResponse>(HttpRequestOptions {
-            url: &format!(
-                "{}/actors/actions/{}",
-                self.endpoint,
-                url_encode(name)
-            ),
-            method: "POST",
+        // Send request via gateway
+        let path = format!("/action/{}", urlencoding::encode(name));
+        let res = self.remote_manager.send_request(
+            &actor_id,
+            &path,
+            "POST",
             headers,
-            body: Some(ActionRequest {
-                a: args,
-            }),
-            encoding_kind: self.encoding_kind,
-        }).await?;
+            Some(args_cbor),
+        ).await?;
 
-        Ok(res.o)
+        if !res.status().is_success() {
+            return Err(anyhow!("action failed: {}", res.status()));
+        }
+
+        // Decode response
+        let output_cbor = res.bytes().await?;
+        let output: JsonValue = serde_cbor::from_slice(&output_cbor)?;
+
+        Ok(output)
     }
 
     pub async fn resolve(&self) -> Result<String> {
         let query = {
-            // None of this is async or runs on multithreads,
-            // it cannot fail given that both borrows are
-            // well contained, and cannot overlap.
             let Ok(query) = self.query.try_borrow() else {
                 return Err(anyhow!("Failed to borrow actor query"));
             };
-
             query.clone()
         };
 
         match query {
-            ActorQuery::Create { create: _query } => {
+            ActorQuery::Create { .. } => {
                 Err(anyhow!("actor query cannot be create"))
             },
-            ActorQuery::GetForId { get_for_id: query } => {
-                Ok(query.clone().actor_id)
+            ActorQuery::GetForId { get_for_id } => {
+                Ok(get_for_id.actor_id.clone())
             },
             _ => {
-                let actor_id = resolve_actor_id(
-                    &self.endpoint,
-                    query,
-                    self.encoding_kind
-                ).await?;
+                let actor_id = self.remote_manager.resolve_actor_id(&query).await?;
+
+                // Get name from the original query
+                let name = match &query {
+                    ActorQuery::GetForKey { get_for_key } => get_for_key.name.clone(),
+                    ActorQuery::GetOrCreateForKey { get_or_create_for_key } => get_or_create_for_key.name.clone(),
+                    _ => return Err(anyhow!("unexpected query type")),
+                };
 
                 {
-                    let Ok(mut query) = self.query.try_borrow_mut() else {
-                        // Following code will not run (see prior note)
+                    let Ok(mut query_mut) = self.query.try_borrow_mut() else {
                         return Err(anyhow!("Failed to borrow actor query mutably"));
                     };
 
-                    *query = ActorQuery::GetForId {
+                    *query_mut = ActorQuery::GetForId {
                         get_for_id: GetForIdRequest {
+                            name,
                             actor_id: actor_id.clone(),
                         }
                     };
@@ -118,7 +115,7 @@ impl ActorHandleStateless {
 
 pub struct ActorHandle {
     handle: ActorHandleStateless,
-    endpoint: String,
+    remote_manager: RemoteManager,
     params: Option<JsonValue>,
     query: ActorQuery,
     client_shutdown_tx: Arc<tokio::sync::broadcast::Sender<()>>,
@@ -128,7 +125,7 @@ pub struct ActorHandle {
 
 impl ActorHandle {
     pub fn new(
-        endpoint: &str,
+        remote_manager: RemoteManager,
         params: Option<JsonValue>,
         query: ActorQuery,
         client_shutdown_tx: Arc<tokio::sync::broadcast::Sender<()>>,
@@ -136,7 +133,7 @@ impl ActorHandle {
         encoding_kind: EncodingKind
     ) -> Self {
         let handle = ActorHandleStateless::new(
-            endpoint,
+            remote_manager.clone(),
             params.clone(),
             encoding_kind,
             query.clone()
@@ -144,7 +141,7 @@ impl ActorHandle {
 
         Self {
             handle,
-            endpoint: endpoint.to_string(),
+            remote_manager,
             params,
             query,
             client_shutdown_tx,
@@ -155,7 +152,7 @@ impl ActorHandle {
 
     pub fn connect(&self) -> ActorConnection {
         let conn = ActorConnectionInner::new(
-            self.endpoint.clone(),
+            self.remote_manager.clone(),
             self.query.clone(),
             self.transport_kind,
             self.encoding_kind,

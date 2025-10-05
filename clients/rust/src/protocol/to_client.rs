@@ -1,59 +1,50 @@
 use serde::{Deserialize, Serialize};
-use serde_json::Value as JsonValue;
 
-// Only called for SSE because we don't need this for WebSockets
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Init {
-    // Actor ID
-    pub ai: String,
-    // Connection ID
-    pub ci: String,
-    // Connection token
-    pub ct: String,
+    #[serde(rename = "actorId")]
+    pub actor_id: String,
+    #[serde(rename = "connectionId")]
+    pub connection_id: String,
+    #[serde(rename = "connectionToken")]
+    pub connection_token: String,
 }
 
 // Used for connection errors (both during initialization and afterwards)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Error {
-    // Code
-    pub c: String,
-    // Message
-    pub m: String,
-    // Metadata
+    pub group: String,
+    pub code: String,
+    pub message: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub md: Option<JsonValue>,
-    // Action ID
+    pub metadata: Option<Vec<u8>>,
+    #[serde(rename = "actionId")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub ai: Option<i64>
+    pub action_id: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ActionResponse {
-    // ID
-    pub i: i64,
-    // Output
-    pub o: JsonValue
+    pub id: u64,
+    pub output: Vec<u8>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Event {
-    // Event name
-    pub n: String,
-    // Event arguments
-    pub a: Vec<JsonValue>,
+    pub name: String,
+    pub args: Vec<u8>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
+#[serde(tag = "tag", content = "val")]
 pub enum ToClientBody {
-    Init { i: Init },
-    Error { e: Error },
-    ActionResponse { ar: ActionResponse },
-    EventMessage { ev: Event },
+    Init(Init),
+    Error(Error),
+    ActionResponse(ActionResponse),
+    Event(Event),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ToClient {
-    // Body
-    pub b: ToClientBody,
+    pub body: ToClientBody,
 }
