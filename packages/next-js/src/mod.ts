@@ -8,7 +8,7 @@ export const toNextHandler = (
 	inputConfig.disableServer = true;
 	inputConfig.disableActorDriver = true;
 
-	const { fetch } = registry.startServerless(inputConfig);
+	const { fetch } = registry.start(inputConfig);
 
 	const fetchWrapper = async (
 		request: Request,

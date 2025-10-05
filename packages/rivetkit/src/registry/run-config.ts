@@ -6,6 +6,7 @@ import { ClientConfigSchema } from "@/client/config";
 import { LogLevelSchema } from "@/common/log";
 import { InspectorConfigSchema } from "@/inspector/config";
 import type { ManagerDriverBuilder } from "@/manager/driver";
+import { getEnvUniversal } from "@/utils";
 
 type CorsOptions = NonNullable<Parameters<typeof cors>[0]>;
 
@@ -34,6 +35,22 @@ export const RunConfigSchema = ClientConfigSchema.extend({
 
 	/** @experimental */
 	disableActorDriver: z.boolean().optional().default(false),
+
+	/**
+	 * @experimental
+	 *
+	 * Whether to run runners normally or have them managed
+	 * serverlessly (by the Rivet Engine for example).
+	 */
+	runnerKind: z
+		.enum(["serverless", "normal"])
+		.optional()
+		.default(() =>
+			getEnvUniversal("RIVET_RUNNER_KIND") === "serverless"
+				? "serverless"
+				: "normal",
+		),
+	totalSlots: z.number().optional(),
 
 	/**
 	 * @experimental

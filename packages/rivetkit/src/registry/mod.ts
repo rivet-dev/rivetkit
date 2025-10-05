@@ -24,6 +24,13 @@ import {
 } from "./run-config";
 import { crossPlatformServe } from "./serve";
 
+export type ServerlessActorDriverBuilder = (
+	token?: string,
+	totalSlots?: number,
+	runnerName?: string,
+	namespace?: string,
+) => ActorDriver;
+
 interface ServerOutput<A extends Registry<any>> {
 	/** Client to communicate with the actors. */
 	client: Client<A>;
@@ -72,6 +79,9 @@ export class Registry<A extends RegistryActors> {
 			config.disableActorDriver = true;
 			config.noWelcome = true;
 		}
+		if (config.runnerKind === "serverless") {
+			config.disableActorDriver = true;
+		}
 
 		// Configure getUpgradeWebSocket lazily so we can assign it in crossPlatformServe
 		let upgradeWebSocket: any;
@@ -117,6 +127,7 @@ export class Registry<A extends RegistryActors> {
 			console.log();
 		}
 
+		let serverlessActorDriverBuilder: undefined | ServerlessActorDriverBuilder;
 		// HACK: We need to find a better way to let the driver itself decide when to start the actor driver
 		// Create runner
 		//
@@ -128,117 +139,22 @@ export class Registry<A extends RegistryActors> {
 				managerDriver,
 				client,
 			);
-		}
-
-		const { router: hono } = createManagerRouter(
-			this.#config,
-			config,
-			managerDriver,
-			undefined,
-		);
-
-		// Start server
-		if (!config.disableServer) {
-			(async () => {
-				const out = await crossPlatformServe(hono, undefined);
-				upgradeWebSocket = out.upgradeWebSocket;
-			})();
-		}
-
-		return {
-			client,
-			fetch: hono.fetch.bind(hono),
-		};
-	}
-
-	public startServerless(inputConfig?: RunConfigInput): ServerOutput<this> {
-		const config = RunConfigSchema.parse(inputConfig);
-
-		// Configure logger
-		if (config.logging?.baseLogger) {
-			// Use provided base logger
-			configureBaseLogger(config.logging.baseLogger);
 		} else {
-			// Configure default logger with log level from config
-			// getPinoLevel will handle env variable priority
-			configureDefaultLogger(config.logging?.level);
-		}
+			serverlessActorDriverBuilder = (
+				token,
+				totalSlots,
+				runnerName,
+				namespace,
+			) => {
+				// Override config
+				if (token) config.token = token;
+				if (totalSlots) config.totalSlots = totalSlots;
+				if (runnerName) config.runnerName = runnerName;
+				if (namespace) config.namespace = namespace;
 
-		// Choose the driver based on configuration
-		const driver = chooseDefaultDriver(config);
-
-		// TODO: Find cleaner way of disabling by default
-		if (driver.name === "engine") {
-			config.inspector.enabled = false;
-			config.disableServer = true;
-			config.disableActorDriver = true;
-		}
-		if (driver.name === "cloudflare-workers") {
-			config.inspector.enabled = false;
-			config.disableServer = true;
-			config.disableActorDriver = true;
-			config.noWelcome = true;
-		}
-
-		// Configure getUpgradeWebSocket lazily so we can assign it in crossPlatformServe
-		let upgradeWebSocket: any;
-		if (!config.getUpgradeWebSocket) {
-			config.getUpgradeWebSocket = () => upgradeWebSocket!;
-		}
-
-		// Create router
-		const managerDriver = driver.manager(this.#config, config);
-
-		// Create client
-		const client = createClientWithDriver<this>(managerDriver, config);
-
-		const driverLog = managerDriver.extraStartupLog?.() ?? {};
-		logger().info({
-			msg: "rivetkit ready",
-			driver: driver.name,
-			definitions: Object.keys(this.#config.use).length,
-			...driverLog,
-		});
-		if (config.inspector?.enabled && managerDriver.inspector) {
-			logger().info({ msg: "inspector ready", url: getInspectorUrl(config) });
-		}
-
-		// Print welcome information
-		if (!config.noWelcome) {
-			const displayInfo = managerDriver.displayInformation();
-			console.log();
-			console.log(`  RivetKit ${pkg.version} (${displayInfo.name})`);
-			console.log(`  - Endpoint:     http://127.0.0.1:6420`);
-			for (const [k, v] of Object.entries(displayInfo.properties)) {
-				const padding = " ".repeat(Math.max(0, 13 - k.length));
-				console.log(`  - ${k}:${padding}${v}`);
-			}
-			if (config.inspector?.enabled && managerDriver.inspector) {
-				console.log(`  - Inspector:    ${getInspectorUrl(config)}`);
-			}
-			console.log();
-		}
-
-		let serverlessActorDriverBuilder:
-			| ((token?: string, totalSlots?: number) => ActorDriver)
-			| undefined = (
-			token: string | undefined,
-			totalSlots: number | undefined,
-		) => {
-			// Override config
-			if (token) config.token = token;
-			if (totalSlots) config.totalSlots = totalSlots;
-
-			return driver.actor(this.#config, config, managerDriver, client);
-		};
-
-		// HACK: We need to find a better way to let the driver itself decide when to start the actor driver
-		// Create runner
-		//
-		// Even though we do not use the return value, this is required to start the code that will handle incoming actors
-		if (!config.disableActorDriver) {
-			const _actorDriver = serverlessActorDriverBuilder();
-			serverlessActorDriverBuilder = undefined;
+				// Create new actor driver with updated config
+				return driver.actor(this.#config, config, managerDriver, client);
+			};
 		}
 
 		const { router: hono } = createManagerRouter(

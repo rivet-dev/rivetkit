@@ -10,7 +10,13 @@ import type { DriverConfig, RunConfig } from "@/registry/run-config";
 export function chooseDefaultDriver(runConfig: RunConfig): DriverConfig {
 	if (runConfig.endpoint && runConfig.driver) {
 		throw new UserError(
-			"Cannot specify both 'engine' and 'driver' in configuration",
+			"Cannot specify both 'endpoint' and 'driver' in configuration",
+		);
+	}
+
+	if (runConfig.runnerKind === "serverless" && !runConfig.endpoint) {
+		throw new UserError(
+			"Cannot use 'serverless' runnerKind without the 'endpoint' config set. This condition should not happen, since the endpoint should be configured by default by Rivet when using serverless runners.",
 		);
 	}
 
