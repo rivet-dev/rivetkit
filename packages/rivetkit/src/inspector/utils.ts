@@ -65,8 +65,10 @@ export function getInspectorUrl(runConfig: RunConfigInput | undefined) {
 
 	url.searchParams.set("t", accessToken);
 
-	if (runConfig?.inspector?.defaultEndpoint) {
-		url.searchParams.set("u", runConfig.inspector.defaultEndpoint);
+	const overrideDefaultEndpoint =
+		runConfig?.inspector?.defaultEndpoint ?? runConfig.overrideServerAddress;
+	if (overrideDefaultEndpoint) {
+		url.searchParams.set("u", overrideDefaultEndpoint);
 	}
 
 	return url.href;

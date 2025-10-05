@@ -31,7 +31,10 @@ export const RunConfigSchema = ClientConfigSchema.extend({
 	inspector: InspectorConfigSchema,
 
 	/** @experimental */
-	disableServer: z.boolean().optional().default(false),
+	disableDefaultServer: z.boolean().optional().default(false),
+
+	/** @experimental */
+	overrideServerAddress: z.string().optional(),
 
 	/** @experimental */
 	disableActorDriver: z.boolean().optional().default(false),
