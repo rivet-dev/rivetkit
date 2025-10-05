@@ -180,7 +180,8 @@ async function handleHttpGateway(
 		headers: proxyHeaders,
 		body: c.req.raw.body,
 		signal: c.req.raw.signal,
-	});
+		duplex: "half",
+	} as RequestInit);
 
 	return await managerDriver.proxyRequest(c, proxyRequest, actorId);
 }
