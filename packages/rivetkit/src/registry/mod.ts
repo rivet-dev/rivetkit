@@ -1,7 +1,9 @@
+import invariant from "invariant";
 import { type Client, createClientWithDriver } from "@/client/client";
 import { configureBaseLogger, configureDefaultLogger } from "@/common/log";
 import type { ActorDriver } from "@/driver-helpers/mod";
 import { chooseDefaultDriver } from "@/drivers/default";
+import { ENGINE_ENDPOINT, ensureEngineProcess } from "@/engine-process/mod";
 import {
 	configureInspectorAccessToken,
 	getInspectorUrl,
@@ -54,6 +56,34 @@ export class Registry<A extends RegistryActors> {
 	 */
 	public start(inputConfig?: RunnerConfigInput): ServerOutput<this> {
 		const config = RunnerConfigSchema.parse(inputConfig);
+
+		// Promise for any async operations we need to wait to complete
+		const readyPromises = [];
+
+		// Start engine
+		if (config.runEngine) {
+			logger().debug({
+				msg: "run engine requested",
+				version: config.runEngineVersion,
+			});
+
+			// Set config to point to the engine
+			config.disableDefaultServer = true;
+			config.overrideServerAddress = ENGINE_ENDPOINT;
+			invariant(
+				config.endpoint === undefined,
+				"cannot specify 'endpoint' with 'runEngine'",
+			);
+			config.endpoint = ENGINE_ENDPOINT;
+
+			// Start the engine
+			const engineProcessPromise = ensureEngineProcess({
+				version: config.runEngineVersion,
+			});
+
+			// Chain ready promise
+			readyPromises.push(engineProcessPromise);
+		}
 
 		// Configure logger
 		if (config.logging?.baseLogger) {
@@ -117,6 +147,10 @@ export class Registry<A extends RegistryActors> {
 			} else if (config.overrideServerAddress) {
 				console.log(`  - Endpoint:     ${config.overrideServerAddress}`);
 			}
+			if (config.runEngine) {
+				const padding = " ".repeat(Math.max(0, 13 - "Engine".length));
+				console.log(`  - Engine:${padding}v${config.runEngineVersion}`);
+			}
 			for (const [k, v] of Object.entries(displayInfo.properties)) {
 				const padding = " ".repeat(Math.max(0, 13 - k.length));
 				console.log(`  - ${k}:${padding}${v}`);
@@ -133,12 +167,11 @@ export class Registry<A extends RegistryActors> {
 		//
 		// Even though we do not use the return value, this is required to start the code that will handle incoming actors
 		if (!config.disableActorDriver) {
-			const _actorDriver = driver.actor(
-				this.#config,
-				config,
-				managerDriver,
-				client,
-			);
+			Promise.all(readyPromises).then(() => {
+				logger().debug("ready promises finished, starting actor driver");
+
+				driver.actor(this.#config, config, managerDriver, client);
+			});
 		} else {
 			serverlessActorDriverBuilder = (
 				token,
