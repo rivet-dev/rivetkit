@@ -79,6 +79,14 @@ export class EngineActorDriver implements ActorDriver {
 		this.#managerDriver = managerDriver;
 		this.#inlineClient = inlineClient;
 		this.#config = config;
+
+		// HACK: Override inspector token (which are likely to be
+		// removed later on) with token from x-rivet-token header
+		const token = runConfig.token ?? config.token;
+		if (token && runConfig.inspector && runConfig.inspector.enabled) {
+			runConfig.inspector.token = () => token;
+		}
+
 		this.#actorRouter = createActorRouter(
 			runConfig,
 			this,
@@ -90,7 +98,7 @@ export class EngineActorDriver implements ActorDriver {
 		const runnerConfig: RunnerConfig = {
 			version: this.#version,
 			endpoint: config.endpoint,
-			token: runConfig.token ?? config.token,
+			token,
 			pegboardEndpoint: config.pegboardEndpoint,
 			namespace: runConfig.namespace ?? config.namespace,
 			totalSlots: runConfig.totalSlots ?? config.totalSlots,
@@ -413,7 +421,7 @@ export class EngineActorDriver implements ActorDriver {
 			// Runner id should be set if the runner started
 			const payload = this.#runner.getServerlessInitPacket();
 			invariant(payload, "runnerId not set");
-			stream.writeSSE({ data: payload });
+			await stream.writeSSE({ data: payload });
 
 			return this.#runnerStopped.promise;
 		});
