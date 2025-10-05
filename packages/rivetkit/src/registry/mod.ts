@@ -57,6 +57,13 @@ export class Registry<A extends RegistryActors> {
 	public start(inputConfig?: RunnerConfigInput): ServerOutput<this> {
 		const config = RunnerConfigSchema.parse(inputConfig);
 
+		// Validate autoConfigureServerless is only used with serverless runner
+		if (config.autoConfigureServerless && config.runnerKind !== "serverless") {
+			throw new Error(
+				"autoConfigureServerless can only be configured when runnerKind is 'serverless'",
+			);
+		}
+
 		// Promise for any async operations we need to wait to complete
 		const readyPromises = [];
 
@@ -68,13 +75,12 @@ export class Registry<A extends RegistryActors> {
 			});
 
 			// Set config to point to the engine
-			config.disableDefaultServer = true;
-			config.overrideServerAddress = ENGINE_ENDPOINT;
 			invariant(
 				config.endpoint === undefined,
 				"cannot specify 'endpoint' with 'runEngine'",
 			);
 			config.endpoint = ENGINE_ENDPOINT;
+			config.disableActorDriver = true;
 
 			// Start the engine
 			const engineProcessPromise = ensureEngineProcess({
@@ -83,6 +89,12 @@ export class Registry<A extends RegistryActors> {
 
 			// Chain ready promise
 			readyPromises.push(engineProcessPromise);
+		}
+
+		// Configure for serverless
+		if (config.runnerKind === "serverless") {
+			config.defaultServerPort = 8080;
+			config.overrideServerAddress = config.endpoint;
 		}
 
 		// Configure logger
@@ -98,19 +110,20 @@ export class Registry<A extends RegistryActors> {
 		// Choose the driver based on configuration
 		const driver = chooseDefaultDriver(config);
 
-		// TODO: Find cleaner way of disabling by default
+		// Set defaults based on the driver
 		if (driver.name === "engine") {
 			config.inspector.enabled = { manager: false, actor: true };
-			config.disableDefaultServer = true;
+
+			// We need to leave the default server enabled for dev
+			if (config.runnerKind !== "serverless") {
+				config.disableDefaultServer = true;
+			}
 		}
 		if (driver.name === "cloudflare-workers") {
 			config.inspector.enabled = { manager: false, actor: true };
 			config.disableDefaultServer = true;
 			config.disableActorDriver = true;
 			config.noWelcome = true;
-		}
-		if (config.runnerKind === "serverless") {
-			config.disableActorDriver = true;
 		}
 
 		// Configure getUpgradeWebSocket lazily so we can assign it in crossPlatformServe
@@ -161,18 +174,26 @@ export class Registry<A extends RegistryActors> {
 			console.log();
 		}
 
-		let serverlessActorDriverBuilder: undefined | ServerlessActorDriverBuilder;
 		// HACK: We need to find a better way to let the driver itself decide when to start the actor driver
 		// Create runner
 		//
-		// Even though we do not use the return value, this is required to start the code that will handle incoming actors
+		// Even though we do not use the returned ActorDriver, this is required to start the code that will handle incoming actors
 		if (!config.disableActorDriver) {
-			Promise.all(readyPromises).then(() => {
-				logger().debug("ready promises finished, starting actor driver");
-
+			Promise.all(readyPromises).then(async () => {
 				driver.actor(this.#config, config, managerDriver, client);
 			});
-		} else {
+		}
+
+		// Setup serverless driver
+		let serverlessActorDriverBuilder: undefined | ServerlessActorDriverBuilder;
+		if (config.runnerKind === "serverless") {
+			// Configure serverless runner if enabled when actor driver is disabled
+			if (config.autoConfigureServerless) {
+				Promise.all(readyPromises).then(async () => {
+					await configureServerlessRunner(config);
+				});
+			}
+
 			serverlessActorDriverBuilder = (
 				token,
 				totalSlots,
@@ -200,7 +221,7 @@ export class Registry<A extends RegistryActors> {
 		// Start server
 		if (!config.disableDefaultServer) {
 			(async () => {
-				const out = await crossPlatformServe(hono, undefined);
+				const out = await crossPlatformServe(config, hono, undefined);
 				upgradeWebSocket = out.upgradeWebSocket;
 			})();
 		}
@@ -209,6 +230,80 @@ export class Registry<A extends RegistryActors> {
 			client,
 			fetch: hono.fetch.bind(hono),
 		};
+	}
+}
+
+async function configureServerlessRunner(config: RunnerConfig): Promise<void> {
+	try {
+		// Ensure we have required config values
+		if (!config.runnerName) {
+			throw new Error("runnerName is required for serverless configuration");
+		}
+		if (!config.namespace) {
+			throw new Error("namespace is required for serverless configuration");
+		}
+		if (!config.endpoint) {
+			throw new Error("endpoint is required for serverless configuration");
+		}
+
+		// Prepare the configuration
+		const customConfig =
+			typeof config.autoConfigureServerless === "object"
+				? config.autoConfigureServerless
+				: {};
+
+		// Build the request body
+		const requestBody = {
+			serverless: {
+				url:
+					customConfig.url ||
+					`http://localhost:${config.defaultServerPort}/start`,
+				headers: customConfig.headers || {},
+				max_runners: customConfig.maxRunners ?? 100,
+				min_runners: customConfig.minRunners ?? 0,
+				request_lifespan: customConfig.requestLifespan ?? 15 * 60_000,
+				runners_margin: customConfig.runnersMargin ?? 0,
+				slots_per_runner:
+					customConfig.slotsPerRunner ?? config.totalSlots ?? 10000,
+			},
+		};
+
+		// Make the request to configure the serverless runner
+		const configUrl = `${config.endpoint}/runner-configs/${config.runnerName}?namespace=${config.namespace}`;
+
+		logger().debug({
+			msg: "configuring serverless runner",
+			url: configUrl,
+			config: requestBody.serverless,
+		});
+
+		const response = await fetch(configUrl, {
+			method: "PUT",
+			headers: {
+				"Content-Type": "application/json",
+				...(config.token ? { Authorization: `Bearer ${config.token}` } : {}),
+			},
+			body: JSON.stringify(requestBody),
+		});
+
+		if (!response.ok) {
+			const errorText = await response.text();
+			throw new Error(
+				`failed to configure serverless runner: ${response.status} ${response.statusText} - ${errorText}`,
+			);
+		}
+
+		logger().info({
+			msg: "serverless runner configured successfully",
+			runnerName: config.runnerName,
+			namespace: config.namespace,
+		});
+	} catch (error) {
+		logger().error({
+			msg: "failed to configure serverless runner",
+			error,
+		});
+		throw error;
 	}
 }
 

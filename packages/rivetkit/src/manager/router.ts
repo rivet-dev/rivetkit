@@ -53,6 +53,7 @@ import { RivetIdSchema } from "@/manager-api/common";
 import type { ServerlessActorDriverBuilder } from "@/mod";
 import type { RegistryConfig } from "@/registry/config";
 import type { RunnerConfig } from "@/registry/run-config";
+import { VERSION } from "@/utils";
 import type { ActorOutput, ManagerDriver } from "./driver";
 import { actorGateway, createTestWebSocketProxy } from "./gateway";
 import { logger } from "./log";
@@ -159,7 +160,11 @@ function addServerlessRoutes(
 	});
 
 	router.get("/health", (c) => {
-		return c.text("ok");
+		return c.json({
+			status: "ok",
+			runtime: "rivetkit",
+			version: VERSION,
+		});
 	});
 }
 
@@ -588,7 +593,12 @@ function addManagerRoutes(
 	}
 
 	router.get("/health", (c) => {
-		return c.text("ok");
+		return c.json({
+			status: "ok",
+			rivetkit: {
+				version: packageJson.version,
+			},
+		});
 	});
 
 	managerDriver.modifyManagerRouter?.(
