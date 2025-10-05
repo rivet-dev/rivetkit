@@ -5,6 +5,7 @@
     "start": "npx turbo watch build",
     "dev": "npx turbo watch dev",
     "build": "npx turbo build",
+    "build:fast": "FAST_BUILD=1 npx turbo build",
     "test": "npx turbo test",
     "test:watch": "npx turbo watch test",
     "check-types": "npx turbo check-types",
