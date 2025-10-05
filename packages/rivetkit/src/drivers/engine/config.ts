@@ -8,7 +8,10 @@ export const ConfigSchema = z
 		endpoint: z
 			.string()
 			.default(
-				() => getEnvUniversal("RIVET_ENGINE") ?? "http://localhost:6420",
+				() =>
+					getEnvUniversal("RIVET_ENGINE") ??
+					getEnvUniversal("RIVET_ENDPOINT") ??
+					"http://localhost:6420",
 			),
 		token: z
 			.string()
