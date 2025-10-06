@@ -27,10 +27,7 @@ import {
 import { crossPlatformServe } from "./serve";
 
 export type ServerlessActorDriverBuilder = (
-	token?: string,
-	totalSlots?: number,
-	runnerName?: string,
-	namespace?: string,
+	updateConfig: (config: RunnerConfig) => void,
 ) => ActorDriver;
 
 interface ServerOutput<A extends Registry<any>> {
@@ -184,38 +181,19 @@ export class Registry<A extends RegistryActors> {
 			});
 		}
 
-		// Setup serverless driver
-		let serverlessActorDriverBuilder: undefined | ServerlessActorDriverBuilder;
-		if (config.runnerKind === "serverless") {
-			// Configure serverless runner if enabled when actor driver is disabled
-			if (config.autoConfigureServerless) {
-				Promise.all(readyPromises).then(async () => {
-					await configureServerlessRunner(config);
-				});
-			}
-
-			serverlessActorDriverBuilder = (
-				token,
-				totalSlots,
-				runnerName,
-				namespace,
-			) => {
-				// Override config
-				if (token) config.token = token;
-				if (totalSlots) config.totalSlots = totalSlots;
-				if (runnerName) config.runnerName = runnerName;
-				if (namespace) config.namespace = namespace;
-
-				// Create new actor driver with updated config
-				return driver.actor(this.#config, config, managerDriver, client);
-			};
+		// Configure serverless runner if enabled when actor driver is disabled
+		if (config.runnerKind === "serverless" && config.autoConfigureServerless) {
+			Promise.all(readyPromises).then(async () => {
+				await configureServerlessRunner(config);
+			});
 		}
 
 		const { router: hono } = createManagerRouter(
 			this.#config,
 			config,
 			managerDriver,
-			serverlessActorDriverBuilder,
+			driver,
+			client,
 		);
 
 		// Start server

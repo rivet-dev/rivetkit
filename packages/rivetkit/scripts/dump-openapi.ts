@@ -3,7 +3,12 @@ import { resolve } from "node:path";
 import { createFileSystemOrMemoryDriver } from "@/drivers/file-system/mod";
 import type { ManagerDriver } from "@/manager/driver";
 import { createManagerRouter } from "@/manager/router";
-import { type RegistryConfig, RegistryConfigSchema, setup } from "@/mod";
+import {
+	createClientWithDriver,
+	type RegistryConfig,
+	RegistryConfigSchema,
+	setup,
+} from "@/mod";
 import { type RunnerConfig, RunnerConfigSchema } from "@/registry/run-config";
 import { VERSION } from "@/utils";
 
@@ -34,11 +39,14 @@ function main() {
 		getOrCreateInspectorAccessToken: unimplemented,
 	};
 
+	const client = createClientWithDriver(managerDriver);
+
 	const { openapi } = createManagerRouter(
 		registryConfig,
 		driverConfig,
 		managerDriver,
-		undefined,
+		driverConfig.driver!,
+		client,
 	);
 
 	const openApiDoc = openapi.getOpenAPIDocument({

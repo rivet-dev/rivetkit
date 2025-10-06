@@ -29,7 +29,7 @@ export function chooseDefaultDriver(runConfig: RunnerConfig): DriverConfig {
 			msg: "using rivet engine driver",
 			endpoint: runConfig.endpoint,
 		});
-		return createEngineDriver(runConfig);
+		return createEngineDriver();
 	}
 
 	loggerWithoutContext().debug({ msg: "using default file system driver" });

@@ -10,6 +10,7 @@ import {
 	getInspectorUrl,
 } from "@/inspector/utils";
 import { createManagerRouter } from "@/manager/router";
+import { createClientWithDriver } from "@/mod";
 import type { Registry } from "@/registry/mod";
 import { RunnerConfigSchema } from "@/registry/run-config";
 import { ConfigSchema, type InputConfig } from "./config";
@@ -30,12 +31,14 @@ function serve(registry: Registry<any>, inputConfig?: InputConfig): ServerType {
 	const runConfig = RunnerConfigSchema.parse(inputConfig);
 	const driver = inputConfig.driver ?? createFileSystemOrMemoryDriver(false);
 	const managerDriver = driver.manager(registry.config, config);
+	const client = createClientWithDriver(managerDriver);
 	configureInspectorAccessToken(config, managerDriver);
 	const { router } = createManagerRouter(
 		registry.config,
 		runConfig,
 		managerDriver,
-		undefined,
+		driver,
+		client,
 	);
 
 	// Inject WebSocket
