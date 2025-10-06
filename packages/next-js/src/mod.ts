@@ -11,7 +11,7 @@ export const toNextHandler = (
 	const publicUrl =
 		process.env.NEXT_PUBLIC_SITE_URL ??
 		process.env.NEXT_PUBLIC_VERCEL_URL ??
-		`http://127.0.0.1:${process.env.PORT ?? 8080}`;
+		`http://127.0.0.1:${process.env.PORT ?? 3000}`;
 	inputConfig.runnerKind = "serverless";
 	inputConfig.runEngine = true;
 	inputConfig.autoConfigureServerless = {

@@ -239,10 +239,10 @@ async function configureServerlessRunner(config: RunnerConfig): Promise<void> {
 				headers: customConfig.headers || {},
 				max_runners: customConfig.maxRunners ?? 100,
 				min_runners: customConfig.minRunners ?? 0,
-				request_lifespan: customConfig.requestLifespan ?? 15 * 60_000,
+				request_lifespan: customConfig.requestLifespan ?? 15 * 60,
 				runners_margin: customConfig.runnersMargin ?? 0,
 				slots_per_runner:
-					customConfig.slotsPerRunner ?? config.totalSlots ?? 10000,
+					customConfig.slotsPerRunner ?? config.totalSlots ?? 1000,
 			},
 		};
 
