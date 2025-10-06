@@ -38,6 +38,9 @@ export const RunnerConfigSchema = z
 		disableDefaultServer: z.boolean().optional().default(false),
 
 		/** @experimental */
+		defaultServerPort: z.number().default(6420),
+
+		/** @experimental */
 		runEngine: z
 			.boolean()
 			.optional()
@@ -97,6 +100,28 @@ export const RunnerConfigSchema = z
 			})
 			.optional()
 			.default({}),
+
+		/**
+		 * @experimental
+		 *
+		 * Automatically configure serverless runners in the engine.
+		 * Can only be used when runnerKind is "serverless".
+		 * If true, uses default configuration. Can also provide custom configuration.
+		 */
+		autoConfigureServerless: z
+			.union([
+				z.boolean(),
+				z.object({
+					url: z.string().optional(),
+					headers: z.record(z.string(), z.string()).optional(),
+					maxRunners: z.number().optional(),
+					minRunners: z.number().optional(),
+					requestLifespan: z.number().optional(),
+					runnersMargin: z.number().optional(),
+					slotsPerRunner: z.number().optional(),
+				}),
+			])
+			.optional(),
 
 		// This is a function to allow for lazy configuration of upgradeWebSocket on the
 		// fly. This is required since the dependencies that upgradeWebSocket
