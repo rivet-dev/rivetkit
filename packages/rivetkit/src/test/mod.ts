@@ -11,7 +11,7 @@ import {
 } from "@/inspector/utils";
 import { createManagerRouter } from "@/manager/router";
 import type { Registry } from "@/registry/mod";
-import { RunConfigSchema } from "@/registry/run-config";
+import { RunnerConfigSchema } from "@/registry/run-config";
 import { ConfigSchema, type InputConfig } from "./config";
 import { logger } from "./log";
 
@@ -27,7 +27,7 @@ function serve(registry: Registry<any>, inputConfig?: InputConfig): ServerType {
 	}
 
 	// Create router
-	const runConfig = RunConfigSchema.parse(inputConfig);
+	const runConfig = RunnerConfigSchema.parse(inputConfig);
 	const driver = inputConfig.driver ?? createFileSystemOrMemoryDriver(false);
 	const managerDriver = driver.manager(registry.config, config);
 	configureInspectorAccessToken(config, managerDriver);

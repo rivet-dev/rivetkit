@@ -32,5 +32,8 @@ export type {
 	ManagerDisplayInformation,
 	ManagerDriver,
 } from "@/manager/driver";
-export { DriverConfigSchema, RunConfigSchema } from "@/registry/run-config";
+export {
+	DriverConfigSchema,
+	RunnerConfigSchema as RunConfigSchema,
+} from "@/registry/run-config";
 export { serializeEmptyPersistData } from "./utils";

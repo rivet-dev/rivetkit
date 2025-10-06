@@ -52,7 +52,7 @@ import {
 import { RivetIdSchema } from "@/manager-api/common";
 import type { ServerlessActorDriverBuilder } from "@/mod";
 import type { RegistryConfig } from "@/registry/config";
-import type { RunConfig } from "@/registry/run-config";
+import type { RunnerConfig } from "@/registry/run-config";
 import type { ActorOutput, ManagerDriver } from "./driver";
 import { actorGateway, createTestWebSocketProxy } from "./gateway";
 import { logger } from "./log";
@@ -78,7 +78,7 @@ function buildOpenApiResponses<T>(schema: T) {
 
 export function createManagerRouter(
 	registryConfig: RegistryConfig,
-	runConfig: RunConfig,
+	runConfig: RunnerConfig,
 	managerDriver: ManagerDriver,
 	serverlessActorDriverBuilder: ServerlessActorDriverBuilder | undefined,
 ): { router: Hono; openapi: OpenAPIHono } {
@@ -121,7 +121,7 @@ export function createManagerRouter(
 }
 
 function addServerlessRoutes(
-	runConfig: RunConfig,
+	runConfig: RunnerConfig,
 	serverlessActorDriverBuilder: ServerlessActorDriverBuilder,
 	router: OpenAPIHono,
 ) {
@@ -165,7 +165,7 @@ function addServerlessRoutes(
 
 function addManagerRoutes(
 	registryConfig: RegistryConfig,
-	runConfig: RunConfig,
+	runConfig: RunnerConfig,
 	managerDriver: ManagerDriver,
 	router: OpenAPIHono,
 ) {

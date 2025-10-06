@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { createClientWithDriver } from "@/client/client";
 import { createTestRuntime, runDriverTests } from "@/driver-test-suite/mod";
 import { createEngineDriver } from "@/drivers/engine/mod";
-import { RunConfigSchema } from "@/registry/run-config";
+import { RunnerConfigSchema } from "@/registry/run-config";
 
 runDriverTests({
 	// Use real timers for engine-runner tests
@@ -48,7 +48,7 @@ runDriverTests({
 				});
 
 				// Start the actor driver
-				const runConfig = RunConfigSchema.parse({
+				const runConfig = RunnerConfigSchema.parse({
 					driver: driverConfig,
 					getUpgradeWebSocket: () => undefined,
 				});

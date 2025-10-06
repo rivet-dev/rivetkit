@@ -14,7 +14,7 @@ import {
 } from "@/common/actor-router-consts";
 import { deconstructError, noopNext } from "@/common/utils";
 import type { UniversalWebSocket, UpgradeWebSocketArgs } from "@/mod";
-import type { RunConfig } from "@/registry/run-config";
+import type { RunnerConfig } from "@/registry/run-config";
 import { promiseWithResolvers, stringifyError } from "@/utils";
 import type { ManagerDriver } from "./driver";
 import { logger } from "./log";
@@ -27,7 +27,7 @@ import { logger } from "./log";
  * - HTTP requests: Uses x-rivet-target and x-rivet-actor headers for routing
  */
 export async function actorGateway(
-	runConfig: RunConfig,
+	runConfig: RunnerConfig,
 	managerDriver: ManagerDriver,
 	c: HonoContext,
 	next: Next,
@@ -65,7 +65,7 @@ export async function actorGateway(
  * Handle WebSocket requests using sec-websocket-protocol for routing
  */
 async function handleWebSocketGateway(
-	runConfig: RunConfig,
+	runConfig: RunnerConfig,
 	managerDriver: ManagerDriver,
 	c: HonoContext,
 	strippedPath: string,

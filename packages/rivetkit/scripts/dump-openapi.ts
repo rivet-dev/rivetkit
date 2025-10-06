@@ -4,7 +4,7 @@ import { createFileSystemOrMemoryDriver } from "@/drivers/file-system/mod";
 import type { ManagerDriver } from "@/manager/driver";
 import { createManagerRouter } from "@/manager/router";
 import { type RegistryConfig, RegistryConfigSchema, setup } from "@/mod";
-import { type RunConfig, RunConfigSchema } from "@/registry/run-config";
+import { type RunnerConfig, RunnerConfigSchema } from "@/registry/run-config";
 import { VERSION } from "@/utils";
 
 function main() {
@@ -13,7 +13,7 @@ function main() {
 	});
 	const registry = setup(registryConfig);
 
-	const driverConfig: RunConfig = RunConfigSchema.parse({
+	const driverConfig: RunnerConfig = RunnerConfigSchema.parse({
 		driver: createFileSystemOrMemoryDriver(false),
 		getUpgradeWebSocket: () => () => unimplemented(),
 		inspector: {

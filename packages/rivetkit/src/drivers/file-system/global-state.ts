@@ -14,7 +14,7 @@ import {
 	serializeEmptyPersistData,
 } from "@/driver-helpers/mod";
 import type { RegistryConfig } from "@/registry/config";
-import type { RunConfig } from "@/registry/run-config";
+import type { RunnerConfig } from "@/registry/run-config";
 import type * as schema from "@/schemas/file-system-driver/mod";
 import {
 	ACTOR_ALARM_VERSIONED,
@@ -73,7 +73,7 @@ export class FileSystemGlobalState {
 
 	#runnerParams?: {
 		registryConfig: RegistryConfig;
-		runConfig: RunConfig;
+		runConfig: RunnerConfig;
 		inlineClient: AnyClient;
 		actorDriver: ActorDriver;
 	};
@@ -410,7 +410,7 @@ export class FileSystemGlobalState {
 	 */
 	onRunnerStart(
 		registryConfig: RegistryConfig,
-		runConfig: RunConfig,
+		runConfig: RunnerConfig,
 		inlineClient: AnyClient,
 		actorDriver: ActorDriver,
 	) {
@@ -436,7 +436,7 @@ export class FileSystemGlobalState {
 
 	async startActor(
 		registryConfig: RegistryConfig,
-		runConfig: RunConfig,
+		runConfig: RunnerConfig,
 		inlineClient: AnyClient,
 		actorDriver: ActorDriver,
 		actorId: string,

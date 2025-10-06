@@ -16,7 +16,7 @@ export class EngineApiError extends Error {
 }
 
 export function getEndpoint(config: ClientConfig) {
-	return config.endpoint ?? "http://127.0.0.1:6420";
+	return config.endpoint ?? "http://localhost:6420";
 }
 
 // Helper function for making API calls
