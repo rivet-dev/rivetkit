@@ -38,6 +38,18 @@ export const RunnerConfigSchema = z
 		disableDefaultServer: z.boolean().optional().default(false),
 
 		/** @experimental */
+		runEngine: z
+			.boolean()
+			.optional()
+			.default(() => getEnvUniversal("RIVET_RUN_ENGINE") === "1"),
+
+		/** @experimental */
+		runEngineVersion: z
+			.string()
+			.optional()
+			.default(() => getEnvUniversal("RIVET_RUN_ENGINE_VERSION") ?? "25.7.3"),
+
+		/** @experimental */
 		overrideServerAddress: z.string().optional(),
 
 		/** @experimental */
