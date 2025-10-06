@@ -6,7 +6,20 @@ export const toNextHandler = (
 ) => {
 	// Don't run server locally since we're using the fetch handler directly
 	inputConfig.disableDefaultServer = true;
-	inputConfig.disableActorDriver = true;
+
+	// Configure serverless
+	const publicUrl =
+		process.env.NEXT_PUBLIC_SITE_URL ??
+		process.env.NEXT_PUBLIC_VERCEL_URL ??
+		`http://127.0.0.1:${process.env.PORT ?? 8080}`;
+	inputConfig.runnerKind = "serverless";
+	inputConfig.runEngine = true;
+	inputConfig.autoConfigureServerless = {
+		url: `${publicUrl}/api/rivet/start`,
+	};
+
+	// Next logs this on every request
+	inputConfig.noWelcome = true;
 
 	const { fetch } = registry.start(inputConfig);
 
