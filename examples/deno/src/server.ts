@@ -3,7 +3,8 @@ import { registry } from "./registry.ts";
 
 const { fetch } = registry.start({
 	// Deno requires using Deno.serve
-	disableServer: true,
+	disableDefaultServer: true,
+	overrideServerAddress: "http://localhost:8080",
 	// Specify Deno-specific upgradeWebSocket
 	getUpgradeWebSocket: () => upgradeWebSocket,
 });
