@@ -315,13 +315,34 @@ enc
 			});
 		});
 		ws.addEventListener("message", async (ev) => {
-			this.#handleOnMessage(ev.data);
+			try {
+				await this.#handleOnMessage(ev.data);
+			} catch (err) {
+				logger().error({
+					msg: "error in websocket message handler",
+					error: stringifyError(err),
+				});
+			}
 		});
 		ws.addEventListener("close", (ev) => {
-			this.#handleOnClose(ev);
+			try {
+				this.#handleOnClose(ev);
+			} catch (err) {
+				logger().error({
+					msg: "error in websocket close handler",
+					error: stringifyError(err),
+				});
+			}
 		});
 		ws.addEventListener("error", (_ev) => {
-			this.#handleOnError();
+			try {
+				this.#handleOnError();
+			} catch (err) {
+				logger().error({
+					msg: "error in websocket error handler",
+					error: stringifyError(err),
+				});
+			}
 		});
 	}
 
