@@ -41,7 +41,6 @@ import {
 	promiseWithResolvers,
 	setLongTimeout,
 } from "@/utils";
-import type { EngineConfig } from "./config";
 import { KEYS } from "./kv";
 import { logger } from "./log";
 
@@ -58,7 +57,6 @@ export class EngineActorDriver implements ActorDriver {
 	#runConfig: RunnerConfig;
 	#managerDriver: ManagerDriver;
 	#inlineClient: Client<any>;
-	#config: EngineConfig;
 	#runner: Runner;
 	#actors: Map<string, ActorHandler> = new Map();
 	#actorRouter: ActorRouter;
@@ -73,17 +71,15 @@ export class EngineActorDriver implements ActorDriver {
 		runConfig: RunnerConfig,
 		managerDriver: ManagerDriver,
 		inlineClient: Client<any>,
-		config: EngineConfig,
 	) {
 		this.#registryConfig = registryConfig;
 		this.#runConfig = runConfig;
 		this.#managerDriver = managerDriver;
 		this.#inlineClient = inlineClient;
-		this.#config = config;
 
 		// HACK: Override inspector token (which are likely to be
 		// removed later on) with token from x-rivet-token header
-		const token = runConfig.token ?? config.token;
+		const token = runConfig.token ?? runConfig.token;
 		if (token && runConfig.inspector && runConfig.inspector.enabled) {
 			runConfig.inspector.token = () => token;
 		}
@@ -98,12 +94,12 @@ export class EngineActorDriver implements ActorDriver {
 		let hasDisconnected = false;
 		const engineRunnerConfig: EngineRunnerConfig = {
 			version: this.#version,
-			endpoint: getEndpoint(config),
+			endpoint: getEndpoint(runConfig),
 			token,
-			namespace: runConfig.namespace ?? config.namespace,
-			totalSlots: runConfig.totalSlots ?? config.totalSlots,
-			runnerName: runConfig.runnerName ?? config.runnerName,
-			runnerKey: config.runnerKey,
+			namespace: runConfig.namespace ?? runConfig.namespace,
+			totalSlots: runConfig.totalSlots ?? runConfig.totalSlots,
+			runnerName: runConfig.runnerName ?? runConfig.runnerName,
+			runnerKey: runConfig.runnerKey,
 			metadata: {
 				inspectorToken: this.#runConfig.inspector.token(),
 			},
@@ -117,14 +113,14 @@ export class EngineActorDriver implements ActorDriver {
 				if (hasDisconnected) {
 					logger().info({
 						msg: "runner reconnected",
-						namespace: this.#config.namespace,
-						runnerName: this.#config.runnerName,
+						namespace: this.#runConfig.namespace,
+						runnerName: this.#runConfig.runnerName,
 					});
 				} else {
 					logger().debug({
 						msg: "runner connected",
-						namespace: this.#config.namespace,
-						runnerName: this.#config.runnerName,
+						namespace: this.#runConfig.namespace,
+						runnerName: this.#runConfig.runnerName,
 					});
 				}
 
@@ -133,8 +129,8 @@ export class EngineActorDriver implements ActorDriver {
 			onDisconnected: () => {
 				logger().warn({
 					msg: "runner disconnected",
-					namespace: this.#config.namespace,
-					runnerName: this.#config.runnerName,
+					namespace: this.#runConfig.namespace,
+					runnerName: this.#runConfig.runnerName,
 				});
 				hasDisconnected = true;
 			},
@@ -153,9 +149,9 @@ export class EngineActorDriver implements ActorDriver {
 		this.#runner.start();
 		logger().debug({
 			msg: "engine runner started",
-			endpoint: config.endpoint,
-			namespace: config.namespace,
-			runnerName: config.runnerName,
+			endpoint: runConfig.endpoint,
+			namespace: runConfig.namespace,
+			runnerName: runConfig.runnerName,
 		});
 	}
 
@@ -236,20 +232,20 @@ export class EngineActorDriver implements ActorDriver {
 	async #runnerOnActorStart(
 		actorId: string,
 		generation: number,
-		config: RunnerActorConfig,
+		runConfig: RunnerActorConfig,
 	): Promise<void> {
 		logger().debug({
 			msg: "runner actor starting",
 			actorId,
-			name: config.name,
-			key: config.key,
+			name: runConfig.name,
+			key: runConfig.key,
 			generation,
 		});
 
 		// Deserialize input
 		let input: any;
-		if (config.input) {
-			input = cbor.decode(config.input);
+		if (runConfig.input) {
+			input = cbor.decode(runConfig.input);
 		}
 
 		// Get or create handler
@@ -262,15 +258,12 @@ export class EngineActorDriver implements ActorDriver {
 			this.#actors.set(actorId, handler);
 		}
 
-		const name = config.name as string;
-		invariant(config.key, "actor should have a key");
-		const key = deserializeActorKey(config.key);
+		const name = runConfig.name as string;
+		invariant(runConfig.key, "actor should have a key");
+		const key = deserializeActorKey(runConfig.key);
 
 		// Create actor instance
-		const definition = lookupInRegistry(
-			this.#registryConfig,
-			config.name as string, // TODO: Remove cast
-		);
+		const definition = lookupInRegistry(this.#registryConfig, runConfig.name);
 		handler.actor = definition.instantiate();
 
 		// Start actor

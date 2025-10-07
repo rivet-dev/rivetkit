@@ -39,13 +39,7 @@ runDriverTests({
 				}
 
 				// Create driver config
-				const driverConfig = createEngineDriver({
-					endpoint,
-					namespace,
-					runnerName,
-					token: "dev",
-					totalSlots: 1000,
-				});
+				const driverConfig = createEngineDriver();
 
 				// Start the actor driver
 				const runConfig = RunnerConfigSchema.parse({

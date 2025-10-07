@@ -11,9 +11,9 @@ import { createMiddleware } from "hono/factory";
 import { streamSSE } from "hono/streaming";
 import invariant from "invariant";
 import { z } from "zod";
-import { ActorNotFound, Unsupported } from "@/actor/errors";
+import { ActorNotFound, InvalidRequest, Unsupported } from "@/actor/errors";
 import { serializeActorKey } from "@/actor/keys";
-import type { Encoding, Transport } from "@/client/mod";
+import type { Client, Encoding, Transport } from "@/client/mod";
 import {
 	WS_PROTOCOL_ACTOR,
 	WS_PROTOCOL_CONN_ID,
@@ -28,7 +28,12 @@ import {
 	handleRouteNotFound,
 	loggerMiddleware,
 } from "@/common/router";
-import { deconstructError, noopNext, stringifyError } from "@/common/utils";
+import {
+	assertUnreachable,
+	deconstructError,
+	noopNext,
+	stringifyError,
+} from "@/common/utils";
 import { type ActorDriver, HEADER_ACTOR_ID } from "@/driver-helpers/mod";
 import type {
 	TestInlineDriverCallRequest,
@@ -50,13 +55,14 @@ import {
 	type Actor as ApiActor,
 } from "@/manager-api/actors";
 import { RivetIdSchema } from "@/manager-api/common";
-import type { ServerlessActorDriverBuilder } from "@/mod";
+import type { AnyClient } from "@/mod";
 import type { RegistryConfig } from "@/registry/config";
-import type { RunnerConfig } from "@/registry/run-config";
+import type { DriverConfig, RunnerConfig } from "@/registry/run-config";
 import { VERSION } from "@/utils";
 import type { ActorOutput, ManagerDriver } from "./driver";
 import { actorGateway, createTestWebSocketProxy } from "./gateway";
 import { logger } from "./log";
+import { ServerlessStartHeadersSchema } from "./router-schema";
 
 function buildOpenApiResponses<T>(schema: T) {
 	return {
@@ -81,7 +87,8 @@ export function createManagerRouter(
 	registryConfig: RegistryConfig,
 	runConfig: RunnerConfig,
 	managerDriver: ManagerDriver,
-	serverlessActorDriverBuilder: ServerlessActorDriverBuilder | undefined,
+	driverConfig: DriverConfig,
+	client: AnyClient,
 ): { router: Hono; openapi: OpenAPIHono } {
 	const router = new OpenAPIHono({ strict: false }).basePath(
 		runConfig.basePath,
@@ -108,10 +115,19 @@ export function createManagerRouter(
 		}),
 	);
 
-	if (serverlessActorDriverBuilder) {
-		addServerlessRoutes(runConfig, serverlessActorDriverBuilder, router);
-	} else {
+	if (runConfig.runnerKind === "serverless") {
+		addServerlessRoutes(
+			driverConfig,
+			registryConfig,
+			runConfig,
+			managerDriver,
+			client,
+			router,
+		);
+	} else if (runConfig.runnerKind === "normal") {
 		addManagerRoutes(registryConfig, runConfig, managerDriver, router);
+	} else {
+		assertUnreachable(runConfig.runnerKind);
 	}
 
 	// Error handling
@@ -122,8 +138,11 @@ export function createManagerRouter(
 }
 
 function addServerlessRoutes(
+	driverConfig: DriverConfig,
+	registryConfig: RegistryConfig,
 	runConfig: RunnerConfig,
-	serverlessActorDriverBuilder: ServerlessActorDriverBuilder,
+	managerDriver: ManagerDriver,
+	client: AnyClient,
 	router: OpenAPIHono,
 ) {
 	// Apply CORS
@@ -138,24 +157,53 @@ function addServerlessRoutes(
 
 	// Serverless start endpoint
 	router.get("/start", async (c) => {
-		const token = c.req.header("x-rivet-token");
-		let totalSlots: number | undefined = parseInt(
-			c.req.header("x-rivet-total-slots") as any,
-		);
-		if (!Number.isFinite(totalSlots)) totalSlots = undefined;
-		const runnerName = c.req.header("x-rivet-runner-name");
-		const namespace = c.req.header("x-rivet-namespace-id");
+		// Parse headers
+		const parseResult = ServerlessStartHeadersSchema.safeParse({
+			endpoint: c.req.header("x-rivet-endpoint"),
+			token: c.req.header("x-rivet-token") ?? undefined,
+			totalSlots: c.req.header("x-rivet-total-slots"),
+			runnerName: c.req.header("x-rivet-runner-name"),
+			namespace: c.req.header("x-rivet-namespace-id"),
+		});
+		if (!parseResult.success) {
+			throw new InvalidRequest(
+				parseResult.error.issues[0]?.message ??
+					"invalid serverless start headers",
+			);
+		}
+		const { endpoint, token, totalSlots, runnerName, namespace } =
+			parseResult.data;
 
-		const actorDriver = serverlessActorDriverBuilder(
-			token,
+		logger().debug({
+			msg: "received serverless runner start request",
+			endpoint,
 			totalSlots,
 			runnerName,
 			namespace,
+		});
+
+		// Override config
+		//
+		// We can't do a structuredClone here since this holds functions
+		const newRunConfig = Object.assign({}, runConfig);
+		newRunConfig.endpoint = endpoint;
+		newRunConfig.token = token;
+		newRunConfig.totalSlots = totalSlots;
+		newRunConfig.runnerName = runnerName;
+		newRunConfig.namespace = namespace;
+
+		// Create new actor driver with updated config
+		const actorDriver = driverConfig.actor(
+			registryConfig,
+			newRunConfig,
+			managerDriver,
+			client,
 		);
 		invariant(
 			actorDriver.serverlessHandleStart,
 			"missing serverlessHandleStart on ActorDriver",
 		);
+
 		return await actorDriver.serverlessHandleStart(c);
 	});
 
@@ -596,7 +644,7 @@ function addManagerRoutes(
 		return c.json({
 			status: "ok",
 			rivetkit: {
-				version: packageJson.version,
+				version: VERSION,
 			},
 		});
 	});

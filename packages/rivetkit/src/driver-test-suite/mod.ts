@@ -6,7 +6,12 @@ import { describe } from "vitest";
 import type { Transport } from "@/client/mod";
 import { configureInspectorAccessToken } from "@/inspector/utils";
 import { createManagerRouter } from "@/manager/router";
-import type { DriverConfig, Registry, RunConfig } from "@/mod";
+import {
+	createClientWithDriver,
+	type DriverConfig,
+	type Registry,
+	type RunConfig,
+} from "@/mod";
 import { RunnerConfigSchema } from "@/registry/run-config";
 import { getPort } from "@/test/mod";
 import { logger } from "./log";
@@ -210,12 +215,14 @@ export async function createTestRuntime(
 
 		// Create router
 		const managerDriver = driver.manager(registry.config, config);
+		const client = createClientWithDriver(managerDriver);
 		configureInspectorAccessToken(config, managerDriver);
 		const { router } = createManagerRouter(
 			registry.config,
 			config,
 			managerDriver,
-			undefined,
+			driver,
+			client,
 		);
 
 		// Inject WebSocket

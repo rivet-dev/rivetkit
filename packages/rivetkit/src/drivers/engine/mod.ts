@@ -13,11 +13,7 @@ export {
 	EngingConfigSchema as ConfigSchema,
 } from "./config";
 
-export function createEngineDriver(
-	inputConfig?: EngineConfigInput,
-): DriverConfig {
-	const config = EngingConfigSchema.parse(inputConfig);
-
+export function createEngineDriver(): DriverConfig {
 	return {
 		name: "engine",
 		manager: (_registryConfig, runConfig) => {
@@ -34,7 +30,6 @@ export function createEngineDriver(
 				runConfig,
 				managerDriver,
 				inlineClient,
-				config,
 			);
 		},
 	};
