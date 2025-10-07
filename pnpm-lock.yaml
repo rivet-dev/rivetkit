@@ -422,7 +422,7 @@ importers:
         version: 0.31.2
       drizzle-orm:
         specifier: ^0.44.2
-        version: 0.44.2(@cloudflare/workers-types@4.20250619.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@11.10.0)(kysely@0.28.2)
+        version: 0.44.2(@cloudflare/workers-types@4.20250619.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@11.10.0)(bun-types@1.2.23(@types/react@19.1.8))(kysely@0.28.2)
     devDependencies:
       '@types/node':
         specifier: ^22.13.9
@@ -551,6 +551,22 @@ importers:
       tsx:
         specifier: ^3.12.7
         version: 3.14.0
+      typescript:
+        specifier: ^5.5.2
+        version: 5.8.3
+
+  examples/hono-bun:
+    dependencies:
+      hono:
+        specifier: 4.9.8
+        version: 4.9.8
+    devDependencies:
+      '@types/bun':
+        specifier: ^1.1.15
+        version: 1.2.23(@types/react@19.1.8)
+      rivetkit:
+        specifier: workspace:*
+        version: link:../../packages/rivetkit
       typescript:
         specifier: ^5.5.2
         version: 5.8.3
@@ -1095,7 +1111,7 @@ importers:
         version: 24.0.4
       drizzle-orm:
         specifier: ^0.44.2
-        version: 0.44.2(@cloudflare/workers-types@4.20250619.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@11.10.0)(kysely@0.28.2)
+        version: 0.44.2(@cloudflare/workers-types@4.20250619.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@11.10.0)(bun-types@1.2.23(@types/react@19.1.8))(kysely@0.28.2)
       tsup:
         specifier: ^8.3.6
         version: 8.5.0(@microsoft/api-extractor@7.52.8(@types/node@24.0.4))(postcss@8.5.6)(tsx@4.20.3)(typescript@5.8.3)(yaml@2.8.0)
@@ -2788,6 +2804,9 @@ packages:
   '@types/body-parser@1.19.6':
     resolution: {integrity: sha512-HLFeCYgz89uk22N5Qg3dvGvsv46B8GLvKKo1zKG4NybA8U2DiEO3w9lqGg29t/tfLRJpJ6iQxnVw4OnB7MoM9g==}
 
+  '@types/bun@1.2.23':
+    resolution: {integrity: sha512-le8ueOY5b6VKYf19xT3McVbXqLqmxzPXHsQT/q9JHgikJ2X22wyTW3g3ohz2ZMnp7dod6aduIiq8A14Xyimm0A==}
+
   '@types/chai@5.2.2':
     resolution: {integrity: sha512-8kB30R7Hwqf40JPiKhVzodJs2Qc1ZJ5zuT3uzw5Hq/dhNCl3G3l83jfpdI1e20BP348+fV7VIL/+FxaXkqBmWg==}
 
@@ -3086,6 +3105,11 @@ packages:
   bufferutil@4.0.9:
     resolution: {integrity: sha512-WDtdLmJvAuNNPzByAYpRo2rF1Mmradw6gvWsQKf63476DDXmomT9zUiGypLcG4ibIM67vhAj8jJRdbmEws2Aqw==}
     engines: {node: '>=6.14.2'}
+
+  bun-types@1.2.23:
+    resolution: {integrity: sha512-R9f0hKAZXgFU3mlrA0YpE/fiDvwV0FT9rORApt2aQVWSuJDzZOyB5QLc0N/4HF57CS8IXJ6+L5E4W1bW6NS2Aw==}
+    peerDependencies:
+      '@types/react': ^19
 
   bundle-require@5.1.0:
     resolution: {integrity: sha512-3WrrOuZiyaaZPWiEt4G3+IffISVC9HYlWueJEBWED4ZH4aIAC2PnkdnuRrR94M+w6yGWn4AglWtJtBI8YqvgoA==}
@@ -6258,6 +6282,12 @@ snapshots:
       '@types/connect': 3.4.38
       '@types/node': 22.15.32
 
+  '@types/bun@1.2.23(@types/react@19.1.8)':
+    dependencies:
+      bun-types: 1.2.23(@types/react@19.1.8)
+    transitivePeerDependencies:
+      - '@types/react'
+
   '@types/chai@5.2.2':
     dependencies:
       '@types/deep-eql': 4.0.2
@@ -6696,6 +6726,11 @@ snapshots:
     dependencies:
       node-gyp-build: 4.8.4
 
+  bun-types@1.2.23(@types/react@19.1.8):
+    dependencies:
+      '@types/node': 22.15.32
+      '@types/react': 19.1.8
+
   bundle-require@5.1.0(esbuild@0.25.5):
     dependencies:
       esbuild: 0.25.5
@@ -6884,12 +6919,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.44.2(@cloudflare/workers-types@4.20250619.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@11.10.0)(kysely@0.28.2):
+  drizzle-orm@0.44.2(@cloudflare/workers-types@4.20250619.0)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@11.10.0)(bun-types@1.2.23(@types/react@19.1.8))(kysely@0.28.2):
     optionalDependencies:
       '@cloudflare/workers-types': 4.20250619.0
       '@opentelemetry/api': 1.9.0
       '@types/better-sqlite3': 7.6.13
       better-sqlite3: 11.10.0
+      bun-types: 1.2.23(@types/react@19.1.8)
       kysely: 0.28.2
 
   dunder-proto@1.0.1:
