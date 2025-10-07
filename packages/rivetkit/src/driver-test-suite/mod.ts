@@ -3,7 +3,7 @@ import { createNodeWebSocket, type NodeWebSocket } from "@hono/node-ws";
 import { bundleRequire } from "bundle-require";
 import invariant from "invariant";
 import { describe } from "vitest";
-import type { Transport } from "@/client/mod";
+import type { Encoding, Transport } from "@/client/mod";
 import { configureInspectorAccessToken } from "@/inspector/utils";
 import { createManagerRouter } from "@/manager/router";
 import {
@@ -60,6 +60,8 @@ export interface DriverTestConfig {
 
 	transport?: Transport;
 
+	encoding?: Encoding;
+
 	clientType: ClientType;
 
 	cleanup?: () => Promise<void>;
@@ -83,68 +85,81 @@ export interface DriverDeployOutput {
 
 /** Runs all Vitest tests against the provided drivers. */
 export function runDriverTests(
-	driverTestConfigPartial: Omit<DriverTestConfig, "clientType" | "transport">,
+	driverTestConfigPartial: Omit<
+		DriverTestConfig,
+		"clientType" | "transport" | "encoding"
+	>,
 ) {
 	const clientTypes: ClientType[] = driverTestConfigPartial.skip?.inline
 		? ["http"]
 		: ["http", "inline"];
 	for (const clientType of clientTypes) {
-		const driverTestConfig: DriverTestConfig = {
-			...driverTestConfigPartial,
-			clientType,
-		};
-
 		describe(`client type (${clientType})`, () => {
-			runActorDriverTests(driverTestConfig);
-			runManagerDriverTests(driverTestConfig);
+			const encodings: Encoding[] = ["bare", "cbor", "json"];
 
-			const transports: Transport[] = driverTestConfig.skip?.sse
-				? ["websocket"]
-				: ["websocket", "sse"];
-			for (const transport of transports) {
-				describe(`transport (${transport})`, () => {
-					runActorConnTests({
-						...driverTestConfig,
-						transport,
-					});
+			for (const encoding of encodings) {
+				describe(`encoding (${encoding})`, () => {
+					const driverTestConfig: DriverTestConfig = {
+						...driverTestConfigPartial,
+						clientType,
+						encoding,
+					};
 
-					runActorConnStateTests({ ...driverTestConfig, transport });
+					runActorDriverTests(driverTestConfig);
+					runManagerDriverTests(driverTestConfig);
 
-					runActorReconnectTests({ ...driverTestConfig, transport });
+					const transports: Transport[] = driverTestConfig.skip?.sse
+						? ["websocket"]
+						: ["websocket", "sse"];
+					for (const transport of transports) {
+						describe(`transport (${transport})`, () => {
+							runActorConnTests({
+								...driverTestConfig,
+								transport,
+							});
 
-					runRequestAccessTests({ ...driverTestConfig, transport });
+							runActorConnStateTests({ ...driverTestConfig, transport });
 
-					runActorDriverTestsWithTransport({ ...driverTestConfig, transport });
+							runActorReconnectTests({ ...driverTestConfig, transport });
+
+							runRequestAccessTests({ ...driverTestConfig, transport });
+
+							runActorDriverTestsWithTransport({
+								...driverTestConfig,
+								transport,
+							});
+						});
+					}
+
+					runActorHandleTests(driverTestConfig);
+
+					runActionFeaturesTests(driverTestConfig);
+
+					runActorVarsTests(driverTestConfig);
+
+					runActorMetadataTests(driverTestConfig);
+
+					runActorOnStateChangeTests(driverTestConfig);
+
+					runActorErrorHandlingTests(driverTestConfig);
+
+					runActorInlineClientTests(driverTestConfig);
+
+					runRawHttpTests(driverTestConfig);
+
+					runRawHttpRequestPropertiesTests(driverTestConfig);
+
+					runRawWebSocketTests(driverTestConfig);
+
+					// TODO: re-expose this once we can have actor queries on the gateway
+					// runRawHttpDirectRegistryTests(driverTestConfig);
+
+					// TODO: re-expose this once we can have actor queries on the gateway
+					// runRawWebSocketDirectRegistryTests(driverTestConfig);
+
+					runActorInspectorTests(driverTestConfig);
 				});
 			}
-
-			runActorHandleTests(driverTestConfig);
-
-			runActionFeaturesTests(driverTestConfig);
-
-			runActorVarsTests(driverTestConfig);
-
-			runActorMetadataTests(driverTestConfig);
-
-			runActorOnStateChangeTests(driverTestConfig);
-
-			runActorErrorHandlingTests(driverTestConfig);
-
-			runActorInlineClientTests(driverTestConfig);
-
-			runRawHttpTests(driverTestConfig);
-
-			runRawHttpRequestPropertiesTests(driverTestConfig);
-
-			runRawWebSocketTests(driverTestConfig);
-
-			// TODO: re-expose this once we can have actor queries on the gateway
-			// runRawHttpDirectRegistryTests(driverTestConfig);
-
-			// TODO: re-expose this once we can have actor queries on the gateway
-			// runRawWebSocketDirectRegistryTests(driverTestConfig);
-
-			runActorInspectorTests(driverTestConfig);
 		});
 	}
 }
