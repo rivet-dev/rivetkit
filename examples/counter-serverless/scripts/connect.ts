@@ -4,9 +4,9 @@ import type { Registry } from "../src/registry";
 async function main() {
 	const client = createClient<Registry>("http://localhost:6420");
 
-	const counter = client.counter.getOrCreate().connect();
+	const counter = client.counter.getOrCreate();
 
-	counter.on("newCount", (count: number) => console.log("Event:", count));
+	// counter.on("newCount", (count: number) => console.log("Event:", count));
 
 	for (let i = 0; i < 5; i++) {
 		const out = await counter.increment(5);
@@ -16,7 +16,7 @@ async function main() {
 	}
 
 	await new Promise((resolve) => setTimeout(resolve, 10000));
-	await counter.dispose();
+	// await counter.dispose();
 }
 
 main();
