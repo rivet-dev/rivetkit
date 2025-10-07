@@ -860,6 +860,24 @@ importers:
         specifier: ^3.1.1
         version: 3.2.4(@types/node@22.15.32)(lightningcss@1.30.2)(terser@5.44.0)(tsx@3.14.0)(yaml@2.8.0)
 
+  examples/smoke-test:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.13.9
+        version: 22.15.32
+      rivetkit:
+        specifier: workspace:*
+        version: link:../../packages/rivetkit
+      tsx:
+        specifier: ^3.12.7
+        version: 3.14.0
+      typescript:
+        specifier: ^5.7.3
+        version: 5.8.3
+      vitest:
+        specifier: ^3.1.1
+        version: 3.2.4(@types/node@22.15.32)(lightningcss@1.30.2)(terser@5.44.0)(tsx@3.14.0)(yaml@2.8.0)
+
   examples/starter:
     dependencies:
       rivetkit:
