@@ -874,9 +874,6 @@ importers:
       typescript:
         specifier: ^5.7.3
         version: 5.8.3
-      vitest:
-        specifier: ^3.1.1
-        version: 3.2.4(@types/node@22.15.32)(lightningcss@1.30.2)(terser@5.44.0)(tsx@3.14.0)(yaml@2.8.0)
 
   examples/starter:
     dependencies:
