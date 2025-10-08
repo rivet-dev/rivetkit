@@ -29,7 +29,7 @@ export const ClientConfigSchema = z.object({
 	/** Name of the runner. This is used to group together runners in to different pools. */
 	runnerName: z
 		.string()
-		.default(() => getEnvUniversal("RIVET_RUNNER") ?? "rivetkit"),
+		.default(() => getEnvUniversal("RIVET_RUNNER") ?? "default"),
 
 	encoding: EncodingSchema.default("bare"),
 

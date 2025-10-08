@@ -98,7 +98,7 @@ runDriverTests({
 		return {
 			endpoint: `http://localhost:${port}/rivet`,
 			namespace: "default",
-			runnerName: "rivetkit",
+			runnerName: "default",
 			async cleanup() {
 				// Shut down wrangler process
 				wranglerProcess.kill();

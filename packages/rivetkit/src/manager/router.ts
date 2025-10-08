@@ -168,7 +168,7 @@ function addServerlessRoutes(
 		if (!parseResult.success) {
 			throw new InvalidRequest(
 				parseResult.error.issues[0]?.message ??
-					"invalid serverless start headers",
+				"invalid serverless start headers",
 			);
 		}
 		const { endpoint, token, totalSlots, runnerName, namespace } =
@@ -274,9 +274,9 @@ function addManagerRoutes(
 
 			const actorIdsParsed = actor_ids
 				? actor_ids
-						.split(",")
-						.map((id) => id.trim())
-						.filter((id) => id.length > 0)
+					.split(",")
+					.map((id) => id.trim())
+					.filter((id) => id.length > 0)
 				: undefined;
 
 			const actors: ActorOutput[] = [];
@@ -321,7 +321,7 @@ function addManagerRoutes(
 			}
 
 			return c.json<ActorsListResponse>({
-				actors: actors.map(createApiActor),
+				actors: actors.map(actor => createApiActor(actor, runConfig.runnerName)),
 			});
 		});
 	}
@@ -355,7 +355,7 @@ function addManagerRoutes(
 
 			if (existingActor) {
 				return c.json<ActorsGetOrCreateResponse>({
-					actor: createApiActor(existingActor),
+					actor: createApiActor(existingActor, runConfig.runnerName),
 					created: false,
 				});
 			}
@@ -372,7 +372,7 @@ function addManagerRoutes(
 			});
 
 			return c.json<ActorsGetOrCreateResponse>({
-				actor: createApiActor(newActor),
+				actor: createApiActor(newActor, runConfig.runnerName),
 				created: true,
 			});
 		});
@@ -410,7 +410,7 @@ function addManagerRoutes(
 			});
 
 			// Transform ActorOutput to match ActorSchema
-			const actor = createApiActor(actorOutput);
+			const actor = createApiActor(actorOutput, runConfig.runnerName);
 
 			return c.json<ActorsCreateResponse>({ actor });
 		});
@@ -655,13 +655,13 @@ function addManagerRoutes(
 	);
 }
 
-function createApiActor(actor: ActorOutput): ApiActor {
+function createApiActor(actor: ActorOutput, runnerName: string = "default"): ApiActor {
 	return {
 		actor_id: actor.actorId,
 		name: actor.name,
 		key: serializeActorKey(actor.key),
 		namespace_id: "default", // Assert default namespace
-		runner_name_selector: "rivetkit", // Assert rivetkit runner
+		runner_name_selector: runnerName,
 		create_ts: Date.now(),
 		connectable_ts: null,
 		destroy_ts: null,
