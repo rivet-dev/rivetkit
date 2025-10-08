@@ -92,6 +92,7 @@ export class Registry<A extends RegistryActors> {
 		if (config.runnerKind === "serverless") {
 			config.defaultServerPort = 8080;
 			config.overrideServerAddress = config.endpoint;
+			config.disableActorDriver = true;
 		}
 
 		// Configure logger
@@ -230,8 +231,31 @@ async function configureServerlessRunner(config: RunnerConfig): Promise<void> {
 				? config.autoConfigureServerless
 				: {};
 
+		// Make the request to fetch all datacenters
+		const dcsUrl = `${config.endpoint}/datacenters`;
+
+		logger().debug({
+			msg: "fetching datacenters",
+			url: dcsUrl,
+		});
+
+		const dcsResponse = await fetch(dcsUrl, {
+			headers: {
+				...(config.token ? { Authorization: `Bearer ${config.token}` } : {}),
+			},
+		});
+
+		if (!dcsResponse.ok) {
+			const errorText = await dcsResponse.text();
+			throw new Error(
+				`failed to configure serverless runner: ${dcsResponse.status} ${dcsResponse.statusText} - ${errorText}`,
+			);
+		}
+
+		let dcsRes = await dcsResponse.json() as { datacenters: { name: string }[] };
+
 		// Build the request body
-		const requestBody = {
+		const serverlessConfig = {
 			serverless: {
 				url:
 					customConfig.url ||
@@ -245,6 +269,7 @@ async function configureServerlessRunner(config: RunnerConfig): Promise<void> {
 					customConfig.slotsPerRunner ?? config.totalSlots ?? 1000,
 			},
 		};
+		const requestBody = Object.fromEntries(dcsRes.datacenters.map(dc => [dc.name, serverlessConfig]));
 
 		// Make the request to configure the serverless runner
 		const configUrl = `${config.endpoint}/runner-configs/${config.runnerName}?namespace=${config.namespace}`;
@@ -252,7 +277,7 @@ async function configureServerlessRunner(config: RunnerConfig): Promise<void> {
 		logger().debug({
 			msg: "configuring serverless runner",
 			url: configUrl,
-			config: requestBody.serverless,
+			config: serverlessConfig.serverless,
 		});
 
 		const response = await fetch(configUrl, {
