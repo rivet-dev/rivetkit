@@ -43,7 +43,7 @@ export async function spawnActor({
 		await counter2.dispose();
 
 		// Wait for actor to sleep
-		await new Promise(res => setTimeout(res, 1000));
+		await new Promise((res) => setTimeout(res, 1000));
 
 		// Reconnect after sleep
 		const counter3 = client.counter.getOrCreate(key).connect();

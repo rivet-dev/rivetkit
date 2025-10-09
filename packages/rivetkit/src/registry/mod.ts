@@ -252,7 +252,9 @@ async function configureServerlessRunner(config: RunnerConfig): Promise<void> {
 			);
 		}
 
-		let dcsRes = await dcsResponse.json() as { datacenters: { name: string }[] };
+		const dcsRes = (await dcsResponse.json()) as {
+			datacenters: { name: string }[];
+		};
 
 		// Build the request body
 		const serverlessConfig = {
@@ -269,7 +271,9 @@ async function configureServerlessRunner(config: RunnerConfig): Promise<void> {
 					customConfig.slotsPerRunner ?? config.totalSlots ?? 1000,
 			},
 		};
-		const requestBody = Object.fromEntries(dcsRes.datacenters.map(dc => [dc.name, serverlessConfig]));
+		const requestBody = Object.fromEntries(
+			dcsRes.datacenters.map((dc) => [dc.name, serverlessConfig]),
+		);
 
 		// Make the request to configure the serverless runner
 		const configUrl = `${config.endpoint}/runner-configs/${config.runnerName}?namespace=${config.namespace}`;

@@ -168,7 +168,7 @@ function addServerlessRoutes(
 		if (!parseResult.success) {
 			throw new InvalidRequest(
 				parseResult.error.issues[0]?.message ??
-				"invalid serverless start headers",
+					"invalid serverless start headers",
 			);
 		}
 		const { endpoint, token, totalSlots, runnerName, namespace } =
@@ -274,9 +274,9 @@ function addManagerRoutes(
 
 			const actorIdsParsed = actor_ids
 				? actor_ids
-					.split(",")
-					.map((id) => id.trim())
-					.filter((id) => id.length > 0)
+						.split(",")
+						.map((id) => id.trim())
+						.filter((id) => id.length > 0)
 				: undefined;
 
 			const actors: ActorOutput[] = [];
@@ -321,7 +321,9 @@ function addManagerRoutes(
 			}
 
 			return c.json<ActorsListResponse>({
-				actors: actors.map(actor => createApiActor(actor, runConfig.runnerName)),
+				actors: actors.map((actor) =>
+					createApiActor(actor, runConfig.runnerName),
+				),
 			});
 		});
 	}
@@ -655,7 +657,10 @@ function addManagerRoutes(
 	);
 }
 
-function createApiActor(actor: ActorOutput, runnerName: string = "default"): ApiActor {
+function createApiActor(
+	actor: ActorOutput,
+	runnerName: string = "default",
+): ApiActor {
 	return {
 		actor_id: actor.actorId,
 		name: actor.name,
