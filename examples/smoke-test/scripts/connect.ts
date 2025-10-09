@@ -15,8 +15,24 @@ async function main() {
 		await new Promise((resolve) => setTimeout(resolve, 1000));
 	}
 
-	await new Promise((resolve) => setTimeout(resolve, 10000));
+	await new Promise((resolve) => setTimeout(resolve, 2000));
 	await counter.dispose();
+
+	await new Promise((resolve) => setTimeout(resolve, 200));
+
+	const counter2 = client.counter.getOrCreate().connect();
+
+	counter2.on("newCount", (count: number) => console.log("Event:", count));
+
+	for (let i = 0; i < 5; i++) {
+		const out = await counter2.increment(5);
+		console.log("RPC:", out);
+
+		await new Promise((resolve) => setTimeout(resolve, 1000));
+	}
+
+	await new Promise((resolve) => setTimeout(resolve, 2000));
+	await counter2.dispose();
 }
 
 main();
