@@ -1,6 +1,6 @@
 {
   "name": "example-game",
-  "version": "2.0.11",
+  "version": "2.0.12",
   "type": "module",
   "scripts": {
     "dev": "concurrently \"tsx --watch src/backend/server.ts\" \"vite\"",
