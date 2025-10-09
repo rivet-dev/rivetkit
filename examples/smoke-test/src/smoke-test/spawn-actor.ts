@@ -36,6 +36,14 @@ export async function spawnActor({
 		const counter = client.counter.getOrCreate(key).connect();
 		await counter.increment(1);
 		await counter.dispose();
+
+		// Wait for actor to sleep
+		await new Promise(res => setTimeout(res, 1000));
+
+		const counter2 = client.counter.getOrCreate(key).connect();
+		await counter2.increment(1);
+		await counter2.dispose();
+
 		succeeded = true;
 		onSuccess();
 	} catch (error) {
