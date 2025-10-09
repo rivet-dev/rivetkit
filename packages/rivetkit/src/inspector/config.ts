@@ -27,6 +27,8 @@ const defaultInspectorOrigins = [
 	"http://localhost:43709",
 	"https://studio.rivet.gg",
 	"https://inspect.rivet.dev",
+	"https://dashboard.rivet.dev",
+	"https://dashboard.staging.rivet.dev",
 ];
 
 const defaultCors: CorsOptions = {
