@@ -272,7 +272,7 @@ export async function createTestRuntime(
 		return {
 			endpoint: serverEndpoint,
 			namespace: "default",
-			runnerName: "rivetkit",
+			runnerName: "default",
 			cleanup,
 		};
 	}
