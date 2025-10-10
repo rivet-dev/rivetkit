@@ -28,27 +28,33 @@ export async function spawnActor({
 	onSuccess,
 	onFailure,
 }: SpawnActorOptions): Promise<void> {
-	const iterationStart = performance.now();
 	let succeeded = false;
 
 	try {
-		const key = ["test", testId, index.toString()];
-		const counter = client.counter.getOrCreate(key).connect();
-		await counter.increment(1);
-		await counter.dispose();
+		for (let i = 0; i < 20; i++) {
+			// Connect to actor
+			const connMethod = Math.random() > 0.5 ? "http" : "websocket";
+			const iterationStart = performance.now();
+			if (connMethod === "websocket") {
+				const key = ["test", testId, index.toString()];
+				const counter = client.counter.getOrCreate(key).connect();
+				await counter.increment(1);
+				await counter.dispose();
+			} else if (connMethod === "http") {
+				const key = ["test", testId, index.toString()];
+				const counter = client.counter.getOrCreate(key);
+				await counter.increment(1);
+			}
+			const iterationEnd = performance.now();
+			const iterationDuration = iterationEnd - iterationStart;
+			iterationDurations.push(iterationDuration);
 
-		// Immediately reconnect
-		const counter2 = client.counter.getOrCreate(key).connect();
-		await counter2.increment(1);
-		await counter2.dispose();
-
-		// Wait for actor to sleep
-		await new Promise((res) => setTimeout(res, 1000));
-
-		// Reconnect after sleep
-		const counter3 = client.counter.getOrCreate(key).connect();
-		await counter3.increment(1);
-		await counter3.dispose();
+			// Wait for actor to sleep (if > 500 ms)
+			const sleepTime = 100 + Math.random() * 800;
+			console.log("sleeping", sleepTime);
+			// const sleepTime = 1000;
+			await new Promise((res) => setTimeout(res, sleepTime));
+		}
 
 		succeeded = true;
 		onSuccess();
@@ -58,8 +64,5 @@ export async function spawnActor({
 	}
 
 	if (succeeded) {
-		const iterationEnd = performance.now();
-		const iterationDuration = iterationEnd - iterationStart;
-		iterationDurations.push(iterationDuration);
 	}
 }
