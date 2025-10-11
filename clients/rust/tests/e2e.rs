@@ -2,7 +2,6 @@ use rivetkit_client::{Client, EncodingKind, GetOrCreateOptions, TransportKind};
 use fs_extra;
 use portpicker;
 use serde_json::json;
-use tracing_subscriber::EnvFilter;
 use std::process::{Child, Command};
 use std::time::Duration;
 use tempfile;

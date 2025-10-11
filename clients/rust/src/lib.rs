@@ -1,5 +1,6 @@
 mod backoff;
 mod common;
+mod remote_manager;
 pub mod client;
 pub mod drivers;
 pub mod connection;

@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use crate::{
     protocol::{query, to_client, to_server},
+    remote_manager::RemoteManager,
     EncodingKind, TransportKind
 };
 use anyhow::Result;
@@ -65,10 +66,12 @@ pub type DriverConnection = (
 );
 
 pub struct DriverConnectArgs {
-    pub endpoint: String,
+    pub remote_manager: RemoteManager,
     pub encoding_kind: EncodingKind,
     pub query: query::ActorQuery,
     pub parameters: Option<Value>,
+    pub conn_id: Option<String>,
+    pub conn_token: Option<String>,
 }
 
 pub async fn connect_driver(

@@ -21,6 +21,7 @@ pub struct GetForKeyRequest {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GetForIdRequest {
+    pub name: String,
     #[serde(rename = "actorId")]
     pub actor_id: String,
 }
