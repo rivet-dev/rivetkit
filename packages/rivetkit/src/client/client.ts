@@ -168,16 +168,12 @@ export class ClientRaw {
 
 	/**
 	 * Creates an instance of Client.
-	 *
-	 * @param {string} managerEndpoint - The manager endpoint. See {@link https://rivet.dev/docs/setup|Initial Setup} for instructions on getting the manager endpoint.
-	 * @param {ClientConfig} [opts] - Options for configuring the client.
-	 * @see {@link https://rivet.dev/docs/setup|Initial Setup}
 	 */
-	public constructor(driver: ManagerDriver, opts?: ClientConfig) {
+	public constructor(driver: ManagerDriver, config: ClientConfig) {
 		this.#driver = driver;
 
-		this.#encodingKind = opts?.encoding ?? "bare";
-		this[TRANSPORT_SYMBOL] = opts?.transport ?? "websocket";
+		this.#encodingKind = config.encoding ?? "bare";
+		this[TRANSPORT_SYMBOL] = config.transport ?? "websocket";
 	}
 
 	/**
@@ -406,7 +402,7 @@ export type AnyClient = Client<Registry<any>>;
 
 export function createClientWithDriver<A extends Registry<any>>(
 	driver: ManagerDriver,
-	config?: ClientConfig,
+	config: ClientConfig,
 ): Client<A> {
 	const client = new ClientRaw(driver, config);
 

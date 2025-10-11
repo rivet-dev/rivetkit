@@ -1,5 +1,6 @@
 import * as fs from "node:fs/promises";
 import { resolve } from "node:path";
+import { ClientConfigSchema } from "@/client/config";
 import { createFileSystemOrMemoryDriver } from "@/drivers/file-system/mod";
 import type { ManagerDriver } from "@/manager/driver";
 import { createManagerRouter } from "@/manager/router";
@@ -39,7 +40,10 @@ function main() {
 		getOrCreateInspectorAccessToken: unimplemented,
 	};
 
-	const client = createClientWithDriver(managerDriver);
+	const client = createClientWithDriver(
+		managerDriver,
+		ClientConfigSchema.parse({}),
+	);
 
 	const { openapi } = createManagerRouter(
 		registryConfig,

@@ -24,9 +24,12 @@ import {
 	WS_PROTOCOL_TRANSPORT,
 } from "@/common/actor-router-consts";
 import {
+	handleHealthRequest,
+	handleMetadataRequest,
 	handleRouteError,
 	handleRouteNotFound,
 	loggerMiddleware,
+	type MetadataResponse,
 } from "@/common/router";
 import {
 	assertUnreachable,
@@ -207,13 +210,9 @@ function addServerlessRoutes(
 		return await actorDriver.serverlessHandleStart(c);
 	});
 
-	router.get("/health", (c) => {
-		return c.json({
-			status: "ok",
-			runtime: "rivetkit",
-			version: VERSION,
-		});
-	});
+	router.get("/health", (c) => handleHealthRequest(c));
+
+	router.get("/metadata", (c) => handleMetadataRequest(c, runConfig));
 }
 
 function addManagerRoutes(
@@ -642,14 +641,9 @@ function addManagerRoutes(
 		});
 	}
 
-	router.get("/health", (c) => {
-		return c.json({
-			status: "ok",
-			rivetkit: {
-				version: VERSION,
-			},
-		});
-	});
+	router.get("/health", (c) => handleHealthRequest(c, runConfig));
+
+	router.get("/metadata", (c) => handleMetadataRequest(c, runConfig));
 
 	managerDriver.modifyManagerRouter?.(
 		registryConfig,

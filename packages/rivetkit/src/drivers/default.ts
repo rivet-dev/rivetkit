@@ -14,12 +14,6 @@ export function chooseDefaultDriver(runConfig: RunnerConfig): DriverConfig {
 		);
 	}
 
-	if (runConfig.runnerKind === "serverless" && !runConfig.endpoint) {
-		throw new UserError(
-			"Cannot use 'serverless' runnerKind without the 'endpoint' config set.",
-		);
-	}
-
 	if (runConfig.driver) {
 		return runConfig.driver;
 	}

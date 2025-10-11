@@ -2,7 +2,7 @@
 import { createClient, createRivetKit } from "@rivetkit/next-js/client";
 import type { registry } from "@/rivet/registry";
 
-// TODO: Auto-trigger start by sending request to health endpoint
-
-const client = createClient<typeof registry>();
+const client = createClient<typeof registry>(
+	process.env.NEXT_RIVET_ENDPOINT ?? "http://localhost:3000/api/rivet",
+);
 export const { useActor } = createRivetKit(client);

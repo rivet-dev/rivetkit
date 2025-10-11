@@ -8,15 +8,20 @@ export const toNextHandler = (
 	inputConfig.disableDefaultServer = true;
 
 	// Configure serverless
-	const publicUrl =
-		process.env.NEXT_PUBLIC_SITE_URL ??
-		process.env.NEXT_PUBLIC_VERCEL_URL ??
-		`http://127.0.0.1:${process.env.PORT ?? 3000}`;
 	inputConfig.runnerKind = "serverless";
-	inputConfig.runEngine = true;
-	inputConfig.autoConfigureServerless = {
-		url: `${publicUrl}/api/rivet/start`,
-	};
+
+	// Auto-configure serverless runner if not in prod
+	if (process.env.NODE_ENV !== "production") {
+		const publicUrl =
+			process.env.NEXT_PUBLIC_SITE_URL ??
+			process.env.NEXT_PUBLIC_VERCEL_URL ??
+			`http://127.0.0.1:${process.env.PORT ?? 3000}`;
+
+		inputConfig.runEngine = true;
+		inputConfig.autoConfigureServerless = {
+			url: `${publicUrl}/api/rivet/start`,
+		};
+	}
 
 	// Next logs this on every request
 	inputConfig.noWelcome = true;
