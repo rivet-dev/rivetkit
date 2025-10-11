@@ -6,6 +6,7 @@ import {
 	handleWebSocketConnect,
 } from "@/actor/router-endpoints";
 import { createClientWithDriver } from "@/client/client";
+import { ClientConfigSchema } from "@/client/config";
 import { InlineWebSocketAdapter2 } from "@/common/inline-websocket-adapter2";
 import { noopNext } from "@/common/utils";
 import type {
@@ -116,7 +117,10 @@ export class FileSystemManagerDriver implements ManagerDriver {
 		}
 
 		// Actors run on the same node as the manager, so we create a dummy actor router that we route requests to
-		const inlineClient = createClientWithDriver(this);
+		const inlineClient = createClientWithDriver(
+			this,
+			ClientConfigSchema.parse({}),
+		);
 		this.#actorDriver = this.#driverConfig.actor(
 			registryConfig,
 			runConfig,

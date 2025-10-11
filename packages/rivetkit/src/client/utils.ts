@@ -8,6 +8,7 @@ import { HTTP_RESPONSE_ERROR_VERSIONED } from "@/schemas/client-protocol/version
 import {
 	contentTypeForEncoding,
 	deserializeWithEncoding,
+	encodingIsBinary,
 	serializeWithEncoding,
 } from "@/serde";
 import { httpUserAgent } from "@/utils";
@@ -120,14 +121,18 @@ export async function sendHttpRequest<
 			);
 		}
 
+		// Decode metadata based on encoding - only binary encodings have CBOR-encoded metadata
+		let decodedMetadata: unknown;
+		if (responseData.metadata && encodingIsBinary(opts.encoding)) {
+			decodedMetadata = cbor.decode(new Uint8Array(responseData.metadata));
+		}
+
 		// Throw structured error
 		throw new ActorError(
 			responseData.group,
 			responseData.code,
 			responseData.message,
-			responseData.metadata
-				? cbor.decode(new Uint8Array(responseData.metadata))
-				: undefined,
+			decodedMetadata,
 		);
 	}
 

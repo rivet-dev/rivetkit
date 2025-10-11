@@ -3,6 +3,7 @@ import { createNodeWebSocket, type NodeWebSocket } from "@hono/node-ws";
 import { bundleRequire } from "bundle-require";
 import invariant from "invariant";
 import { describe } from "vitest";
+import { ClientConfigSchema } from "@/client/config";
 import type { Encoding, Transport } from "@/client/mod";
 import { configureInspectorAccessToken } from "@/inspector/utils";
 import { createManagerRouter } from "@/manager/router";
@@ -230,7 +231,10 @@ export async function createTestRuntime(
 
 		// Create router
 		const managerDriver = driver.manager(registry.config, config);
-		const client = createClientWithDriver(managerDriver);
+		const client = createClientWithDriver(
+			managerDriver,
+			ClientConfigSchema.parse({}),
+		);
 		configureInspectorAccessToken(config, managerDriver);
 		const { router } = createManagerRouter(
 			registry.config,

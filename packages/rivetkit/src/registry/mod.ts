@@ -1,5 +1,6 @@
 import invariant from "invariant";
 import { type Client, createClientWithDriver } from "@/client/client";
+import type { ClientConfig } from "@/client/config";
 import { configureBaseLogger, configureDefaultLogger } from "@/common/log";
 import type { ActorDriver } from "@/driver-helpers/mod";
 import { chooseDefaultDriver } from "@/drivers/default";
@@ -10,6 +11,11 @@ import {
 	isInspectorEnabled,
 } from "@/inspector/utils";
 import { createManagerRouter } from "@/manager/router";
+import {
+	getDatacenters,
+	type RunnerConfigRequest,
+	updateRunnerConfig,
+} from "@/remote-manager-driver/api-endpoints";
 import pkg from "../../package.json" with { type: "json" };
 import {
 	type RegistryActors,
@@ -231,32 +237,32 @@ async function configureServerlessRunner(config: RunnerConfig): Promise<void> {
 				? config.autoConfigureServerless
 				: {};
 
-		// Make the request to fetch all datacenters
-		const dcsUrl = `${config.endpoint}/datacenters`;
-
-		logger().debug({
-			msg: "fetching datacenters",
-			url: dcsUrl,
-		});
-
-		const dcsResponse = await fetch(dcsUrl, {
-			headers: {
-				...(config.token ? { Authorization: `Bearer ${config.token}` } : {}),
-			},
-		});
-
-		if (!dcsResponse.ok) {
-			const errorText = await dcsResponse.text();
-			throw new Error(
-				`failed to configure serverless runner: ${dcsResponse.status} ${dcsResponse.statusText} - ${errorText}`,
-			);
-		}
-
-		const dcsRes = (await dcsResponse.json()) as {
-			datacenters: { name: string }[];
+		// Create a ClientConfig from RunnerConfig for API calls
+		const clientConfig: ClientConfig = {
+			endpoint: config.endpoint,
+			token: config.token,
+			namespace: config.namespace,
+			runnerName: config.runnerName,
+			encoding: config.encoding,
+			transport: config.transport,
+			headers: config.headers,
+			getUpgradeWebSocket: config.getUpgradeWebSocket,
+			disableHealthCheck: true, // We don't need health check for this operation
 		};
 
+		// Fetch all datacenters
+		logger().debug({
+			msg: "fetching datacenters",
+			endpoint: config.endpoint,
+		});
+		const dcsRes = await getDatacenters(clientConfig);
+
 		// Build the request body
+		logger().debug({
+			msg: "configuring serverless runner",
+			runnerName: config.runnerName,
+			namespace: config.namespace,
+		});
 		const serverlessConfig = {
 			serverless: {
 				url:
@@ -271,34 +277,11 @@ async function configureServerlessRunner(config: RunnerConfig): Promise<void> {
 					customConfig.slotsPerRunner ?? config.totalSlots ?? 1000,
 			},
 		};
-		const requestBody = Object.fromEntries(
-			dcsRes.datacenters.map((dc) => [dc.name, serverlessConfig]),
-		);
-
-		// Make the request to configure the serverless runner
-		const configUrl = `${config.endpoint}/runner-configs/${config.runnerName}?namespace=${config.namespace}`;
-
-		logger().debug({
-			msg: "configuring serverless runner",
-			url: configUrl,
-			config: serverlessConfig.serverless,
+		await updateRunnerConfig(clientConfig, config.runnerName, {
+			datacenters: Object.fromEntries(
+				dcsRes.datacenters.map((dc) => [dc.name, serverlessConfig]),
+			),
 		});
-
-		const response = await fetch(configUrl, {
-			method: "PUT",
-			headers: {
-				"Content-Type": "application/json",
-				...(config.token ? { Authorization: `Bearer ${config.token}` } : {}),
-			},
-			body: JSON.stringify(requestBody),
-		});
-
-		if (!response.ok) {
-			const errorText = await response.text();
-			throw new Error(
-				`failed to configure serverless runner: ${response.status} ${response.statusText} - ${errorText}`,
-			);
-		}
 
 		logger().info({
 			msg: "serverless runner configured successfully",
