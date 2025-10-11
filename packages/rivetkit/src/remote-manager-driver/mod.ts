@@ -4,7 +4,7 @@ import invariant from "invariant";
 import { deserializeActorKey, serializeActorKey } from "@/actor/keys";
 import { generateRandomString } from "@/actor/utils";
 import type { ClientConfig } from "@/client/client";
-import { noopNext } from "@/common/utils";
+import { noopNext, stringifyError } from "@/common/utils";
 import type {
 	ActorOutput,
 	CreateInput,
@@ -27,6 +27,7 @@ import {
 	destroyActor,
 	getActor,
 	getActorByKey,
+	getMetadata,
 	getOrCreateActor,
 } from "./api-endpoints";
 import { EngineApiError, getEndpoint } from "./api-utils";
@@ -47,11 +48,68 @@ import { createWebSocketProxy } from "./ws-proxy";
 // 	};
 // })();
 
+// Global cache to store metadata check promises for each endpoint
+const metadataCheckCache = new Map<string, Promise<void>>();
+
 export class RemoteManagerDriver implements ManagerDriver {
 	#config: ClientConfig;
+	#metadataPromise: Promise<void> | undefined;
 
 	constructor(runConfig: ClientConfig) {
 		this.#config = runConfig;
+
+		// Perform metadata check if enabled
+		if (!runConfig.disableHealthCheck) {
+			this.#metadataPromise = this.#performMetadataCheck(runConfig);
+			this.#metadataPromise.catch((error) => {
+				logger().error({
+					msg: "metadata check failed",
+					error: error instanceof Error ? error.message : String(error),
+				});
+			});
+		}
+	}
+
+	async #performMetadataCheck(config: ClientConfig): Promise<void> {
+		const endpoint = getEndpoint(config);
+
+		// Check if metadata check is already in progress or completed for this endpoint
+		const existingPromise = metadataCheckCache.get(endpoint);
+		if (existingPromise) {
+			return existingPromise;
+		}
+
+		// Create and store the promise immediately to prevent racing requests
+		const metadataCheckPromise = (async () => {
+			try {
+				const metadataData = await getMetadata(config);
+
+				if (metadataData.clientEndpoint) {
+					logger().info({
+						msg: "received new client endpoint from metadata",
+						endpoint: metadataData.clientEndpoint,
+					});
+					this.#config.endpoint = metadataData.clientEndpoint;
+				}
+
+				// Log successful metadata check with runtime and version info
+				logger().info({
+					msg: "connected to rivetkit manager",
+					runtime: metadataData.runtime,
+					version: metadataData.version,
+					runner: metadataData.runner,
+				});
+			} catch (error) {
+				logger().error({
+					msg: "failed to connect to metadata endpoint",
+					endpoint,
+					error: stringifyError(error),
+				});
+			}
+		})();
+
+		metadataCheckCache.set(endpoint, metadataCheckPromise);
+		return metadataCheckPromise;
 	}
 
 	async getForId({
@@ -59,6 +117,11 @@ export class RemoteManagerDriver implements ManagerDriver {
 		name,
 		actorId,
 	}: GetForIdInput): Promise<ActorOutput | undefined> {
+		// Wait for metadata check to complete if in progress
+		if (this.#metadataPromise) {
+			await this.#metadataPromise;
+		}
+
 		// Fetch from API if not in cache
 		const response = await getActor(this.#config, name, actorId);
 		const actor = response.actors[0];
@@ -91,6 +154,11 @@ export class RemoteManagerDriver implements ManagerDriver {
 		name,
 		key,
 	}: GetWithKeyInput): Promise<ActorOutput | undefined> {
+		// Wait for metadata check to complete if in progress
+		if (this.#metadataPromise) {
+			await this.#metadataPromise;
+		}
+
 		logger().debug({ msg: "getWithKey: searching for actor", name, key });
 
 		// If not in local cache, fetch by key from API
@@ -128,6 +196,11 @@ export class RemoteManagerDriver implements ManagerDriver {
 	async getOrCreateWithKey(
 		input: GetOrCreateWithKeyInput,
 	): Promise<ActorOutput> {
+		// Wait for metadata check to complete if in progress
+		if (this.#metadataPromise) {
+			await this.#metadataPromise;
+		}
+
 		const { c, name, key, input: actorInput, region } = input;
 
 		logger().info({
@@ -169,6 +242,11 @@ export class RemoteManagerDriver implements ManagerDriver {
 		key,
 		input,
 	}: CreateInput): Promise<ActorOutput> {
+		// Wait for metadata check to complete if in progress
+		if (this.#metadataPromise) {
+			await this.#metadataPromise;
+		}
+
 		logger().info({ msg: "creating actor via engine api", name, key });
 
 		// Create actor via engine API
@@ -191,6 +269,11 @@ export class RemoteManagerDriver implements ManagerDriver {
 	}
 
 	async destroyActor(actorId: string): Promise<void> {
+		// Wait for metadata check to complete if in progress
+		if (this.#metadataPromise) {
+			await this.#metadataPromise;
+		}
+
 		logger().info({ msg: "destroying actor via engine api", actorId });
 
 		await destroyActor(this.#config, actorId);
@@ -199,6 +282,11 @@ export class RemoteManagerDriver implements ManagerDriver {
 	}
 
 	async sendRequest(actorId: string, actorRequest: Request): Promise<Response> {
+		// Wait for metadata check to complete if in progress
+		if (this.#metadataPromise) {
+			await this.#metadataPromise;
+		}
+
 		return await sendHttpRequestToActor(this.#config, actorId, actorRequest);
 	}
 
@@ -210,6 +298,11 @@ export class RemoteManagerDriver implements ManagerDriver {
 		connId?: string,
 		connToken?: string,
 	): Promise<UniversalWebSocket> {
+		// Wait for metadata check to complete if in progress
+		if (this.#metadataPromise) {
+			await this.#metadataPromise;
+		}
+
 		return await openWebSocketToActor(
 			this.#config,
 			path,
@@ -226,6 +319,11 @@ export class RemoteManagerDriver implements ManagerDriver {
 		actorRequest: Request,
 		actorId: string,
 	): Promise<Response> {
+		// Wait for metadata check to complete if in progress
+		if (this.#metadataPromise) {
+			await this.#metadataPromise;
+		}
+
 		return await sendHttpRequestToActor(this.#config, actorId, actorRequest);
 	}
 
@@ -238,6 +336,11 @@ export class RemoteManagerDriver implements ManagerDriver {
 		connId?: string,
 		connToken?: string,
 	): Promise<Response> {
+		// Wait for metadata check to complete if in progress
+		if (this.#metadataPromise) {
+			await this.#metadataPromise;
+		}
+
 		const upgradeWebSocket = this.#config.getUpgradeWebSocket?.();
 		invariant(upgradeWebSocket, "missing getUpgradeWebSocket");
 
