@@ -838,6 +838,52 @@ importers:
         specifier: ^3.1.1
         version: 3.2.4(@types/node@22.15.32)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.3)(yaml@2.8.0)
 
+  examples/raw-websocket-handler:
+    dependencies:
+      '@rivetkit/react':
+        specifier: workspace:*
+        version: link:../../packages/react
+      hono:
+        specifier: 4.9.8
+        version: 4.9.8
+      react:
+        specifier: ^18.3
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
+      rivetkit:
+        specifier: workspace:*
+        version: link:../../packages/rivetkit
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.2
+        version: 22.15.32
+      '@types/react':
+        specifier: ^18.3.16
+        version: 18.3.23
+      '@types/react-dom':
+        specifier: ^18.3.5
+        version: 18.3.7(@types/react@18.3.23)
+      '@vitejs/plugin-react':
+        specifier: ^4.3.4
+        version: 4.5.2(vite@6.3.5(@types/node@22.15.32)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.3)(yaml@2.8.0))
+      concurrently:
+        specifier: ^9.1.0
+        version: 9.2.0
+      tsx:
+        specifier: ^4.19.2
+        version: 4.20.3
+      typescript:
+        specifier: ^5.7.2
+        version: 5.8.3
+      vite:
+        specifier: ^6.0.5
+        version: 6.3.5(@types/node@22.15.32)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.3)(yaml@2.8.0)
+      vitest:
+        specifier: ^3.1.1
+        version: 3.2.4(@types/node@22.15.32)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.3)(yaml@2.8.0)
+
   examples/raw-websocket-handler-proxy:
     dependencies:
       hono:
