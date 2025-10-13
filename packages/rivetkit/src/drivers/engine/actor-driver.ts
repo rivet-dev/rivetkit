@@ -177,16 +177,9 @@ export class EngineActorDriver implements ActorDriver {
 	async readPersistedData(actorId: string): Promise<Uint8Array | undefined> {
 		const handler = this.#actors.get(actorId);
 		if (!handler) throw new Error(`Actor ${actorId} not loaded`);
-		if (handler.persistedData) return handler.persistedData;
 
-		const [value] = await this.#runner.kvGet(actorId, [KEYS.PERSIST_DATA]);
-
-		if (value !== null) {
-			handler.persistedData = value;
-			return value;
-		} else {
-			return undefined;
-		}
+		// This was loaded during actor startup
+		return handler.persistedData;
 	}
 
 	async writePersistedData(actorId: string, data: Uint8Array): Promise<void> {
@@ -251,11 +244,24 @@ export class EngineActorDriver implements ActorDriver {
 		// Get or create handler
 		let handler = this.#actors.get(actorId);
 		if (!handler) {
+			// IMPORTANT: We must set the handler in the map synchronously before doing any
+			// async operations to avoid race conditions where multiple calls might try to
+			// create the same handler simultaneously.
 			handler = {
 				actorStartPromise: promiseWithResolvers(),
-				persistedData: serializeEmptyPersistData(input),
+				persistedData: undefined,
 			};
 			this.#actors.set(actorId, handler);
+
+			// Load persisted data from storage
+			const [persistedValue] = await this.#runner.kvGet(actorId, [
+				KEYS.PERSIST_DATA,
+			]);
+
+			handler.persistedData =
+				persistedValue !== null
+					? persistedValue
+					: serializeEmptyPersistData(input);
 		}
 
 		const name = runConfig.name as string;
