@@ -16,6 +16,7 @@ import {
 	type RunnerConfigRequest,
 	updateRunnerConfig,
 } from "@/remote-manager-driver/api-endpoints";
+import { getEndpoint } from "@/remote-manager-driver/api-utils";
 import pkg from "../../package.json" with { type: "json" };
 import {
 	type RegistryActors,
@@ -160,7 +161,7 @@ export class Registry<A extends RegistryActors> {
 			console.log();
 			console.log(`  RivetKit ${pkg.version} (${displayInfo.name})`);
 			if (!config.disableDefaultServer) {
-				console.log(`  - Endpoint:     ${config.endpoint}`);
+				console.log(`  - Endpoint:     ${getEndpoint(config)}`);
 			} else if (config.overrideServerAddress) {
 				console.log(`  - Endpoint:     ${config.overrideServerAddress}`);
 			}
