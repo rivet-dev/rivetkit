@@ -18,9 +18,10 @@ runDriverTests({
 			join(__dirname, "../fixtures/driver-test-suite/registry.ts"),
 			async (registry) => {
 				// Get configuration from environment or use defaults
-				const endpoint = process.env.RIVET_ENDPOINT || "http://localhost:6420";
+				const endpoint = process.env.RIVET_ENDPOINT || "http://127.0.0.1:6420";
 				const namespace = `test-${crypto.randomUUID().slice(0, 8)}`;
 				const runnerName = "test-runner";
+				const token = "dev";
 
 				// Create namespace
 				const response = await fetch(`${endpoint}/namespaces`, {
@@ -44,6 +45,10 @@ runDriverTests({
 				// Start the actor driver
 				const runConfig = RunnerConfigSchema.parse({
 					driver: driverConfig,
+					endpoint,
+					namespace,
+					runnerName,
+					token,
 					getUpgradeWebSocket: () => undefined,
 				});
 				const managerDriver = driverConfig.manager(registry.config, runConfig);
@@ -55,12 +60,14 @@ runDriverTests({
 					inlineClient,
 				);
 
+				await new Promise((resolve) => setTimeout(resolve, 1000));
+
 				return {
 					rivetEngine: {
 						endpoint: "http://127.0.0.1:6420",
 						namespace: namespace,
 						runnerName: runnerName,
-						token: "dev",
+						token,
 					},
 					driver: driverConfig,
 					cleanup: async () => {
