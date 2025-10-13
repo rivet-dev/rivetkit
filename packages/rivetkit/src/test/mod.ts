@@ -2,6 +2,7 @@ import { createServer } from "node:net";
 import { serve as honoServe, type ServerType } from "@hono/node-server";
 import { createNodeWebSocket } from "@hono/node-ws";
 import { type TestContext, vi } from "vitest";
+import { ClientConfigSchema } from "@/client/config";
 import { type Client, createClient } from "@/client/mod";
 import { chooseDefaultDriver } from "@/drivers/default";
 import { createFileSystemOrMemoryDriver } from "@/drivers/file-system/mod";
@@ -31,7 +32,10 @@ function serve(registry: Registry<any>, inputConfig?: InputConfig): ServerType {
 	const runConfig = RunnerConfigSchema.parse(inputConfig);
 	const driver = inputConfig.driver ?? createFileSystemOrMemoryDriver(false);
 	const managerDriver = driver.manager(registry.config, config);
-	const client = createClientWithDriver(managerDriver);
+	const client = createClientWithDriver(
+		managerDriver,
+		ClientConfigSchema.parse({}),
+	);
 	configureInspectorAccessToken(config, managerDriver);
 	const { router } = createManagerRouter(
 		registry.config,

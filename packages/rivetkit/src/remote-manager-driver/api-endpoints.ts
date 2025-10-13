@@ -1,5 +1,6 @@
 import { serializeActorKey } from "@/actor/keys";
 import type { ClientConfig } from "@/client/client";
+import type { MetadataResponse } from "@/common/router";
 import type {
 	ActorsCreateRequest,
 	ActorsCreateResponse,
@@ -73,5 +74,54 @@ export async function destroyActor(
 		config,
 		"DELETE",
 		`/actors/${encodeURIComponent(actorId)}`,
+	);
+}
+
+// MARK: Get metadata
+export async function getMetadata(
+	config: ClientConfig,
+): Promise<MetadataResponse> {
+	return apiCall<never, MetadataResponse>(config, "GET", `/metadata`);
+}
+
+// MARK: Get datacenters
+export interface DatacentersResponse {
+	datacenters: { name: string }[];
+}
+
+export async function getDatacenters(
+	config: ClientConfig,
+): Promise<DatacentersResponse> {
+	return apiCall<never, DatacentersResponse>(config, "GET", `/datacenters`);
+}
+
+// MARK: Update runner config
+export interface RunnerConfigRequest {
+	datacenters: Record<
+		string,
+		{
+			serverless: {
+				url: string;
+				headers: Record<string, string>;
+				max_runners: number;
+				min_runners: number;
+				request_lifespan: number;
+				runners_margin: number;
+				slots_per_runner: number;
+			};
+		}
+	>;
+}
+
+export async function updateRunnerConfig(
+	config: ClientConfig,
+	runnerName: string,
+	request: RunnerConfigRequest,
+): Promise<void> {
+	return apiCall<RunnerConfigRequest, void>(
+		config,
+		"PUT",
+		`/runner-configs/${runnerName}`,
+		request,
 	);
 }

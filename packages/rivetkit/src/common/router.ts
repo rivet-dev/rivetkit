@@ -5,10 +5,12 @@ import {
 	getRequestEncoding,
 	getRequestExposeInternalError,
 } from "@/actor/router-endpoints";
+import type { RunnerConfig } from "@/registry/run-config";
+import { getEndpoint } from "@/remote-manager-driver/api-utils";
 import { HttpResponseError } from "@/schemas/client-protocol/mod";
 import { HTTP_RESPONSE_ERROR_VERSIONED } from "@/schemas/client-protocol/versioned";
 import { encodingIsBinary, serializeWithEncoding } from "@/serde";
-import { bufferToArrayBuffer } from "@/utils";
+import { bufferToArrayBuffer, VERSION } from "@/utils";
 import { getLogger, type Logger } from "./log";
 import { deconstructError, stringifyError } from "./utils";
 
@@ -78,4 +80,51 @@ export function handleRouteError(error: unknown, c: HonoContext) {
 
 	// TODO: Remove any
 	return c.body(output as any, { status: statusCode });
+}
+
+/**
+ * Metadata response interface for the /metadata endpoint
+ */
+export interface MetadataResponse {
+	runtime: string;
+	version: string;
+	runner?: {
+		kind:
+			| { serverless: Record<never, never> }
+			| { normal: Record<never, never> };
+	};
+	/**
+	 * Endpoint that the client should connect to to access this runner.
+	 *
+	 * If defined, will override the endpoint the user has configured on startup.
+	 *
+	 * This is helpful if attempting to connect to a serverless runner, so the serverless runner can define where the main endpoint lives.
+	 *
+	 * This is also helpful for setting up clean redirects as needed.
+	 **/
+	clientEndpoint?: string;
+}
+
+export function handleMetadataRequest(c: HonoContext, runConfig: RunnerConfig) {
+	const response: MetadataResponse = {
+		runtime: "rivetkit",
+		version: VERSION,
+		runner: {
+			kind:
+				runConfig.runnerKind === "serverless"
+					? { serverless: {} }
+					: { normal: {} },
+		},
+		clientEndpoint: getEndpoint(runConfig),
+	};
+
+	return c.json(response);
+}
+
+export function handleHealthRequest(c: HonoContext) {
+	return c.json({
+		status: "ok",
+		runtime: "rivetkit",
+		version: VERSION,
+	});
 }

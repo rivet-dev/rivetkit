@@ -54,17 +54,6 @@ export class ActorError extends Error {
 		// Force stringify to return the message
 		return this.message;
 	}
-
-	/**
-	 * Serialize error for HTTP response
-	 */
-	serializeForHttp() {
-		return {
-			type: this.code,
-			message: this.message,
-			metadata: this.metadata,
-		};
-	}
 }
 
 export class InternalError extends ActorError {
