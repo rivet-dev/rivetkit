@@ -115,7 +115,10 @@ export function handleMetadataRequest(c: HonoContext, runConfig: RunnerConfig) {
 					? { serverless: {} }
 					: { normal: {} },
 		},
-		clientEndpoint: getEndpoint(runConfig),
+		// Do not return client endpoint if default server disabled
+		clientEndpoint:
+			runConfig.overrideServerAddress ??
+			(runConfig.disableDefaultServer ? undefined : getEndpoint(runConfig)),
 	};
 
 	return c.json(response);
