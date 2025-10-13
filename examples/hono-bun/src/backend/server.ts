@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { upgradeWebSocket, websocket } from "hono/bun";
+import { cors } from "hono/cors";
 import { registry } from "./registry";
 
 const { client, fetch } = registry.start({
@@ -10,10 +11,21 @@ const { client, fetch } = registry.start({
 	overrideServerAddress: "http://localhost:8080/rivet",
 	// Specify Hono-specific upgradeWebSocket
 	getUpgradeWebSocket: () => upgradeWebSocket,
+	cors: {
+		origin: "http://localhost:5173",
+	},
 });
 
 // Setup router
 const app = new Hono();
+
+app.use(
+	"*",
+	cors({
+		origin: "http://localhost:5173",
+		credentials: true,
+	}),
+);
 
 app.use("/rivet/*", async (c) => {
 	return await fetch(c.req.raw, c.env);
