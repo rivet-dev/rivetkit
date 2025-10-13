@@ -127,7 +127,7 @@ export function createActorDurableObject(
 			configureInspectorAccessToken(registry.config, managerDriver);
 
 			// Create inline client
-			const inlineClient = createClientWithDriver(managerDriver);
+			const inlineClient = createClientWithDriver(managerDriver, runConfig);
 
 			// Create actor driver
 			const actorDriver = runConfig.driver.actor(
