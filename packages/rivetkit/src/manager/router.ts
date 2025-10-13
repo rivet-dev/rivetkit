@@ -641,7 +641,7 @@ function addManagerRoutes(
 		});
 	}
 
-	router.get("/health", (c) => handleHealthRequest(c, runConfig));
+	router.get("/health", (c) => handleHealthRequest(c));
 
 	router.get("/metadata", (c) => handleMetadataRequest(c, runConfig));
 
