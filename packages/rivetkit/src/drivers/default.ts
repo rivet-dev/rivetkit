@@ -18,7 +18,11 @@ export function chooseDefaultDriver(runConfig: RunnerConfig): DriverConfig {
 		return runConfig.driver;
 	}
 
-	if (runConfig.endpoint || runConfig.token) {
+	if (
+		runConfig.endpoint ||
+		runConfig.token ||
+		runConfig.runnerKind === "serverless"
+	) {
 		loggerWithoutContext().debug({
 			msg: "using rivet engine driver",
 			endpoint: runConfig.endpoint,
