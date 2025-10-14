@@ -5,6 +5,7 @@ import {
 	getRequestEncoding,
 	getRequestExposeInternalError,
 } from "@/actor/router-endpoints";
+import { buildActorNames, type RegistryConfig } from "@/registry/config";
 import type { RunnerConfig } from "@/registry/run-config";
 import { getEndpoint } from "@/remote-manager-driver/api-utils";
 import { HttpResponseError } from "@/schemas/client-protocol/mod";
@@ -93,6 +94,7 @@ export interface MetadataResponse {
 			| { serverless: Record<never, never> }
 			| { normal: Record<never, never> };
 	};
+	actorNames: ReturnType<typeof buildActorNames>;
 	/**
 	 * Endpoint that the client should connect to to access this runner.
 	 *
@@ -105,7 +107,11 @@ export interface MetadataResponse {
 	clientEndpoint?: string;
 }
 
-export function handleMetadataRequest(c: HonoContext, runConfig: RunnerConfig) {
+export function handleMetadataRequest(
+	c: HonoContext,
+	registryConfig: RegistryConfig,
+	runConfig: RunnerConfig,
+) {
 	const response: MetadataResponse = {
 		runtime: "rivetkit",
 		version: VERSION,
@@ -115,6 +121,7 @@ export function handleMetadataRequest(c: HonoContext, runConfig: RunnerConfig) {
 					? { serverless: {} }
 					: { normal: {} },
 		},
+		actorNames: buildActorNames(registryConfig),
 		// Do not return client endpoint if default server disabled
 		clientEndpoint:
 			runConfig.overrideServerAddress ??
