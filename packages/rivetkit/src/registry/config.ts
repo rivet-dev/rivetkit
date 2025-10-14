@@ -30,3 +30,11 @@ export type RegistryConfigInput<A extends RegistryActors> = Omit<
 	z.input<typeof RegistryConfigSchema>,
 	"use"
 > & { use: A };
+
+export function buildActorNames(
+	registryConfig: RegistryConfig,
+): Record<string, { metadata: Record<string, any> }> {
+	return Object.fromEntries(
+		Object.keys(registryConfig.use).map((name) => [name, { metadata: {} }]),
+	);
+}

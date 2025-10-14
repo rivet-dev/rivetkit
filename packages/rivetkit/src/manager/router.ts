@@ -212,7 +212,9 @@ function addServerlessRoutes(
 
 	router.get("/health", (c) => handleHealthRequest(c));
 
-	router.get("/metadata", (c) => handleMetadataRequest(c, runConfig));
+	router.get("/metadata", (c) =>
+		handleMetadataRequest(c, registryConfig, runConfig),
+	);
 }
 
 function addManagerRoutes(
@@ -643,7 +645,9 @@ function addManagerRoutes(
 
 	router.get("/health", (c) => handleHealthRequest(c));
 
-	router.get("/metadata", (c) => handleMetadataRequest(c, runConfig));
+	router.get("/metadata", (c) =>
+		handleMetadataRequest(c, registryConfig, runConfig),
+	);
 
 	managerDriver.modifyManagerRouter?.(
 		registryConfig,

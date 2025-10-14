@@ -33,7 +33,7 @@ import {
 	type ManagerDriver,
 	serializeEmptyPersistData,
 } from "@/driver-helpers/mod";
-import type { RegistryConfig } from "@/registry/config";
+import { buildActorNames, type RegistryConfig } from "@/registry/config";
 import type { RunnerConfig } from "@/registry/run-config";
 import { getEndpoint } from "@/remote-manager-driver/api-utils";
 import {
@@ -103,12 +103,7 @@ export class EngineActorDriver implements ActorDriver {
 			metadata: {
 				inspectorToken: this.#runConfig.inspector.token(),
 			},
-			prepopulateActorNames: Object.fromEntries(
-				Object.keys(this.#registryConfig.use).map((name) => [
-					name,
-					{ metadata: {} },
-				]),
-			),
+			prepopulateActorNames: buildActorNames(registryConfig),
 			onConnected: () => {
 				if (hasDisconnected) {
 					logger().info({
