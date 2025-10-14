@@ -1,23 +1,16 @@
 import { actor, setup } from "rivetkit";
-
-export type Contact = {
-	id: string;
-	name: string;
-	email: string;
-	phone: string;
-	updatedAt: number;
-};
+import type { Contact } from "./types";
 
 const contacts = actor({
 	// State is automatically persisted
-	// Persistent state that survives restarts: https://rivet.dev/docs/actors/state
+	// Persistent state that survives restarts
 	state: {
 		contacts: {} as Record<string, Contact>,
 		lastSyncTime: Date.now(),
 	},
 
 	actions: {
-		// Callable functions from clients: https://rivet.dev/docs/actors/actions
+		// Callable functions from clients
 		getChanges: (c, after = 0) => {
 			const changes = Object.values(c.state.contacts).filter(
 				(contact) => contact.updatedAt > after,
@@ -47,7 +40,7 @@ const contacts = actor({
 			c.state.lastSyncTime = Date.now();
 
 			if (changed) {
-				// Send events to all connected clients: https://rivet.dev/docs/actors/events
+				// Send events to all connected clients
 				c.broadcast("contactsChanged", {
 					contacts: Object.values(c.state.contacts).filter(
 						(c) => c.name !== "",
@@ -91,7 +84,7 @@ const contacts = actor({
 	},
 });
 
-// Register actors for use: https://rivet.dev/docs/setup
+// Register actors for use
 export const registry = setup({
 	use: { contacts },
 });

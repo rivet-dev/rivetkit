@@ -24,25 +24,24 @@ test("CRDT document can handle initial state", async (ctx) => {
 
 	// Test initial state
 	const state = await doc.getState();
-	expect(state).toMatchObject({
-		docData: "",
-		lastModified: 0,
-	});
+	expect(state.docData).toBeInstanceOf(Uint8Array);
+	expect(state.docData.length).toBe(0);
+	expect(state.lastModified).toBe(0);
 });
 
 test("CRDT document can apply updates", async (ctx) => {
 	const { client } = await setupTest(ctx, registry);
 	const doc = client.yjsDocument.getOrCreate(["test-updates"]);
 
-	// Mock update data (Base64 encoded)
-	const updateBase64 = btoa("mock-update-data");
+	// Mock update data as binary
+	const updateBytes = new Uint8Array([1, 2, 3, 4, 5]);
 
 	// Apply an update
-	await doc.applyUpdate(updateBase64);
+	await doc.applyUpdate(updateBytes);
 
 	// Verify state was updated
 	const state = await doc.getState();
-	expect(state.docData).not.toBe("");
+	expect(state.docData.length).toBeGreaterThan(0);
 	expect(state.lastModified).toBeGreaterThan(0);
 });
 
@@ -50,9 +49,9 @@ test("CRDT document handles multiple updates", async (ctx) => {
 	const { client } = await setupTest(ctx, registry);
 	const doc = client.yjsDocument.getOrCreate(["test-multiple"]);
 
-	const update1 = btoa("update-1");
-	const update2 = btoa("update-2");
-	const update3 = btoa("update-3");
+	const update1 = new Uint8Array([1, 2, 3]);
+	const update2 = new Uint8Array([4, 5, 6]);
+	const update3 = new Uint8Array([7, 8, 9]);
 
 	// Apply multiple updates
 	await doc.applyUpdate(update1);
@@ -72,21 +71,20 @@ test("CRDT document handles multiple updates", async (ctx) => {
 	expect(thirdModified).toBeGreaterThanOrEqual(secondModified);
 
 	// Verify state is updated
-	expect(state3.docData).not.toBe("");
+	expect(state3.docData.length).toBeGreaterThan(0);
 	expect(state3.lastModified).toBe(thirdModified);
 });
 
-test("CRDT document handles Base64 encoding correctly", async (ctx) => {
+test("CRDT document handles binary data correctly", async (ctx) => {
 	const { client } = await setupTest(ctx, registry);
 	const doc = client.yjsDocument.getOrCreate(["test-encoding"]);
 
-	// Test with specific Base64 data
-	const testData = "Hello, collaborative world!";
-	const updateBase64 = btoa(testData);
+	// Test with specific binary data
+	const updateBytes = new TextEncoder().encode("Hello, collaborative world!");
 
-	await doc.applyUpdate(updateBase64);
+	await doc.applyUpdate(updateBytes);
 
 	const state = await doc.getState();
-	expect(state.docData).toBeTruthy();
+	expect(state.docData.length).toBeGreaterThan(0);
 	expect(state.lastModified).toBeGreaterThan(0);
 });

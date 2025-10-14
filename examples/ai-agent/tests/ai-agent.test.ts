@@ -14,7 +14,7 @@ vi.mock("ai", () => ({
 	tool: vi.fn().mockImplementation(({ execute }) => ({ execute })),
 }));
 
-vi.mock("../src/backend/my-utils", () => ({
+vi.mock("../src/backend/my-tools", () => ({
 	getWeather: vi.fn().mockResolvedValue({
 		location: "San Francisco",
 		temperature: 72,

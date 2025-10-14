@@ -1,19 +1,20 @@
 import { actor, setup } from "rivetkit";
+import type { GameVars, Input, Player } from "./types";
 
-export type Position = { x: number; y: number };
-export type Input = { x: number; y: number };
-export type Player = { id: string; position: Position; input: Input };
+export type { Player };
 
 const gameRoom = actor({
-	// Persistent state that survives restarts: https://rivet.dev/docs/actors/state
+	// Persistent state that survives restarts
 	state: {
 		players: {} as Record<string, Player>,
 		mapSize: 800,
 	},
 
+	createVars: (): GameVars => ({}),
+
 	onStart: (c) => {
 		// Set up game update loop
-		setInterval(() => {
+		c.vars.gameLoopInterval = setInterval(() => {
 			const playerList: Player[] = [];
 			let hasPlayers = false;
 
@@ -42,16 +43,19 @@ const gameRoom = actor({
 
 			// Only broadcast if there are players
 			if (hasPlayers) {
-				// Send events to all connected clients: https://rivet.dev/docs/actors/events
+				// Send events to all connected clients
 				c.broadcast("worldUpdate", { playerList });
 			}
 		}, 50);
-
-		// Store interval ID for cleanup (would need to be cleaned up manually if needed)
-		// For now, we'll let the interval run since there's no cleanup method
 	},
 
-	// Handle client connections: https://rivet.dev/docs/actors/connection-lifecycle
+	onStop: (c) => {
+		if (c.vars.gameLoopInterval) {
+			clearInterval(c.vars.gameLoopInterval);
+		}
+	},
+
+	// Handle client connections
 	onConnect: (c, conn) => {
 		const id = conn.id;
 		// State changes are automatically persisted
@@ -74,7 +78,7 @@ const gameRoom = actor({
 	},
 
 	actions: {
-		// Callable functions from clients: https://rivet.dev/docs/actors/actions
+		// Callable functions from clients
 		setInput: (c, input: Input) => {
 			const player = c.state.players[c.conn.id];
 			if (player) {
@@ -88,7 +92,7 @@ const gameRoom = actor({
 	},
 });
 
-// Register actors for use: https://rivet.dev/docs/setup
+// Register actors for use
 export const registry = setup({
 	use: { gameRoom },
 });

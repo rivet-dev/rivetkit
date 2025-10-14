@@ -2,13 +2,8 @@ import { openai } from "@ai-sdk/openai";
 import { generateText, tool } from "ai";
 import { actor, setup } from "rivetkit";
 import { z } from "zod";
-import { getWeather } from "./my-utils";
-
-export type Message = {
-	role: "user" | "assistant";
-	content: string;
-	timestamp: number;
-};
+import { getWeather } from "./my-tools";
+import type { Message } from "./types";
 
 export const aiAgent = actor({
 	// Persistent state that survives restarts: https://rivet.dev/docs/actors/state
