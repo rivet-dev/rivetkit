@@ -1,4 +1,5 @@
 import type { Registry, RunConfigInput } from "rivetkit";
+import { logger } from "./log";
 
 export const toNextHandler = (
 	registry: Registry<any>,
@@ -12,6 +13,10 @@ export const toNextHandler = (
 
 	// Auto-configure serverless runner if not in prod
 	if (process.env.NODE_ENV !== "production") {
+		logger().debug(
+			"detected development environment, auto-starting engine and auto-configuring serverless",
+		);
+
 		const publicUrl =
 			process.env.NEXT_PUBLIC_SITE_URL ??
 			process.env.NEXT_PUBLIC_VERCEL_URL ??
@@ -21,6 +26,10 @@ export const toNextHandler = (
 		inputConfig.autoConfigureServerless = {
 			url: `${publicUrl}/api/rivet/start`,
 		};
+	} else {
+		logger().debug(
+			"detected production environment, will not auto-start engine and auto-configure serverless",
+		);
 	}
 
 	// Next logs this on every request
