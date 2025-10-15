@@ -1,9 +1,8 @@
-import { createClient, createRivetKit } from "@rivetkit/react";
+import { createRivetKit } from "@rivetkit/react";
 import { useEffect, useState } from "react";
 import type { Member, registry } from "../backend/registry";
 
-const client = createClient<typeof registry>("http://localhost:8080");
-const { useActor } = createRivetKit(client);
+const { useActor } = createRivetKit<typeof registry>("http://localhost:8080");
 
 const ORG_ID = "org-1";
 

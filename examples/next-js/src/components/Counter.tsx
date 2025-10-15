@@ -1,7 +1,13 @@
 "use client";
+
+import { createRivetKit } from "@rivetkit/next-js/client";
+import type { registry } from "@/rivet/registry";
 import { useState } from "react";
-import { useActor } from "@/lib/rivet-client";
 import styles from "./Counter.module.css";
+
+export const { useActor } = createRivetKit<typeof registry>(
+	process.env.NEXT_RIVET_ENDPOINT ?? "http://localhost:3000/api/rivet",
+);
 
 export function Counter() {
 	const [count, setCount] = useState(0);

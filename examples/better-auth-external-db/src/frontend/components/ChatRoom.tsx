@@ -1,11 +1,9 @@
-import { createClient, createRivetKit } from "@rivetkit/react";
+import { createRivetKit } from "@rivetkit/react";
 import { useEffect, useState } from "react";
 import type { registry } from "../../backend/registry";
 import { authClient } from "../auth-client";
 
-const client = createClient<typeof registry>("http://localhost:8080");
-
-const { useActor } = createRivetKit(client);
+const { useActor } = createRivetKit<typeof registry>("http://localhost:8080");
 
 interface ChatRoomProps {
 	user: { id: string; email: string };

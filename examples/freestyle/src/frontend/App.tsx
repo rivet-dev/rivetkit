@@ -1,13 +1,12 @@
-import { createClient, createRivetKit } from "@rivetkit/react";
+import { createRivetKit } from "@rivetkit/react";
 import { useEffect, useState } from "react";
 import type { Message, registry } from "../backend/registry";
 
-const client = createClient<typeof registry>({
+const { useActor } = createRivetKit<typeof registry>({
 	endpoint: import.meta.env.VITE_RIVET_ENDPOINT ?? "http://localhost:8080/api",
 	namespace: import.meta.env.VITE_RIVET_NAMESPACE,
 	runnerName: import.meta.env.VITE_RIVET_RUNNER_NAME ?? "freestyle-runner",
 });
-const { useActor } = createRivetKit(client);
 
 export function App() {
 	const [roomId, setRoomId] = useState("general");

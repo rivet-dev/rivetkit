@@ -1,11 +1,10 @@
-import { createClient, createRivetKit } from "@rivetkit/react";
+import { createRivetKit } from "@rivetkit/react";
 import { useEffect, useRef, useState } from "react";
 import * as Y from "yjs";
 import { applyUpdate, encodeStateAsUpdate } from "yjs";
 import type { registry } from "../backend/registry";
 
-const client = createClient<typeof registry>("http://localhost:8080");
-const { useActor } = createRivetKit(client);
+const { useActor } = createRivetKit<typeof registry>("http://localhost:8080");
 
 function YjsEditor({ documentId }: { documentId: string }) {
 	const yjsDocument = useActor({
