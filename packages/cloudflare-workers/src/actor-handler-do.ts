@@ -124,8 +124,6 @@ export function createActorDurableObject(
 				runConfig,
 			);
 
-			configureInspectorAccessToken(registry.config, managerDriver);
-
 			// Create inline client
 			const inlineClient = createClientWithDriver(managerDriver, runConfig);
 
@@ -191,10 +189,4 @@ export function createActorDurableObject(
 			await actor._onAlarm();
 		}
 	};
-}
-function configureInspectorAccessToken(
-	config: any,
-	managerDriver: ManagerDriver,
-) {
-	throw new Error("Function not implemented.");
 }

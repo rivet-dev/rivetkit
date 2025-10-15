@@ -33,6 +33,12 @@ export function createHandler<R extends Registry<any>>(
 	registry: R,
 	inputConfig?: InputConfig,
 ): Handler {
+	// HACK: Cloudflare does not support using `crypto.randomUUID()` before start, so we pass a default value
+	//
+	// Runner key is not used on Cloudflare
+	inputConfig = { ...inputConfig, runnerKey: "" };
+
+	// Parse config
 	const config = ConfigSchema.parse(inputConfig);
 
 	// Create config
