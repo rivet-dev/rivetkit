@@ -6,7 +6,12 @@ import { auth } from "./auth";
 import { registry } from "./registry";
 
 // Start RivetKit
-registry.start();
+registry.start({
+	cors: {
+		origin: "http://localhost:5173",
+		credentials: true,
+	},
+});
 
 // Setup router
 const app = new Hono();
