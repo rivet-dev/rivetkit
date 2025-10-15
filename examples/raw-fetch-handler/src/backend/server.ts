@@ -4,7 +4,12 @@ import { cors } from "hono/cors";
 import { registry } from "./registry";
 
 // Start RivetKit
-const { client } = registry.start();
+const { client } = registry.start({
+	cors: {
+		origin: "http://localhost:5173",
+		credentials: true,
+	},
+});
 
 // Setup router
 const app = new Hono();
@@ -12,6 +17,7 @@ const app = new Hono();
 app.use(
 	cors({
 		origin: "http://localhost:5173",
+		credentials: true,
 	}),
 );
 

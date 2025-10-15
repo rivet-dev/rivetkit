@@ -5,6 +5,7 @@ import { registry } from "./registry";
 const { client } = registry.start({
 	cors: {
 		origin: "http://localhost:5173",
+		credentials: true,
 	},
 });
 

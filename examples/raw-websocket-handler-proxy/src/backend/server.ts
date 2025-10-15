@@ -3,7 +3,12 @@ import { createNodeWebSocket } from "@hono/node-ws";
 import { Hono } from "hono";
 import { registry } from "./registry.js";
 
-const { client } = registry.start();
+const { client } = registry.start({
+	cors: {
+		origin: "http://localhost:5173",
+		credentials: true,
+	},
+});
 
 const app = new Hono();
 const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });

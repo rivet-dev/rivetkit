@@ -13,6 +13,7 @@ const { client, fetch } = registry.start({
 	getUpgradeWebSocket: () => upgradeWebSocket,
 	cors: {
 		origin: "http://localhost:5173",
+		credentials: true,
 	},
 });
 
