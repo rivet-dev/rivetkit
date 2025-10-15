@@ -1,9 +1,8 @@
-import { createClient, createRivetKit } from "@rivetkit/react";
+import { createRivetKit } from "@rivetkit/react";
 import { useEffect, useState } from "react";
 import type { Note, registry } from "../backend/registry";
 
-const client = createClient<typeof registry>("http://localhost:8080");
-const { useActor } = createRivetKit(client);
+const { useActor } = createRivetKit<typeof registry>("http://localhost:8080");
 
 function NotesApp({ userId }: { userId: string }) {
 	const [notes, setNotes] = useState<Note[]>([]);

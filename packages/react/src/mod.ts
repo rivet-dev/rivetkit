@@ -6,11 +6,25 @@ import {
 } from "@rivetkit/framework-base";
 import { useStore } from "@tanstack/react-store";
 import { useEffect, useRef } from "react";
-import type { Client, ExtractActorsFromRegistry } from "rivetkit/client";
+import {
+	type Client,
+	createClient,
+	type ExtractActorsFromRegistry,
+} from "rivetkit/client";
 
 export { createClient } from "rivetkit/client";
 
 export function createRivetKit<Registry extends AnyActorRegistry>(
+	clientInput: Parameters<typeof createClient>[0],
+	opts: CreateRivetKitOptions<Registry> = {},
+) {
+	return createRivetKitWithClient<Registry>(
+		createClient<Registry>(clientInput),
+		opts,
+	);
+}
+
+export function createRivetKitWithClient<Registry extends AnyActorRegistry>(
 	client: Client<Registry>,
 	opts: CreateRivetKitOptions<Registry> = {},
 ) {
