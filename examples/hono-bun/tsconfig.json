@@ -5,7 +5,7 @@
     /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
     "target": "esnext",
     /* Specify a set of bundled library declaration files that describe the target runtime environment. */
-    "lib": ["esnext"],
+    "lib": ["esnext", "dom"],
     /* Specify what JSX code is generated. */
     "jsx": "react-jsx",
 
