@@ -5,7 +5,7 @@ export const counter = actor({
 	actions: {
 		increment: (c, x: number) => {
 			c.state.count += x;
-			c.broadcast("foo", 1);
+			c.broadcast("newCount", c.state.count);
 			return c.state.count;
 		},
 	},
