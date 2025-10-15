@@ -114,6 +114,28 @@ importers:
         specifier: ^3.1.1
         version: 3.2.4(@types/node@22.15.32)(lightningcss@1.30.2)(terser@5.44.0)(tsx@3.14.0)(yaml@2.8.0)
 
+  examples/background-jobs:
+    dependencies:
+      resend:
+        specifier: ^4.0.1
+        version: 4.8.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+    devDependencies:
+      '@types/node':
+        specifier: ^22.13.9
+        version: 22.15.32
+      rivetkit:
+        specifier: workspace:*
+        version: link:../../packages/rivetkit
+      tsx:
+        specifier: ^3.12.7
+        version: 3.14.0
+      typescript:
+        specifier: ^5.7.3
+        version: 5.8.3
+      vitest:
+        specifier: ^3.1.1
+        version: 3.2.4(@types/node@22.15.32)(lightningcss@1.30.2)(terser@5.44.0)(tsx@3.14.0)(yaml@2.8.0)
+
   examples/better-auth-external-db:
     dependencies:
       '@rivetkit/react':
@@ -165,6 +187,31 @@ importers:
       vite:
         specifier: ^5.0.0
         version: 5.4.19(@types/node@22.15.32)(lightningcss@1.30.2)(terser@5.44.0)
+      vitest:
+        specifier: ^3.1.1
+        version: 3.2.4(@types/node@22.15.32)(lightningcss@1.30.2)(terser@5.44.0)(tsx@3.14.0)(yaml@2.8.0)
+
+  examples/bots:
+    dependencies:
+      '@hono/node-server':
+        specifier: ^1.14.3
+        version: 1.18.2(hono@4.9.8)
+      hono:
+        specifier: 4.9.8
+        version: 4.9.8
+    devDependencies:
+      '@types/node':
+        specifier: ^22.13.9
+        version: 22.15.32
+      rivetkit:
+        specifier: workspace:*
+        version: link:../../packages/rivetkit
+      tsx:
+        specifier: ^3.12.7
+        version: 3.14.0
+      typescript:
+        specifier: ^5.7.3
+        version: 5.8.3
       vitest:
         specifier: ^3.1.1
         version: 3.2.4(@types/node@22.15.32)(lightningcss@1.30.2)(terser@5.44.0)(tsx@3.14.0)(yaml@2.8.0)
@@ -1181,6 +1228,24 @@ importers:
       typescript:
         specifier: ^5.5.2
         version: 5.8.3
+
+  examples/workflows:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.13.9
+        version: 22.15.32
+      rivetkit:
+        specifier: workspace:*
+        version: link:../../packages/rivetkit
+      tsx:
+        specifier: ^3.12.7
+        version: 3.14.0
+      typescript:
+        specifier: ^5.7.3
+        version: 5.8.3
+      vitest:
+        specifier: ^3.1.1
+        version: 3.2.4(@types/node@22.15.32)(lightningcss@1.30.2)(terser@5.44.0)(tsx@3.14.0)(yaml@2.8.0)
 
   packages/actor:
     devDependencies:
@@ -3395,6 +3460,13 @@ packages:
     peerDependencies:
       react: ^18.3
 
+  '@react-email/render@1.1.2':
+    resolution: {integrity: sha512-RnRehYN3v9gVlNMehHPHhyp2RQo7+pSkHDtXPvg3s0GbzM9SQMW4Qrf8GRNvtpLC4gsI+Wt0VatNRUFqjvevbw==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      react: ^19.0.0
+      react-dom: ^19.0.0
+
   '@react-native/assets-registry@0.82.0':
     resolution: {integrity: sha512-SHRZxH+VHb6RwcHNskxyjso6o91Lq0DPgOpE5cDrppn1ziYhI723rjufFgh59RcpH441eci0/cXs/b0csXTtnw==}
     engines: {node: '>= 20.19.4'}
@@ -3669,6 +3741,9 @@ packages:
 
   '@rushstack/ts-command-line@5.0.1':
     resolution: {integrity: sha512-bsbUucn41UXrQK7wgM8CNM/jagBytEyJqXw/umtI8d68vFm1Jwxh1OtLrlW7uGZgjCWiiPH6ooUNa1aVsuVr3Q==}
+
+  '@selderee/plugin-htmlparser2@0.11.0':
+    resolution: {integrity: sha512-P33hHGdldxGabLFjPPpaTxVolMrzrcegejx+0GxjrIb9Zv48D8yAIA/QTDR2dFl7Uz7urX8aX6+5bCZslr+gWQ==}
 
   '@simplewebauthn/browser@13.1.0':
     resolution: {integrity: sha512-WuHZ/PYvyPJ9nxSzgHtOEjogBhwJfC8xzYkPC+rR/+8chl/ft4ngjiK8kSU5HtRJfczupyOh33b25TjYbvwAcg==}
@@ -4659,6 +4734,19 @@ packages:
     resolution: {integrity: sha512-Mv/TDa3nZ9sbc5soK+OoA74BsS3mL37yixCvUAQkiuA4Wz6YtwP/K47n2rv2ovzHZvoiQeA5FTQOschKkEwB0Q==}
     engines: {node: '>= 10.14.2'}
 
+  dom-serializer@2.0.0:
+    resolution: {integrity: sha512-wIkAryiqt/nV5EQKqQpo3SToSOV9J0DnbJqwK7Wv/Trc92zIAYZ4FlMu+JPFW1DfGFt81ZTCGgDEabffXeLyJg==}
+
+  domelementtype@2.3.0:
+    resolution: {integrity: sha512-OLETBj6w0OsagBwdXnPdN0cnMfF9opN69co+7ZrbfPGrdpPVNBUj02spi6B1N7wChLQiPn4CSH/zJvXw56gmHw==}
+
+  domhandler@5.0.3:
+    resolution: {integrity: sha512-cgwlv/1iFQiFnU96XXgROh8xTeetsnJiDsTc7TYCLFd9+/WNkIqPTxiM/8pSd8VIrhXGTf1Ny1q1hquVqDJB5w==}
+    engines: {node: '>= 4'}
+
+  domutils@3.2.2:
+    resolution: {integrity: sha512-6kZKyUajlDuqlHKVX1w7gyslj9MPIXzIFiz/rGu35uC1wMi+kMhQwGhl4lt9unC9Vb9INnY9Z3/ZA3+FhASLaw==}
+
   dot-case@3.0.4:
     resolution: {integrity: sha512-Kv5nKlh6yRrdrGvxeJ2e5y2eRUpkUosIW4A2AS38zwSz27zu7ufDwQPi5Jhs3XAlGNetl3bmnGhQsMtkKJnj3w==}
 
@@ -5052,6 +5140,9 @@ packages:
   fast-decode-uri-component@1.0.1:
     resolution: {integrity: sha512-WKgKWg5eUxvRZGwW8FvfbaH7AXSh2cL+3j5fMGzUMCxWBJ3dV3a7Wz8y2f/uQ0e3B6WmodD3oS54jTQ9HVTIIg==}
 
+  fast-deep-equal@2.0.1:
+    resolution: {integrity: sha512-bCK/2Z4zLidyB4ReuIsvALH6w31YfAQDmXMqMx6FyfHqvBxtjC0eRumeSu4Bs3XtXwpyIywtSTrVT99BxY1f9w==}
+
   fast-deep-equal@3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
 
@@ -5297,6 +5388,13 @@ packages:
     resolution: {integrity: sha512-puUZAUKT5m8Zzvs72XWy3HtvVbTWljRE66cP60bxJzAqf2DgICo7lYTY2IHUmLnNpjYvw5bvmoHvPc0QO2a62w==}
     engines: {node: ^16.14.0 || >=18.0.0}
 
+  html-to-text@9.0.5:
+    resolution: {integrity: sha512-qY60FjREgVZL03vJU6IfMV4GDjGBIoOyvuFdpBDIX9yTlDw0TjxVBQp+P8NvpdIXNJvfWBTNul7fsAQJq2FNpg==}
+    engines: {node: '>=14'}
+
+  htmlparser2@8.0.2:
+    resolution: {integrity: sha512-GYdjWKDkbRLkZ5geuHs5NY1puJ+PXwP7+fHPRz06Eirsb9ugf6d8kkXav6ADhcODhFFPMIXyxkxSuMf3D6NCFA==}
+
   http-errors@2.0.0:
     resolution: {integrity: sha512-FtwrG/euBzaEjYeRqOgly7G0qviiXoJWnvEH2Z1plBdXgbyjv34pHTSb9zoeHMyDy33+DWy5Wt9Wo+TURtOYSQ==}
     engines: {node: '>= 0.8'}
@@ -5540,6 +5638,9 @@ packages:
   lan-network@0.1.7:
     resolution: {integrity: sha512-mnIlAEMu4OyEvUNdzco9xpuB9YVcPkQec+QsgycBCtPZvEqWPCDPfbAE4OJMdBBWpZWtpCn1xw9jJYlwjWI5zQ==}
     hasBin: true
+
+  leac@0.6.0:
+    resolution: {integrity: sha512-y+SqErxb8h7nE/fiEX07jsbuhrpO9lL8eca7/Y1nuWV2moNlXhyd59iDGcRf6moVyDMbmTNzL40SUyrFU/yDpg==}
 
   lefthook-darwin-arm64@1.11.14:
     resolution: {integrity: sha512-YPbUK6kGytY5W6aNUrzK7Vod3ynLVvj5JQiBh0DjlxCHMgIQPpFkDfwQzGw1E8CySyC95HXO83En5Ule8umS7g==}
@@ -6222,6 +6323,9 @@ packages:
     resolution: {integrity: sha512-Nt/a5SfCLiTnQAjx3fHlqp8hRgTL3z7kTQZzvIMS9uCAepnCyjpdEc6M/sz69WqMBdaDBw9sF1F1UaHROYzGkQ==}
     engines: {node: '>=10'}
 
+  parseley@0.12.1:
+    resolution: {integrity: sha512-e6qHKe3a9HWr0oMRVDTRhKce+bRO8VGQR3NyVwcjwrbhMmFCX9KszEV35+rn4AdilFAq9VPxP/Fe1wC9Qjd2lw==}
+
   parseurl@1.3.3:
     resolution: {integrity: sha512-CiyeOxFT/JZyN5m0z9PfXw4SCBJ6Sygz1Dpl0wqjlhDEGGBP1GnsUVEL0p63hoG1fcj3fHynXi9NYO4nWOL+qQ==}
     engines: {node: '>= 0.8'}
@@ -6275,6 +6379,9 @@ packages:
   pathval@2.0.0:
     resolution: {integrity: sha512-vE7JKRyES09KiunauX7nd2Q9/L7lhok4smP9RZTDeD4MVs72Dp2qNFVz39Nz5a0FVEW0BJR6C0DYrq6unoziZA==}
     engines: {node: '>= 14.16'}
+
+  peberminta@0.9.0:
+    resolution: {integrity: sha512-XIxfHpEuSJbITd1H3EeQwpcZbTLHc+VVr8ANI9t5sit565tsI4/xK3KWTUFE2e6QiangUkh3B0jihzmGnNrRsQ==}
 
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
@@ -6352,6 +6459,11 @@ packages:
   prebuild-install@7.1.3:
     resolution: {integrity: sha512-8Mf2cbV7x1cXPUILADGI3wuhfqWvtiLA1iclTDbFRZkgRQS0NqsPZphna9V+HyTEadheuPmjaJMsbzKQFOzLug==}
     engines: {node: '>=10'}
+    hasBin: true
+
+  prettier@3.6.2:
+    resolution: {integrity: sha512-I7AIg5boAr5R0FFtJ6rCfD+LFsWHp81dolrFD8S79U9tb8Az2nGrJncnMSnys+bpQJfRUzqs9hnA81OAA3hCuQ==}
+    engines: {node: '>=14'}
     hasBin: true
 
   pretty-bytes@5.6.0:
@@ -6527,6 +6639,9 @@ packages:
       '@types/react':
         optional: true
 
+  react-promise-suspense@0.3.4:
+    resolution: {integrity: sha512-I42jl7L3Ze6kZaq+7zXWSunBa3b1on5yfvUW6Eo/3fFOj6dZ5Bqmcd264nJbTK/gn1HjjILAjSwnZbV4RpSaNQ==}
+
   react-refresh@0.14.2:
     resolution: {integrity: sha512-jCvmsr+1IUSMUyzOkRcvnVbX3ZYC6g9TDrDbFuFmRDq7PD4yaGbLKNQL6k2jnArV8hjYxh7hVhAZB6s9HDGpZA==}
     engines: {node: '>=0.10.0'}
@@ -6594,6 +6709,10 @@ packages:
 
   requires-port@1.0.0:
     resolution: {integrity: sha512-KigOCHcocU3XODJxsu8i/j8T9tzT4adHiecwORRQ0ZZFcp7ahwXuRU1m+yuO90C5ZUyGeGfocHDI14M3L3yDAQ==}
+
+  resend@4.8.0:
+    resolution: {integrity: sha512-R8eBOFQDO6dzRTDmaMEdpqrkmgSjPpVXt4nGfWsZdYOet0kqra0xgbvTES6HmCriZEXbmGk3e0DiGIaLFTFSHA==}
+    engines: {node: '>=18'}
 
   resolve-from@3.0.0:
     resolution: {integrity: sha512-GnlH6vxLymXJNMBo7XP1fJIzBFbdYt49CuTwmB/6N53t+kMPRMFKz783LlQ4tv28XoQfMWinAJX6WCGf2IlaIw==}
@@ -6682,6 +6801,9 @@ packages:
 
   secure-json-parse@2.7.0:
     resolution: {integrity: sha512-6aU+Rwsezw7VR8/nyvKTx8QpWH9FrcYiXXlqC4z5d5XQBDRqtbfsRjnwGyqbi3gddNtWHuEk9OANUotL26qKUw==}
+
+  selderee@0.11.0:
+    resolution: {integrity: sha512-5TF+l7p4+OsnP8BCCvSyZiSPc4x4//p5uPwK8TCnVPJYRmU2aYKMpOXvw8zM5a5JvuuCGN1jmsMwuU2W02ukfA==}
 
   semver@6.3.1:
     resolution: {integrity: sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==}
@@ -9643,6 +9765,14 @@ snapshots:
       '@radix-ui/react-compose-refs': 1.0.0(react@19.1.0)
       react: 19.1.0
 
+  '@react-email/render@1.1.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
+    dependencies:
+      html-to-text: 9.0.5
+      prettier: 3.6.2
+      react: 19.1.0
+      react-dom: 19.1.0(react@19.1.0)
+      react-promise-suspense: 0.3.4
+
   '@react-native/assets-registry@0.82.0': {}
 
   '@react-native/babel-plugin-codegen@0.81.4(@babel/core@7.27.4)':
@@ -10090,6 +10220,11 @@ snapshots:
       string-argv: 0.3.2
     transitivePeerDependencies:
       - '@types/node'
+
+  '@selderee/plugin-htmlparser2@0.11.0':
+    dependencies:
+      domhandler: 5.0.3
+      selderee: 0.11.0
 
   '@simplewebauthn/browser@13.1.0': {}
 
@@ -11286,6 +11421,24 @@ snapshots:
 
   diff-sequences@26.6.2: {}
 
+  dom-serializer@2.0.0:
+    dependencies:
+      domelementtype: 2.3.0
+      domhandler: 5.0.3
+      entities: 4.5.0
+
+  domelementtype@2.3.0: {}
+
+  domhandler@5.0.3:
+    dependencies:
+      domelementtype: 2.3.0
+
+  domutils@3.2.2:
+    dependencies:
+      dom-serializer: 2.0.0
+      domelementtype: 2.3.0
+      domhandler: 5.0.3
+
   dot-case@3.0.4:
     dependencies:
       no-case: 3.0.4
@@ -11742,6 +11895,8 @@ snapshots:
 
   fast-decode-uri-component@1.0.1: {}
 
+  fast-deep-equal@2.0.1: {}
+
   fast-deep-equal@3.1.3: {}
 
   fast-json-stable-stringify@2.1.0: {}
@@ -12040,6 +12195,21 @@ snapshots:
     dependencies:
       lru-cache: 10.4.3
 
+  html-to-text@9.0.5:
+    dependencies:
+      '@selderee/plugin-htmlparser2': 0.11.0
+      deepmerge: 4.3.1
+      dom-serializer: 2.0.0
+      htmlparser2: 8.0.2
+      selderee: 0.11.0
+
+  htmlparser2@8.0.2:
+    dependencies:
+      domelementtype: 2.3.0
+      domhandler: 5.0.3
+      domutils: 3.2.2
+      entities: 4.5.0
+
   http-errors@2.0.0:
     dependencies:
       depd: 2.0.0
@@ -12289,6 +12459,8 @@ snapshots:
   kysely@0.28.2: {}
 
   lan-network@0.1.7: {}
+
+  leac@0.6.0: {}
 
   lefthook-darwin-arm64@1.11.14:
     optional: true
@@ -13142,6 +13314,11 @@ snapshots:
     dependencies:
       pngjs: 3.4.0
 
+  parseley@0.12.1:
+    dependencies:
+      leac: 0.6.0
+      peberminta: 0.9.0
+
   parseurl@1.3.3: {}
 
   pascal-case@3.1.2:
@@ -13183,6 +13360,8 @@ snapshots:
   pathe@2.0.3: {}
 
   pathval@2.0.0: {}
+
+  peberminta@0.9.0: {}
 
   picocolors@1.1.1: {}
 
@@ -13282,6 +13461,8 @@ snapshots:
       simple-get: 4.0.1
       tar-fs: 2.1.3
       tunnel-agent: 0.6.0
+
+  prettier@3.6.2: {}
 
   pretty-bytes@5.6.0: {}
 
@@ -13526,6 +13707,10 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  react-promise-suspense@0.3.4:
+    dependencies:
+      fast-deep-equal: 2.0.1
+
   react-refresh@0.14.2: {}
 
   react-refresh@0.17.0: {}
@@ -13588,6 +13773,13 @@ snapshots:
       resolve: 1.7.1
 
   requires-port@1.0.0: {}
+
+  resend@4.8.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
+    dependencies:
+      '@react-email/render': 1.1.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+    transitivePeerDependencies:
+      - react
+      - react-dom
 
   resolve-from@3.0.0: {}
 
@@ -13690,6 +13882,10 @@ snapshots:
       ajv-keywords: 5.1.0(ajv@8.13.0)
 
   secure-json-parse@2.7.0: {}
+
+  selderee@0.11.0:
+    dependencies:
+      parseley: 0.12.1
 
   semver@6.3.1: {}
 

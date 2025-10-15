@@ -44,8 +44,7 @@ function YjsEditor({ documentId }: { documentId: string }) {
 					updatingFromLocal.current = true;
 
 					const update = encodeStateAsUpdate(yDoc);
-					const base64 = bufferToBase64(update);
-					yjsDocument.connection.applyUpdate(base64).finally(() => {
+					yjsDocument.connection.applyUpdate(update).finally(() => {
 						updatingFromLocal.current = false;
 					});
 				}
@@ -55,20 +54,14 @@ function YjsEditor({ documentId }: { documentId: string }) {
 		observationInitialized.current = true;
 	}, [yjsDocument.connection]);
 
-	yjsDocument.useEvent("initialState", ({ update }: { update: string }) => {
+	yjsDocument.useEvent("initialState", ({ update }: { update: Uint8Array }) => {
 		const yDoc = yDocRef.current;
 		if (!yDoc) return;
 
 		updatingFromServer.current = true;
 
 		try {
-			const binary = atob(update);
-			const bytes = new Uint8Array(binary.length);
-			for (let i = 0; i < binary.length; i++) {
-				bytes[i] = binary.charCodeAt(i);
-			}
-
-			applyUpdate(yDoc, bytes);
+			applyUpdate(yDoc, update);
 
 			const yText = yDoc.getText("content");
 			setText(yText.toString());
@@ -79,20 +72,14 @@ function YjsEditor({ documentId }: { documentId: string }) {
 		}
 	});
 
-	yjsDocument.useEvent("update", ({ update }: { update: string }) => {
+	yjsDocument.useEvent("update", ({ update }: { update: Uint8Array }) => {
 		const yDoc = yDocRef.current;
 		if (!yDoc) return;
 
 		updatingFromServer.current = true;
 
 		try {
-			const binary = atob(update);
-			const bytes = new Uint8Array(binary.length);
-			for (let i = 0; i < binary.length; i++) {
-				bytes[i] = binary.charCodeAt(i);
-			}
-
-			applyUpdate(yDoc, bytes);
+			applyUpdate(yDoc, update);
 
 			const yText = yDoc.getText("content");
 			setText(yText.toString());
@@ -161,8 +148,8 @@ export function App() {
 			<div className="info-box">
 				<h4>How it works</h4>
 				<p>
-					This editor uses Conflict-free Replicated Data Types (CRDTs) with Yjs to enable 
-					real-time collaborative editing. Open multiple browser tabs or share the URL 
+					This editor uses Conflict-free Replicated Data Types (CRDTs) with Yjs to enable
+					real-time collaborative editing. Open multiple browser tabs or share the URL
 					with others to see live collaboration in action!
 				</p>
 			</div>
@@ -183,12 +170,4 @@ export function App() {
 			<YjsEditor key={documentId} documentId={documentId} />
 		</div>
 	);
-}
-
-function bufferToBase64(buffer: Uint8Array): string {
-	let binary = "";
-	for (let i = 0; i < buffer.byteLength; i++) {
-		binary += String.fromCharCode(buffer[i]);
-	}
-	return btoa(binary);
 }
