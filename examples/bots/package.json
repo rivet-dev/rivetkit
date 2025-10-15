@@ -1,6 +1,6 @@
 {
   "name": "example-bots",
-  "version": "2.0.14",
+  "version": "2.0.16",
   "private": true,
   "type": "module",
   "scripts": {
