@@ -1,6 +1,6 @@
 "use client";
 
-import { createClient, createRivetKit } from "@rivetkit/react";
+import { createRivetKit } from "@rivetkit/next-js/client";
 import { useEffect, useState, useRef } from "react";
 import type { Message, registry } from "../rivet/registry";
 
