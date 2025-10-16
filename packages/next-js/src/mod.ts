@@ -28,7 +28,7 @@ export const toNextHandler = (
 
 		inputConfig.runEngine = true;
 		inputConfig.autoConfigureServerless = {
-			url: `${publicUrl}/api/rivet/start`,
+			url: `${publicUrl}/api/rivet`,
 		};
 	} else {
 		logger().debug(

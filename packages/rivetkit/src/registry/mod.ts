@@ -266,9 +266,7 @@ async function configureServerlessRunner(config: RunnerConfig): Promise<void> {
 		});
 		const serverlessConfig = {
 			serverless: {
-				url:
-					customConfig.url ||
-					`http://localhost:${config.defaultServerPort}/start`,
+				url: customConfig.url || `http://localhost:${config.defaultServerPort}`,
 				headers: customConfig.headers || {},
 				max_runners: customConfig.maxRunners ?? 100,
 				min_runners: customConfig.minRunners ?? 0,
