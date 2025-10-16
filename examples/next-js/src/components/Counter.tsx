@@ -5,9 +5,11 @@ import type { registry } from "@/rivet/registry";
 import { useState } from "react";
 import styles from "./Counter.module.css";
 
-export const { useActor } = createRivetKit<typeof registry>(
-	process.env.NEXT_RIVET_ENDPOINT ?? "http://localhost:3000/api/rivet",
-);
+export const { useActor } = createRivetKit<typeof registry>({
+	endpoint: process.env.NEXT_PUBLIC_RIVET_ENDPOINT ?? "http://localhost:3000/api/rivet",
+	namespace: process.env.NEXT_PUBLIC_RIVET_NAMESPACE,
+	token: process.env.NEXT_PUBLIC_RIVET_TOKEN,
+});
 
 export function Counter() {
 	const [count, setCount] = useState(0);
