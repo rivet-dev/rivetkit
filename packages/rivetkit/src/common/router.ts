@@ -11,7 +11,7 @@ import { getEndpoint } from "@/remote-manager-driver/api-utils";
 import { HttpResponseError } from "@/schemas/client-protocol/mod";
 import { HTTP_RESPONSE_ERROR_VERSIONED } from "@/schemas/client-protocol/versioned";
 import { encodingIsBinary, serializeWithEncoding } from "@/serde";
-import { bufferToArrayBuffer, VERSION } from "@/utils";
+import { bufferToArrayBuffer, getEnvUniversal, VERSION } from "@/utils";
 import { getLogger, type Logger } from "./log";
 import { deconstructError, stringifyError } from "./utils";
 
@@ -37,6 +37,9 @@ export function loggerMiddleware(logger: Logger) {
 			reqSize: c.req.header("content-length"),
 			resSize: c.res.headers.get("content-length"),
 			userAgent: c.req.header("user-agent"),
+			...(getEnvUniversal("_RIVET_LOG_HEADERS")
+				? { allHeaders: JSON.stringify(c.req.header()) }
+				: {}),
 		});
 	};
 }
