@@ -1,12 +1,5 @@
-import { Counter } from "@/components/Counter";
-import styles from "./page.module.css";
+import { ChatRoom } from "@/components/ChatRoom";
 
 export default function Home() {
-	return (
-		<div className={styles.page}>
-			<main className={styles.main}>
-				<Counter />
-			</main>
-		</div>
-	);
+	return <ChatRoom />;
 }
