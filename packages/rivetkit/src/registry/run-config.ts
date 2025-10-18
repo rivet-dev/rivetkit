@@ -50,7 +50,7 @@ export const RunnerConfigSchema = z
 		runEngineVersion: z
 			.string()
 			.optional()
-			.default(() => getEnvUniversal("RIVET_RUN_ENGINE_VERSION") ?? "25.8.0"),
+			.default(() => getEnvUniversal("RIVET_RUN_ENGINE_VERSION") ?? "25.8.1"),
 
 		/** @experimental */
 		overrideServerAddress: z.string().optional(),
