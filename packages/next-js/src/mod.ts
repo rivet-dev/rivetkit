@@ -29,6 +29,10 @@ export const toNextHandler = (
 		inputConfig.runEngine = true;
 		inputConfig.autoConfigureServerless = {
 			url: `${publicUrl}/api/rivet`,
+			minRunners: 0,
+			maxRunners: 100_000,
+			requestLifespan: 300,
+			slotsPerRunner: 1,
 		};
 	} else {
 		logger().debug(
