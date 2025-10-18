@@ -66,12 +66,12 @@ function logProgress({
 		startedCount - (successCount + failureCount),
 	);
 	console.log(
-		`progress: success=${successCount}, failures=${failureCount}, pending=${pendingCount}, remaining=${remainingCount}, duration(ms): avg=${stats.average.toFixed(2)}, median=${stats.median.toFixed(2)}, min=${stats.min.toFixed(2)}, max=${stats.max.toFixed(2)}`,
+		`progress: success=${successCount}, failures=${failureCount}, pending=${pendingCount}, remaining=${remainingCount}, samples=${iterationDurations.length}, duration(ms): avg=${stats.average.toFixed(2)}, median=${stats.median.toFixed(2)}, min=${stats.min.toFixed(2)}, max=${stats.max.toFixed(2)}`,
 	);
 }
 
 async function main() {
-	const client = createClient<Registry>("http://localhost:6420");
+	const client = createClient<Registry>();
 	const testId = randomUUID();
 	const errors: SmokeTestError[] = [];
 	let successCount = 0;
@@ -130,7 +130,7 @@ async function main() {
 
 	const finalStats = calculateDurationStats(iterationDurations);
 	console.log(
-		`iteration duration stats (ms): avg=${finalStats.average.toFixed(2)}, median=${finalStats.median.toFixed(2)}, min=${finalStats.min.toFixed(2)}, max=${finalStats.max.toFixed(2)}`,
+		`iteration duration stats (ms): samples=${iterationDurations.length}, avg=${finalStats.average.toFixed(2)}, median=${finalStats.median.toFixed(2)}, min=${finalStats.min.toFixed(2)}, max=${finalStats.max.toFixed(2)}`,
 	);
 
 	if (errors.length > 0) {
