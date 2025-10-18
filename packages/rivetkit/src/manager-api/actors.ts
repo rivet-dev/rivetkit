@@ -23,6 +23,7 @@ export type ActorsListResponse = z.infer<typeof ActorsListResponseSchema>;
 
 // MARK: POST /actors
 export const ActorsCreateRequestSchema = z.object({
+	datacenter: z.string().optional(),
 	name: z.string(),
 	runner_name_selector: z.string(),
 	crash_policy: z.string(),
@@ -38,6 +39,7 @@ export type ActorsCreateResponse = z.infer<typeof ActorsCreateResponseSchema>;
 
 // MARK: PUT /actors
 export const ActorsGetOrCreateRequestSchema = z.object({
+	datacenter: z.string().optional(),
 	name: z.string(),
 	key: z.string(),
 	runner_name_selector: z.string(),
