@@ -119,6 +119,7 @@ export const RunnerConfigSchema = z
 					requestLifespan: z.number().optional(),
 					runnersMargin: z.number().optional(),
 					slotsPerRunner: z.number().optional(),
+					metadata: z.record(z.unknown()).optional(),
 				}),
 			])
 			.optional(),

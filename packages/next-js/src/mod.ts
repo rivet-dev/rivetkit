@@ -33,6 +33,7 @@ export const toNextHandler = (
 			maxRunners: 100_000,
 			requestLifespan: 300,
 			slotsPerRunner: 1,
+			metadata: { provider: "next-js" },
 		};
 	} else {
 		logger().debug(

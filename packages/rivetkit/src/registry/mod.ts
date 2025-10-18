@@ -275,6 +275,7 @@ async function configureServerlessRunner(config: RunnerConfig): Promise<void> {
 				slots_per_runner:
 					customConfig.slotsPerRunner ?? config.totalSlots ?? 1000,
 			},
+			metadata: customConfig.metadata ?? {},
 		};
 		await updateRunnerConfig(clientConfig, config.runnerName, {
 			datacenters: Object.fromEntries(
