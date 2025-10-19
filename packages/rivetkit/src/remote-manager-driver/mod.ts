@@ -16,7 +16,7 @@ import type {
 } from "@/driver-helpers/mod";
 import type { Encoding, UniversalWebSocket } from "@/mod";
 import { uint8ArrayToBase64 } from "@/serde";
-import { combineUrlPath } from "@/utils";
+import { combineUrlPath, getEnvUniversal } from "@/utils";
 import { sendHttpRequestToActor } from "./actor-http-client";
 import {
 	buildWebSocketProtocols,
@@ -56,6 +56,14 @@ export class RemoteManagerDriver implements ManagerDriver {
 	#metadataPromise: Promise<void> | undefined;
 
 	constructor(runConfig: ClientConfig) {
+		// Disable health check if in Next.js build phase since there is no `/metadata` endpoint
+		//
+		// See https://github.com/vercel/next.js/blob/5e6b008b561caf2710ab7be63320a3d549474a5b/packages/next/shared/lib/constants.ts#L19-L23
+		if (getEnvUniversal("NEXT_PHASE") === "phase-production-build") {
+			logger().info("detected next.js build phase, disabling health check");
+			runConfig.disableHealthCheck = true;
+		}
+
 		this.#config = runConfig;
 
 		// Perform metadata check if enabled
