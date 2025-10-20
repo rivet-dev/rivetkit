@@ -109,7 +109,7 @@ export class RemoteManagerDriver implements ManagerDriver {
 				});
 			} catch (error) {
 				logger().error({
-					msg: "failed to connect to metadata endpoint",
+					msg: "health check failed, validate the Rivet endpoint is configured correctly",
 					endpoint,
 					error: stringifyError(error),
 				});

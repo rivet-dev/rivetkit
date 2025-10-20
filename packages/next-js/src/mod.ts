@@ -11,10 +11,6 @@ export const toNextHandler = (
 	// Configure serverless
 	inputConfig.runnerKind = "serverless";
 
-	// TODO: We probably want to move this to the registry for all serverless runners
-	// Metadata endpoint will not exist at 127.0.0.1:6420
-	inputConfig.disableHealthCheck = true;
-
 	// Auto-configure serverless runner if not in prod
 	if (process.env.NODE_ENV !== "production") {
 		logger().debug(
