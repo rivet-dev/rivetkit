@@ -20,12 +20,19 @@ import {
 	promiseWithResolvers,
 	SinglePromiseQueue,
 } from "@/utils";
-import type { ActionContext } from "./action";
+import { ActionContext } from "./action";
 import type { ActorConfig, OnConnectOptions } from "./config";
-import { Conn, type ConnId, generateConnId, generateConnToken } from "./conn";
+import {
+	Conn,
+	type ConnId,
+	generateConnId,
+	generateConnSocketId,
+	generateConnToken,
+} from "./conn";
 import {
 	CONN_DRIVERS,
 	type ConnDriver,
+	ConnDriverKind,
 	type ConnDriverState,
 	getConnDriverKindFromState,
 } from "./conn-drivers";
@@ -224,6 +231,27 @@ export class ActorInstance<S, CP, CS, V, I, DB extends AnyDatabaseProvider> {
 				// 2. If we were to assign `state` to `#persist.s`, `on-change` would assume nothing changed since `state` is still === `#persist.s` since we returned a reference in `getState`
 				this.#persist.state = { ...(state as S) };
 				await this.saveState({ immediate: true });
+			},
+			executeAction: async (name, params) => {
+				const socketId = generateConnSocketId();
+				const conn = await this.createConn(
+					{
+						socketId,
+						driverState: { [ConnDriverKind.HTTP]: {} },
+					},
+					undefined,
+					undefined,
+				);
+
+				try {
+					return await this.executeAction(
+						new ActionContext(this.actorContext, conn),
+						name,
+						params || [],
+					);
+				} finally {
+					this.__connDisconnected(conn, true, socketId);
+				}
 			},
 		};
 	});

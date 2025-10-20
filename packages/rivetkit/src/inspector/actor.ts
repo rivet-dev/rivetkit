@@ -250,6 +250,21 @@ export function createActorInspectorRouter() {
 					return c.json({ error: (error as Error).message }, 500);
 				}
 			},
+		)
+		.post(
+			"/action",
+			sValidator(
+				"json",
+				z.object({ name: z.string(), params: z.array(z.any()).optional() }),
+			),
+			async (c) => {
+				const { name, params } = c.req.valid("json");
+				const result = await c.var.inspector.accessors.executeAction(
+					name,
+					params,
+				);
+				return c.json({ result }, 200);
+			},
 		);
 }
 
@@ -261,6 +276,7 @@ interface ActorInspectorAccessors {
 	getDb: () => Promise<InferDatabaseClient<AnyDatabaseProvider>>;
 	getRpcs: () => Promise<string[]>;
 	getConnections: () => Promise<Connection[]>;
+	executeAction: (name: string, params?: unknown[]) => Promise<unknown>;
 }
 
 interface ActorInspectorEmitterEvents {
