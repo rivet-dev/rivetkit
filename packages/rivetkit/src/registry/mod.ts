@@ -71,6 +71,25 @@ export class Registry<A extends RegistryActors> {
 		// Promise for any async operations we need to wait to complete
 		const readyPromises = [];
 
+		// Disable health check if using serverless
+		//
+		// This is because the endpoint will not be configured until we receive
+		// a serverless runner request, so we do not know what to health check
+		if (config.runnerKind === "serverless") {
+			logger().debug("disabling health check since using serverless");
+			config.disableHealthCheck = true;
+		}
+
+		// Auto-configure serverless runner if not in prod
+		if (
+			process.env.NODE_ENV !== "production" &&
+			config.runnerKind === "serverless"
+		) {
+			if (inputConfig?.runEngine === undefined) config.runEngine = true;
+			if (inputConfig?.autoConfigureServerless === undefined)
+				config.autoConfigureServerless = true;
+		}
+
 		// Start engine
 		if (config.runEngine) {
 			logger().debug({
@@ -185,6 +204,7 @@ export class Registry<A extends RegistryActors> {
 		// Even though we do not use the returned ActorDriver, this is required to start the code that will handle incoming actors
 		if (!config.disableActorDriver) {
 			Promise.all(readyPromises).then(async () => {
+				logger().debug("starting actor driver");
 				driver.actor(this.#config, config, managerDriver, client);
 			});
 		}
@@ -220,6 +240,8 @@ export class Registry<A extends RegistryActors> {
 }
 
 async function configureServerlessRunner(config: RunnerConfig): Promise<void> {
+	logger().debug("configuring serverless runner");
+
 	try {
 		// Ensure we have required config values
 		if (!config.runnerName) {
@@ -290,10 +312,11 @@ async function configureServerlessRunner(config: RunnerConfig): Promise<void> {
 		});
 	} catch (error) {
 		logger().error({
-			msg: "failed to configure serverless runner",
+			msg: "failed to configure serverless runner, validate endpoint is configured correctly then restart this process",
 			error,
 		});
-		throw error;
+
+		// Don't throw, allow the runner to continue
 	}
 }
 
