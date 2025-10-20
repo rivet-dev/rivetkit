@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { createWriteStream } from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
@@ -103,9 +104,11 @@ export async function ensureEngineProcess(
 
 	child.once("exit", (code, signal) => {
 		logger().warn({
-			msg: "engine process exited",
+			msg: "engine process exited, please report this error",
 			code,
 			signal,
+			issues: "https://github.com/rivet-dev/rivetkit/issues",
+			support: "https://rivet.dev/discord",
 		});
 		// Clean up log streams
 		stdoutStream.end();
@@ -168,22 +171,70 @@ async function downloadEngineBinaryIfNeeded(
 		);
 	}
 
-	const tempPath = `${binaryPath}.${process.pid}.tmp`;
-	await pipeline(response.body, createWriteStream(tempPath));
-	if (process.platform !== "win32") {
-		await fs.chmod(tempPath, 0o755);
-	}
-	await fs.rename(tempPath, binaryPath);
+	// Generate unique temp file name to prevent parallel download conflicts
+	const tempPath = `${binaryPath}.${randomUUID()}.tmp`;
+	const startTime = Date.now();
+
 	logger().debug({
-		msg: "engine binary download complete",
-		version,
-		path: binaryPath,
+		msg: "starting binary download",
+		tempPath,
+		contentLength: response.headers.get("content-length"),
 	});
-	logger().info({
-		msg: "engine binary downloaded",
-		version,
-		path: binaryPath,
-	});
+
+	// Warn user if download is taking a long time
+	const slowDownloadWarning = setTimeout(() => {
+		logger().warn({
+			msg: "engine binary download is taking longer than expected, please be patient",
+			version,
+		});
+	}, 5000);
+
+	try {
+		await pipeline(response.body, createWriteStream(tempPath));
+
+		// Clear the slow download warning
+		clearTimeout(slowDownloadWarning);
+
+		// Get file size to verify download
+		const stats = await fs.stat(tempPath);
+		const downloadDuration = Date.now() - startTime;
+
+		if (process.platform !== "win32") {
+			await fs.chmod(tempPath, 0o755);
+		}
+		await fs.rename(tempPath, binaryPath);
+
+		logger().debug({
+			msg: "engine binary download complete",
+			version,
+			path: binaryPath,
+			size: stats.size,
+			durationMs: downloadDuration,
+		});
+		logger().info({
+			msg: "engine binary downloaded",
+			version,
+			path: binaryPath,
+		});
+	} catch (error) {
+		// Clear the slow download warning
+		clearTimeout(slowDownloadWarning);
+
+		// Clean up partial temp file on error
+		logger().warn({
+			msg: "engine download failed, please report this error",
+			tempPath,
+			error,
+			issues: "https://github.com/rivet-dev/rivetkit/issues",
+			support: "https://rivet.dev/discord",
+		});
+		try {
+			await fs.unlink(tempPath);
+		} catch (unlinkError) {
+			// Ignore errors when cleaning up (file may not exist)
+		}
+		throw error;
+	}
 }
 
 function resolveTargetTriplet(): { targetTriplet: string; extension: string } {
