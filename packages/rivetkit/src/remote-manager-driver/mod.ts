@@ -70,7 +70,8 @@ export class RemoteManagerDriver implements ManagerDriver {
 		if (!runConfig.disableHealthCheck) {
 			this.#metadataPromise = this.#performMetadataCheck(runConfig);
 			this.#metadataPromise.catch((error) => {
-				logger().error({
+				// TODO: Promot to error after metadata endpoint merged on prod
+				logger().info({
 					msg: "metadata check failed",
 					error: error instanceof Error ? error.message : String(error),
 				});
