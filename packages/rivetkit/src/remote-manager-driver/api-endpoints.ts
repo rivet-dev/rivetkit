@@ -21,7 +21,7 @@ export async function getActor(
 	return apiCall<never, ActorsListResponse>(
 		config,
 		"GET",
-		`/actors?name=${name}&actor_ids=${encodeURIComponent(actorId)}`,
+		`/actors?actor_ids=${encodeURIComponent(actorId)}`,
 	);
 }
 
