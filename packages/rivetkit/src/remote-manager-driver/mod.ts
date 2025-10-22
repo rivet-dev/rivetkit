@@ -218,6 +218,7 @@ export class RemoteManagerDriver implements ManagerDriver {
 		});
 
 		const { actor, created } = await getOrCreateActor(this.#config, {
+			datacenter: region,
 			name,
 			key: serializeActorKey(key),
 			runner_name_selector: this.#config.runnerName,
@@ -249,6 +250,7 @@ export class RemoteManagerDriver implements ManagerDriver {
 		name,
 		key,
 		input,
+		region,
 	}: CreateInput): Promise<ActorOutput> {
 		// Wait for metadata check to complete if in progress
 		if (this.#metadataPromise) {
@@ -259,6 +261,7 @@ export class RemoteManagerDriver implements ManagerDriver {
 
 		// Create actor via engine API
 		const result = await createActor(this.#config, {
+			datacenter: region,
 			name,
 			runner_name_selector: this.#config.runnerName,
 			key: serializeActorKey(key),

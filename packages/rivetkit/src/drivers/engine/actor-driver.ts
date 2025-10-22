@@ -1,6 +1,6 @@
 import type {
+	ActorConfig as EngineActorConfig,
 	RunnerConfig as EngineRunnerConfig,
-	ActorConfig as RunnerActorConfig,
 } from "@rivetkit/engine-runner";
 import { Runner } from "@rivetkit/engine-runner";
 import * as cbor from "cbor-x";
@@ -220,20 +220,20 @@ export class EngineActorDriver implements ActorDriver {
 	async #runnerOnActorStart(
 		actorId: string,
 		generation: number,
-		runConfig: RunnerActorConfig,
+		actorConfig: EngineActorConfig,
 	): Promise<void> {
 		logger().debug({
 			msg: "runner actor starting",
 			actorId,
-			name: runConfig.name,
-			key: runConfig.key,
+			name: actorConfig.name,
+			key: actorConfig.key,
 			generation,
 		});
 
 		// Deserialize input
 		let input: any;
-		if (runConfig.input) {
-			input = cbor.decode(runConfig.input);
+		if (actorConfig.input) {
+			input = cbor.decode(actorConfig.input);
 		}
 
 		// Get or create handler
@@ -259,12 +259,12 @@ export class EngineActorDriver implements ActorDriver {
 					: serializeEmptyPersistData(input);
 		}
 
-		const name = runConfig.name as string;
-		invariant(runConfig.key, "actor should have a key");
-		const key = deserializeActorKey(runConfig.key);
+		const name = actorConfig.name as string;
+		invariant(actorConfig.key, "actor should have a key");
+		const key = deserializeActorKey(actorConfig.key);
 
 		// Create actor instance
-		const definition = lookupInRegistry(this.#registryConfig, runConfig.name);
+		const definition = lookupInRegistry(this.#registryConfig, actorConfig.name);
 		handler.actor = definition.instantiate();
 
 		// Start actor
