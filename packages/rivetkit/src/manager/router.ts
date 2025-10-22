@@ -262,7 +262,7 @@ function addManagerRoutes(
 			path: "/actors",
 			request: {
 				query: z.object({
-					name: z.string(),
+					name: z.string().optional(),
 					actor_ids: z.string().optional(),
 					key: z.string().optional(),
 				}),
@@ -282,6 +282,37 @@ function addManagerRoutes(
 
 			const actors: ActorOutput[] = [];
 
+			// Validate: cannot provide both actor_ids and (name or key)
+			if (actorIdsParsed && (name || key)) {
+				return c.json(
+					{
+						error:
+							"Cannot provide both actor_ids and (name + key). Use either actor_ids or (name + key).",
+					},
+					400,
+				);
+			}
+
+			// Validate: when key is provided, name must also be provided
+			if (key && !name) {
+				return c.json(
+					{
+						error: "When providing 'key', 'name' must also be provided.",
+					},
+					400,
+				);
+			}
+
+			// Validate: must provide either actor_ids or (name + key)
+			if (!actorIdsParsed && !key) {
+				return c.json(
+					{
+						error: "Must provide either 'actor_ids' or both 'name' and 'key'.",
+					},
+					400,
+				);
+			}
+
 			if (actorIdsParsed) {
 				if (actorIdsParsed.length > 32) {
 					return c.json(
@@ -298,8 +329,10 @@ function addManagerRoutes(
 					});
 				}
 
+				// Fetch actors by ID
 				for (const actorId of actorIdsParsed) {
 					if (name) {
+						// If name is provided, use it directly
 						const actorOutput = await managerDriver.getForId({
 							c,
 							name,
@@ -308,12 +341,27 @@ function addManagerRoutes(
 						if (actorOutput) {
 							actors.push(actorOutput);
 						}
+					} else {
+						// If no name is provided, try all registered actor types
+						// Actor IDs are globally unique, so we'll find it in one of them
+						for (const actorName of Object.keys(registryConfig.use)) {
+							const actorOutput = await managerDriver.getForId({
+								c,
+								name: actorName,
+								actorId,
+							});
+							if (actorOutput) {
+								actors.push(actorOutput);
+								break; // Found the actor, no need to check other names
+							}
+						}
 					}
 				}
 			} else if (key) {
+				// At this point, name is guaranteed to be defined due to validation above
 				const actorOutput = await managerDriver.getWithKey({
 					c,
-					name,
+					name: name!,
 					key: [key], // Convert string to ActorKey array
 				});
 				if (actorOutput) {
