@@ -15,7 +15,7 @@ import { apiCall } from "./api-utils";
 // MARK: Get actor
 export async function getActor(
 	config: ClientConfig,
-	name: string,
+	_: string,
 	actorId: RivetId,
 ): Promise<ActorsListResponse> {
 	return apiCall<never, ActorsListResponse>(
