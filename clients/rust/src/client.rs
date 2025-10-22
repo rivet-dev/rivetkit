@@ -4,9 +4,10 @@ use anyhow::Result;
 use serde_json::{Value as JsonValue};
 
 use crate::{
-    common::{resolve_actor_id, ActorKey, EncodingKind, TransportKind},
+    common::{ActorKey, EncodingKind, TransportKind},
     handle::ActorHandle,
-    protocol::query::*
+    protocol::query::*,
+    remote_manager::RemoteManager,
 };
 
 #[derive(Default)]
@@ -35,7 +36,7 @@ pub struct CreateOptions {
 
 
 pub struct Client {
-    manager_endpoint: String,
+    remote_manager: RemoteManager,
     encoding_kind: EncodingKind,
     transport_kind: TransportKind,
     shutdown_tx: Arc<tokio::sync::broadcast::Sender<()>>,
@@ -48,7 +49,21 @@ impl Client {
         encoding_kind: EncodingKind,
     ) -> Self {
         Self {
-            manager_endpoint: manager_endpoint.to_string(),
+            remote_manager: RemoteManager::new(manager_endpoint, None),
+            encoding_kind,
+            transport_kind,
+            shutdown_tx: Arc::new(tokio::sync::broadcast::channel(1).0)
+        }
+    }
+
+    pub fn new_with_token(
+        manager_endpoint: &str,
+        token: String,
+        transport_kind: TransportKind,
+        encoding_kind: EncodingKind,
+    ) -> Self {
+        Self {
+            remote_manager: RemoteManager::new(manager_endpoint, Some(token)),
             encoding_kind,
             transport_kind,
             shutdown_tx: Arc::new(tokio::sync::broadcast::channel(1).0)
@@ -61,7 +76,7 @@ impl Client {
         query: ActorQuery
     ) -> ActorHandle {
         let handle = ActorHandle::new(
-            &self.manager_endpoint,
+            self.remote_manager.clone(),
             params,
             query,
             self.shutdown_tx.clone(),
@@ -95,11 +110,13 @@ impl Client {
 
     pub fn get_for_id(
         &self,
+        name: &str,
         actor_id: &str,
         opts: GetOptions
     ) -> Result<ActorHandle> {
         let actor_query = ActorQuery::GetForId {
             get_for_id: GetForIdRequest {
+                name: name.to_string(),
                 actor_id: actor_id.to_string(),
             }
         };
@@ -145,25 +162,17 @@ impl Client {
         opts: CreateOptions
     ) -> Result<ActorHandle> {
         let input = opts.input;
-        let region = opts.region;
+        let _region = opts.region;
 
-        let create_query = ActorQuery::Create {
-            create: CreateRequest {
-                name: name.to_string(),
-                key,
-                input,
-                region
-            }
-        };
-
-        let actor_id = resolve_actor_id(
-            &self.manager_endpoint,
-            create_query,
-            self.encoding_kind
+        let actor_id = self.remote_manager.create_actor(
+            name,
+            &key,
+            input,
         ).await?;
 
         let get_query = ActorQuery::GetForId {
             get_for_id: GetForIdRequest {
+                name: name.to_string(),
                 actor_id,
             }
         };

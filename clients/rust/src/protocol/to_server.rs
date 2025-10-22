@@ -1,40 +1,27 @@
 use serde::{Deserialize, Serialize};
-use serde_json::Value as JsonValue;
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Init {
-    // Conn Params
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub p: Option<JsonValue>
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ActionRequest {
-    // ID
-    pub i: i64,
-    // Name
-    pub n: String,
-    // Args
-    pub a: Vec<JsonValue>,
+    pub id: u64,
+    pub name: String,
+    pub args: Vec<u8>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SubscriptionRequest {
-    // Event name
-    pub e: String,
-    // Subscribe
-    pub s: bool,
+    #[serde(rename = "eventName")]
+    pub event_name: String,
+    pub subscribe: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
+#[serde(tag = "tag", content = "val")]
 pub enum ToServerBody {
-    Init { i: Init },
-    ActionRequest { ar: ActionRequest },
-    SubscriptionRequest { sr: SubscriptionRequest },
+    ActionRequest(ActionRequest),
+    SubscriptionRequest(SubscriptionRequest),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ToServer {
-    pub b: ToServerBody,
+    pub body: ToServerBody,
 }

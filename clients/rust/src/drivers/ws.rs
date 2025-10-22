@@ -1,10 +1,8 @@
 use anyhow::{Context, Result};
 use futures_util::{SinkExt, StreamExt};
 use std::sync::Arc;
-use tokio::net::TcpStream;
 use tokio::sync::mpsc;
 use tokio_tungstenite::tungstenite::Message;
-use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 use tracing::debug;
 
 use crate::{
@@ -17,33 +15,20 @@ use super::{
     DriverConnectArgs, DriverConnection, DriverHandle, DriverStopReason, MessageToClient, MessageToServer
 };
 
-fn build_connection_url(args: &DriverConnectArgs) -> Result<String> {
-    let actor_query_string = serde_json::to_string(&args.query)?;
-    // TODO: Should replace http:// only at the start of the string
-    let url = args.endpoint
-        .to_string()
-        .replace("http://", "ws://")
-        .replace("https://", "wss://");
-
-    let url = format!(
-        "{}/actors/connect/websocket?encoding={}&query={}",
-        url,
-        args.encoding_kind.as_str(),
-        urlencoding::encode(&actor_query_string)
-    );
-
-    Ok(url)
-}
-
-
 pub(crate) async fn connect(args: DriverConnectArgs) -> Result<DriverConnection> {
-    let url = build_connection_url(&args)?;
+    // Resolve actor ID
+    let actor_id = args.remote_manager.resolve_actor_id(&args.query).await?;
 
-    debug!("Connecting to: {}", url);
+    debug!("Opening WebSocket connection to actor via gateway: {}", actor_id);
 
-    let (ws, _res) = tokio_tungstenite::connect_async(url)
-        .await
-        .context("Failed to connect to WebSocket")?;
+    // Open WebSocket via remote manager (gateway)
+    let ws = args.remote_manager.open_websocket(
+        &actor_id,
+        args.encoding_kind,
+        args.parameters,
+        args.conn_id,
+        args.conn_token,
+    ).await.context("Failed to connect to WebSocket via gateway")?;
 
     let (in_tx, in_rx) = mpsc::channel::<MessageToClient>(32);
     let (out_tx, out_rx) = mpsc::channel::<MessageToServer>(32);
@@ -51,21 +36,11 @@ pub(crate) async fn connect(args: DriverConnectArgs) -> Result<DriverConnection>
     let task = tokio::spawn(start(ws, args.encoding_kind, in_tx, out_rx));
     let handle = DriverHandle::new(out_tx, task.abort_handle());
 
-    handle.send(Arc::new(
-        to_server::ToServer {
-            b: to_server::ToServerBody::Init {
-                i: to_server::Init {
-                    p: args.parameters
-                }
-            },
-        }
-    )).await?;
-
     Ok((handle, in_rx, task))
 }
 
 async fn start(
-    ws: WebSocketStream<MaybeTlsStream<TcpStream>>,
+    ws: tokio_tungstenite::WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>,
     encoding_kind: EncodingKind,
     in_tx: mpsc::Sender<MessageToClient>,
     mut out_rx: mpsc::Receiver<MessageToServer>,
