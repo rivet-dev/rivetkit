@@ -1,6 +1,0 @@
-pre-commit:
-  commands:
-    fmt:
-      run: pnpm fmt
-      tags: formatting
-      stage_fixed: true
